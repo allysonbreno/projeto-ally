@@ -4,16 +4,16 @@
 # Godot 3 (legado)
 .import/
 
-# Exports/builds
+# Builds/exports
 export/
 
-# SO e IDEs
+# SO/IDEs
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
 
-# C# (se vier a usar)
+# C# (se usar)
 .mono/
 **/obj/
 **/bin/
