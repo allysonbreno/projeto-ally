@@ -1,11 +1,19 @@
+# Godot 4
+.godot/
 
-# Godot
+# Godot 3 (legado)
 .import/
-# Editor/OS
+
+# Exports/builds
+export/
+
+# SO e IDEs
 .DS_Store
 Thumbs.db
-# Logs/Temp
-*.log
-*.tmp
-# Builds
-/build/
+.vscode/
+.idea/
+
+# C# (se vier a usar)
+.mono/
+**/obj/
+**/bin/
