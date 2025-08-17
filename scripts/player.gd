@@ -12,197 +12,201 @@ var main: Node
 var attack_cooldown: float = 0.3
 var _can_attack: bool = true
 var is_attacking: bool = false
+var attack_cd_remaining: float = 0.0
 
 # --- Sprite/animação ---
 var sprite: AnimatedSprite2D
 var frames: SpriteFrames
 
-# Pastas dos sprites (lado East; viramos com flip_h para esquerda)
-const PATH_WALK   := "res://art/player/walk_east"
-const PATH_JUMP   := "res://art/player/jump_east"
-const PATH_ATTACK := "res://art/player/attack_east"
+# Pastas (lado East)
+const PATH_WALK: String   = "res://art/player/walk_east"
+const PATH_JUMP: String   = "res://art/player/jump_east"
+const PATH_ATTACK: String = "res://art/player/attack_east"
 
-# FPS sugeridos
+# Tamanho/escala
+const SPRITE_SCALE: Vector2 = Vector2(1.25, 1.25)
+const COLLIDER_SIZE: Vector2 = Vector2(24, 40)
+
+# FPS
 const FPS_WALK: int = 10
 const FPS_JUMP: int = 12
 const FPS_ATTACK: int = 10
 
 func _ready() -> void:
-    # Collider (24x24)
-    var shape: RectangleShape2D = RectangleShape2D.new()
-    shape.size = Vector2(24, 24)
-    var col: CollisionShape2D = CollisionShape2D.new()
-    col.shape = shape
-    add_child(col)
+	var shape: RectangleShape2D = RectangleShape2D.new()
+	shape.size = COLLIDER_SIZE
+	var col: CollisionShape2D = CollisionShape2D.new()
+	col.shape = shape
+	add_child(col)
 
-    # Layers/máscaras do player
-    set_collision_layer_value(1, true)  # player
-    set_collision_mask_value(2, true)   # inimigos
-    set_collision_mask_value(3, true)   # cenário
+	set_collision_layer_value(1, true)
+	set_collision_mask_value(2, true)
+	set_collision_mask_value(3, true)
 
-    # AnimatedSprite2D
-    sprite = AnimatedSprite2D.new()
-    add_child(sprite)
-    frames = SpriteFrames.new()
-    sprite.frames = frames
-    sprite.centered = true
+	sprite = AnimatedSprite2D.new()
+	add_child(sprite)
+	frames = SpriteFrames.new()
+	sprite.frames = frames
+	sprite.centered = true
+	sprite.scale = SPRITE_SCALE
 
-    # Carrega animações das pastas
-    _add_animation_from_dir("walk", PATH_WALK, FPS_WALK, true)
-    _add_animation_from_dir("jump", PATH_JUMP, FPS_JUMP, false)
-    _add_animation_from_dir("attack", PATH_ATTACK, FPS_ATTACK, false)
+	_add_animation_from_dir("walk", PATH_WALK, FPS_WALK, true)
+	_add_animation_from_dir("jump", PATH_JUMP, FPS_JUMP, false)
+	_add_animation_from_dir("attack", PATH_ATTACK, FPS_ATTACK, false)
 
-    # Idle automático com 1º frame do walk
-    if frames.has_animation("walk") and frames.get_frame_count("walk") > 0 and not frames.has_animation("idle"):
-        frames.add_animation("idle")
-        frames.set_animation_speed("idle", 1)
-        frames.set_animation_loop("idle", true)
-        frames.add_frame("idle", frames.get_frame_texture("walk", 0))
+	if frames.has_animation("walk") and frames.get_frame_count("walk") > 0 and not frames.has_animation("idle"):
+		frames.add_animation("idle")
+		frames.set_animation_speed("idle", 1)
+		frames.set_animation_loop("idle", true)
+		frames.add_frame("idle", frames.get_frame_texture("walk", 0))
 
-    sprite.play("idle")
+	sprite.play("idle")
 
 func _physics_process(delta: float) -> void:
-    # Gravidade
-    if not is_on_floor():
-        velocity.y += gravity * delta
+	if attack_cd_remaining > 0.0:
+		attack_cd_remaining = max(0.0, attack_cd_remaining - delta)
 
-    # Movimento horizontal (trava enquanto atacando)
-    var input_dir: float = 0.0
-    if not is_attacking:
-        if Input.is_action_pressed("move_left"):
-            input_dir -= 1.0
-        if Input.is_action_pressed("move_right"):
-            input_dir += 1.0
-    velocity.x = input_dir * speed
+	if not is_on_floor():
+		velocity.y += gravity * delta
 
-    if input_dir != 0.0:
-        facing = Vector2(sign(input_dir), 0.0)
-        sprite.flip_h = (facing.x < 0.0)
+	var input_dir: float = 0.0
+	if not is_attacking:
+		if Input.is_action_pressed("move_left"):
+			input_dir -= 1.0
+		if Input.is_action_pressed("move_right"):
+			input_dir += 1.0
+	velocity.x = input_dir * speed
 
-    # Pulo
-    if Input.is_action_just_pressed("jump") and is_on_floor() and not is_attacking:
-        velocity.y = -jump_force
-        _play_if_not("jump")
+	if input_dir != 0.0:
+		facing = Vector2(sign(input_dir), 0.0)
+		sprite.flip_h = (facing.x < 0.0)
 
-    move_and_slide()
+	if Input.is_action_just_pressed("jump") and is_on_floor() and not is_attacking:
+		velocity.y = -jump_force
+		_play_if_not("jump")
 
-    # Ataque
-    if Input.is_action_just_pressed("attack"):
-        _try_attack()
+	move_and_slide()
 
-    # Escolha de animação (se não estiver atacando)
-    if not is_attacking:
-        if not is_on_floor():
-            _play_if_not("jump")
-        elif absf(velocity.x) > 1.0:
-            _play_if_not("walk")
-        else:
-            _play_if_not("idle")
+	if Input.is_action_just_pressed("attack"):
+		_try_attack()
+
+	if not is_attacking:
+		if not is_on_floor():
+			_play_if_not("jump")
+		elif absf(velocity.x) > 1.0:
+			_play_if_not("walk")
+		else:
+			_play_if_not("idle")
 
 func _try_attack() -> void:
-    if not _can_attack or is_attacking:
-        return
-    is_attacking = true
-    _can_attack = false
+	if not _can_attack or is_attacking:
+		return
+	is_attacking = true
+	_can_attack = false
 
-    _play_once_if_has("attack")
+	_play_once_if_has("attack")
+	if main and main.has_method("play_sfx_id"):
+		main.play_sfx_id("attack")
 
-    var anim_len: float = _anim_length("attack")
-    if anim_len <= 0.0:
-        anim_len = 0.4  # fallback
+	var anim_len: float = _anim_length("attack")
+	if anim_len <= 0.0:
+		anim_len = 0.4
 
-    # aplica hit no ponto de impacto (~35% da anima)
-    var hit_time: float = clamp(anim_len * 0.35, 0.05, anim_len - 0.05)
-    _spawn_attack_hitbox_after_delay(hit_time)
+	var hit_time: float = clamp(anim_len * 0.35, 0.05, anim_len - 0.05)
+	_spawn_attack_hitbox_after_delay(hit_time)
 
-    # espera a anima terminar para liberar movimento
-    await get_tree().create_timer(anim_len).timeout
-    is_attacking = false
+	await get_tree().create_timer(anim_len).timeout
+	is_attacking = false
 
-    # cooldown do ataque
-    await get_tree().create_timer(attack_cooldown).timeout
-    _can_attack = true
+	attack_cd_remaining = attack_cooldown
+	await get_tree().create_timer(attack_cooldown).timeout
+	_can_attack = true
 
-# aguarda um delay e então cria a hitbox do ataque
+func get_attack_cooldown_ratio() -> float:
+	if attack_cooldown <= 0.0:
+		return 1.0
+	var r: float = 1.0 - clamp(attack_cd_remaining / attack_cooldown, 0.0, 1.0)
+	return r
+
 func _spawn_attack_hitbox_after_delay(delay: float) -> void:
-    await get_tree().create_timer(delay).timeout
-    _spawn_attack_hitbox()
+	await get_tree().create_timer(delay).timeout
+	_spawn_attack_hitbox()
 
 func _spawn_attack_hitbox() -> void:
-    var area: Area2D = Area2D.new()
-    var cshape: CollisionShape2D = CollisionShape2D.new()
-    var shape: RectangleShape2D = RectangleShape2D.new()
-    shape.size = Vector2(22, 22)
-    cshape.shape = shape
+	var area: Area2D = Area2D.new()
+	var cshape: CollisionShape2D = CollisionShape2D.new()
+	var shape: RectangleShape2D = RectangleShape2D.new()
+	shape.size = Vector2(28, 24)
+	cshape.shape = shape
 
-    var dir_x: float = facing.x
-    if dir_x == 0.0:
-        dir_x = 1.0
-    var offset: Vector2 = Vector2(18, 0) * dir_x
-    area.position = position + offset
-    area.add_child(cshape)
+	var dir_x: float = facing.x
+	if dir_x == 0.0:
+		dir_x = 1.0
+	var offset: Vector2 = Vector2(22, 0) * dir_x
+	area.position = position + offset
+	area.add_child(cshape)
 
-    # Só detectar inimigos (layer 2)
-    area.monitoring = true
-    area.monitorable = true
-    area.collision_layer = 0
-    area.collision_mask = 0
-    area.set_collision_mask_value(2, true)
+	area.monitoring = true
+	area.monitorable = true
+	area.collision_layer = 0
+	area.collision_mask = 0
+	area.set_collision_mask_value(2, true)
 
-    area.body_entered.connect(func(body):
-        if body is Enemy:
-            body.take_damage(34)
-    )
-    get_parent().add_child(area)
-    await get_tree().create_timer(0.07).timeout
-    area.queue_free()
+	area.body_entered.connect(func(body):
+		if body is Enemy:
+			body.take_damage(34)
+			if main and main.has_method("play_sfx_id"):
+				main.play_sfx_id("hit")
+			if main and main.has_method("show_damage_popup_at_world"):
+				main.show_damage_popup_at_world(body.global_position, "-34", Color(1, 0.8, 0.2, 1))
+	)
+	get_parent().add_child(area)
+	await get_tree().create_timer(0.07).timeout
+	area.queue_free()
 
-# Sofrer dano (chamado por inimigos)
 func take_damage(amount: int) -> void:
-    main.damage_player(amount)
+	if main and main.has_method("damage_player"):
+		main.damage_player(amount, global_position)
 
-# -----------------------
-# Helpers de animação
-# -----------------------
-
+# ------ helpers de animação ------
 func _add_animation_from_dir(anim_name: String, dir_path: String, fps: int, loop: bool) -> void:
-    var files: Array[String] = _list_pngs_sorted(dir_path)
-    if files.is_empty():
-        return
-    frames.add_animation(anim_name)
-    frames.set_animation_loop(anim_name, loop)
-    frames.set_animation_speed(anim_name, fps)
-    for f in files:
-        var tex: Resource = load(f)
-        if tex is Texture2D:
-            frames.add_frame(anim_name, tex)
+	var files: Array[String] = _list_pngs_sorted(dir_path)
+	if files.is_empty():
+		return
+	frames.add_animation(anim_name)
+	frames.set_animation_loop(anim_name, loop)
+	frames.set_animation_speed(anim_name, fps)
+	for f in files:
+		var tex: Resource = load(f)
+		if tex is Texture2D:
+			frames.add_frame(anim_name, tex)
 
 func _list_pngs_sorted(dir_path: String) -> Array[String]:
-    var out: Array[String] = []
-    var d: DirAccess = DirAccess.open(dir_path)
-    if d == null:
-        return out
-    d.list_dir_begin()
-    var entry: String = d.get_next()
-    while entry != "":
-        if not d.current_is_dir() and entry.to_lower().ends_with(".png"):
-            out.append(dir_path + "/" + entry)
-        entry = d.get_next()
-    d.list_dir_end()
-    out.sort()
-    return out
+	var out: Array[String] = []
+	var d: DirAccess = DirAccess.open(dir_path)
+	if d == null:
+		return out
+	d.list_dir_begin()
+	var entry: String = d.get_next()
+	while entry != "":
+		if not d.current_is_dir() and entry.to_lower().ends_with(".png"):
+			out.append(dir_path + "/" + entry)
+		entry = d.get_next()
+	d.list_dir_end()
+	out.sort()
+	return out
 
 func _anim_length(anim: String) -> float:
-    if not frames.has_animation(anim):
-        return 0.0
-    var fps: float = max(1.0, float(frames.get_animation_speed(anim)))
-    var count: float = float(frames.get_frame_count(anim))
-    return count / fps
+	if not frames.has_animation(anim):
+		return 0.0
+	var fps: float = max(1.0, float(frames.get_animation_speed(anim)))
+	var count: float = float(frames.get_frame_count(anim))
+	return count / fps
 
 func _play_if_not(anim: String) -> void:
-    if sprite.animation != anim and frames.has_animation(anim):
-        sprite.play(anim)
+	if sprite.animation != anim and frames.has_animation(anim):
+		sprite.play(anim)
 
 func _play_once_if_has(anim: String) -> void:
-    if frames.has_animation(anim):
-        sprite.play(anim)
+	if frames.has_animation(anim):
+		sprite.play(anim)
