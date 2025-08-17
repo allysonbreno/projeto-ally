@@ -1,7 +1,0 @@
-res://scripts/city_map.gd
-res://scripts/forest_map.gd
-res://main.tscn
-res://main.gd
-res://scripts/player.gd
-res://scripts/hud.gd
-res://scripts/enemy.gd
