@@ -1,7 +1,7 @@
-res://tools/bootstrap_platformer.gd
-res://scenes/Main.tscn
-res://scenes/Enemy.tscn
-res://tools/path_minimal_visuals.gd
-res://tools/repair_platform.gd
-res://scripts/Enemy.gd
-res://scripts/Player.gd
+res://scripts/city_map.gd
+res://scripts/forest_map.gd
+res://main.tscn
+res://main.gd
+res://scripts/player.gd
+res://scripts/hud.gd
+res://scripts/enemy.gd

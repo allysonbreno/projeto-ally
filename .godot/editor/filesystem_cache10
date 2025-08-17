@@ -1,3 +1,12 @@
 ea4bc82a6ad023ab7ee23ee620429895
-::res://::1755409497
-icon.svg::CompressedTexture2D::118644471226110216::1755409493::1755409497::1::::<><><>0<>0<>ced30f32a003bbec258a217940fcd5d1<>res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex::
+::res://::1755464642
+icon.svg::CompressedTexture2D/CompressedTexture2D::118644471226110216::1755409493::1755409497::1::::<><><>0<>0<>ced30f32a003bbec258a217940fcd5d1<>res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex::
+main.gd::GDScript/GDScript::2610822607413239267::1755464100::0::1::::<>Node<><>0<>0<><>::
+main.tscn::PackedScene::-1::1755464401::0::1::::<><><>0<>0<><>::res://main.gd
+::res://scripts/::1755464199
+city_map.gd::GDScript::5316705049334094280::1755464611::0::1::::<>RefCounted<><>0<>0<><>::
+enemy.gd::GDScript/GDScript::2399263263195186145::1755464327::0::1::::Enemy<>CharacterBody2D<><>0<>0<><>::
+forest_map.gd::GDScript::2756225626790473701::1755464597::0::1::::<>Node2D<><>0<>0<><>::
+hud.gd::GDScript/GDScript::3534473122804067226::1755464127::0::1::::<>CanvasLayer<><>0<>0<><>::
+input_setup.gd::GDScript/GDScript::8342022464910554382::1755464118::0::1::::InputSetup<>RefCounted<><>0<>0<><>::
+player.gd::GDScript/GDScript::5377857767668084189::1755464139::0::1::::Player<>CharacterBody2D<><>0<>0<><>::
