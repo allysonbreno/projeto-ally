@@ -38,13 +38,15 @@ func _ready() -> void:
     top.add_child(subtitle_label)
 
     health_bar = ProgressBar.new()
-    health_bar.min_value = 0; health_bar.max_value = 100; health_bar.value = 100
+    health_bar.min_value = 0
+    health_bar.max_value = 100
+    health_bar.value = 100
     health_bar.custom_minimum_size = Vector2(200, 24)
     top.add_child(health_bar)
 
     # Ícone de ataque + barra de cooldown
     var atk_box: VBoxContainer = VBoxContainer.new()
-    atk_box.custom_minimum_size = Vector2(48, 48 + 8)
+    atk_box.custom_minimum_size = Vector2(48, 56)
     atk_box.alignment = BoxContainer.ALIGNMENT_CENTER
     top.add_child(atk_box)
 
@@ -57,7 +59,6 @@ func _ready() -> void:
     atk_box.add_child(atk_icon)
 
     atk_fallback_label = Label.new()
-    # >>> ternário no formato do GDScript
     atk_fallback_label.text = "J" if atk_icon.texture == null else ""
     atk_fallback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     atk_fallback_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -68,16 +69,19 @@ func _ready() -> void:
     atk_cd_bar = ProgressBar.new()
     atk_cd_bar.min_value = 0
     atk_cd_bar.max_value = 100
-    atk_cd_bar.value = 100 # pronto (100%)
+    atk_cd_bar.value = 100
     atk_cd_bar.custom_minimum_size = Vector2(48, 6)
     atk_cd_bar.add_theme_stylebox_override("fill", StyleBoxFlat.new())
     atk_box.add_child(atk_cd_bar)
 
+    # Botão de mapas (somente mouse)
     map_button = Button.new()
     map_button.text = "Mapas"
+    map_button.focus_mode = Control.FOCUS_NONE
     map_button.pressed.connect(_open_map_menu)
     top.add_child(map_button)
 
+    # Popup do menu (não tem focus_mode em Godot 4)
     popup_menu = PopupMenu.new()
     add_child(popup_menu)
     popup_menu.add_item("Floresta")
@@ -115,7 +119,6 @@ func _process(_delta: float) -> void:
     if player_ref != null:
         var ratio: float = player_ref.get_attack_cooldown_ratio()
         atk_cd_bar.value = int(round(ratio * 100.0))
-        # Desabilita o ícone quando em cooldown
         var alpha: float = 0.4 + 0.6 * ratio
         if atk_icon.texture != null:
             atk_icon.modulate = Color(1, 1, 1, alpha)

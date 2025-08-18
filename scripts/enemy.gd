@@ -17,7 +17,7 @@ var frames: SpriteFrames
 
 const PATH_WALK: String = "res://art/enemy_forest/walk_east"
 const PATH_ATK: String  = "res://art/enemy_forest/attack_east"
-const SPRITE_SCALE: Vector2 = Vector2(1.25, 1.25)
+const SPRITE_SCALE: Vector2 = Vector2(1.8, 1.8)
 const COLLIDER_SIZE: Vector2 = Vector2(24, 40)
 const FPS_WALK: int = 8
 const FPS_ATK: int = 7

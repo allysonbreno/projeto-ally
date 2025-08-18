@@ -5,8 +5,10 @@ class_name Player
 var speed: float = 220.0
 var jump_force: float = 360.0
 var gravity: float = 900.0
-var facing: Vector2 = Vector2.RIGHT
 var main: Node
+
+# Direção atual: -1 = esquerda, +1 = direita
+var facing_sign: int = 1
 
 # --- Ataque ---
 var attack_cooldown: float = 0.3
@@ -18,21 +20,30 @@ var attack_cd_remaining: float = 0.0
 var sprite: AnimatedSprite2D
 var frames: SpriteFrames
 
-# Pastas (lado East)
+# Pastas (nomes “_east” são só convenção)
+const PATH_IDLE: String   = "res://art/player/idle_east"
 const PATH_WALK: String   = "res://art/player/walk_east"
 const PATH_JUMP: String   = "res://art/player/jump_east"
 const PATH_ATTACK: String = "res://art/player/attack_east"
 
 # Tamanho/escala
-const SPRITE_SCALE: Vector2 = Vector2(1.25, 1.25)
+const SPRITE_SCALE: Vector2 = Vector2(1.8, 1.8)
 const COLLIDER_SIZE: Vector2 = Vector2(24, 40)
 
 # FPS
-const FPS_WALK: int = 10
-const FPS_JUMP: int = 12
+const FPS_IDLE: int   = 3
+const FPS_WALK: int   = 10
+const FPS_JUMP: int   = 12
 const FPS_ATTACK: int = 10
 
+# Orientação base de cada animação (true = frames originais olham para a DIREITA/Este; false = para a ESQUERDA/Oeste)
+const IDLE_FACES_RIGHT: bool   = false	# ajuste aqui se trocar os frames de idle
+const WALK_FACES_RIGHT: bool   = true
+const JUMP_FACES_RIGHT: bool   = true
+const ATTACK_FACES_RIGHT: bool = true
+
 func _ready() -> void:
+	# colisão
 	var shape: RectangleShape2D = RectangleShape2D.new()
 	shape.size = COLLIDER_SIZE
 	var col: CollisionShape2D = CollisionShape2D.new()
@@ -43,6 +54,7 @@ func _ready() -> void:
 	set_collision_mask_value(2, true)
 	set_collision_mask_value(3, true)
 
+	# sprite
 	sprite = AnimatedSprite2D.new()
 	add_child(sprite)
 	frames = SpriteFrames.new()
@@ -50,17 +62,21 @@ func _ready() -> void:
 	sprite.centered = true
 	sprite.scale = SPRITE_SCALE
 
+	# animações
+	var idle_ok: bool = _add_animation_idle_if_exists()
 	_add_animation_from_dir("walk", PATH_WALK, FPS_WALK, true)
 	_add_animation_from_dir("jump", PATH_JUMP, FPS_JUMP, false)
 	_add_animation_from_dir("attack", PATH_ATTACK, FPS_ATTACK, false)
 
-	if frames.has_animation("walk") and frames.get_frame_count("walk") > 0 and not frames.has_animation("idle"):
+	# fallback de idle caso não exista pasta idle_east
+	if not idle_ok and frames.has_animation("walk") and not frames.has_animation("idle"):
 		frames.add_animation("idle")
 		frames.set_animation_speed("idle", 1)
 		frames.set_animation_loop("idle", true)
 		frames.add_frame("idle", frames.get_frame_texture("walk", 0))
 
 	sprite.play("idle")
+	_apply_flip_for_current_anim()
 
 func _physics_process(delta: float) -> void:
 	if attack_cd_remaining > 0.0:
@@ -77,9 +93,9 @@ func _physics_process(delta: float) -> void:
 			input_dir += 1.0
 	velocity.x = input_dir * speed
 
+	# atualiza direção quando há input
 	if input_dir != 0.0:
-		facing = Vector2(sign(input_dir), 0.0)
-		sprite.flip_h = (facing.x < 0.0)
+		facing_sign = int(sign(input_dir))
 
 	if Input.is_action_just_pressed("jump") and is_on_floor() and not is_attacking:
 		velocity.y = -jump_force
@@ -90,6 +106,7 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("attack"):
 		_try_attack()
 
+	# troca animação
 	if not is_attacking:
 		if not is_on_floor():
 			_play_if_not("jump")
@@ -97,6 +114,27 @@ func _physics_process(delta: float) -> void:
 			_play_if_not("walk")
 		else:
 			_play_if_not("idle")
+
+	# aplica flip coerente com a orientação base da anima atual
+	_apply_flip_for_current_anim()
+
+func _apply_flip_for_current_anim() -> void:
+	var anim: String = sprite.animation
+	var faces_right: bool = true
+	if anim == "idle":
+		faces_right = IDLE_FACES_RIGHT
+	elif anim == "walk":
+		faces_right = WALK_FACES_RIGHT
+	elif anim == "jump":
+		faces_right = JUMP_FACES_RIGHT
+	elif anim == "attack":
+		faces_right = ATTACK_FACES_RIGHT
+	# Se frames originais olham para a direita: flip quando olhando para esquerda.
+	# Se frames originais olham para a esquerda: flip quando olhando para direita.
+	if faces_right:
+		sprite.flip_h = (facing_sign < 0)
+	else:
+		sprite.flip_h = (facing_sign > 0)
 
 func _try_attack() -> void:
 	if not _can_attack or is_attacking:
@@ -139,7 +177,7 @@ func _spawn_attack_hitbox() -> void:
 	shape.size = Vector2(28, 24)
 	cshape.shape = shape
 
-	var dir_x: float = facing.x
+	var dir_x: float = float(facing_sign)
 	if dir_x == 0.0:
 		dir_x = 1.0
 	var offset: Vector2 = Vector2(22, 0) * dir_x
@@ -169,6 +207,27 @@ func take_damage(amount: int) -> void:
 		main.damage_player(amount, global_position)
 
 # ------ helpers de animação ------
+func _add_animation_idle_if_exists() -> bool:
+	if not DirAccess.dir_exists_absolute(PATH_IDLE):
+		return false
+	var files: Array[String] = _list_pngs_sorted(PATH_IDLE)
+	if files.is_empty():
+		return false
+	frames.add_animation("idle")
+	frames.set_animation_loop("idle", true)
+	frames.set_animation_speed("idle", FPS_IDLE)
+	if files.size() == 2:
+		for i in [0, 1, 0, 1]:
+			var tex: Resource = load(files[i])
+			if tex is Texture2D:
+				frames.add_frame("idle", tex)
+	else:
+		for f in files:
+			var tex2: Resource = load(f)
+			if tex2 is Texture2D:
+				frames.add_frame("idle", tex2)
+	return true
+
 func _add_animation_from_dir(anim_name: String, dir_path: String, fps: int, loop: bool) -> void:
 	var files: Array[String] = _list_pngs_sorted(dir_path)
 	if files.is_empty():
