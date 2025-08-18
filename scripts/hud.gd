@@ -1,24 +1,24 @@
 extends CanvasLayer
 signal on_select_map(map_name: String)
 
-var health_bar: ProgressBar
 var title_label: Label
-var subtitle_label: Label
+
+var hp_bar: ProgressBar
+var hp_value_label: Label
+var xp_bar: ProgressBar
+var xp_value_label: Label
+
 var map_button: Button
 var popup_menu: PopupMenu
 var dialog: AcceptDialog
 
-# ataque / cooldown
 var player_ref: Player
-var atk_icon: TextureRect
-var atk_fallback_label: Label
-var atk_cd_bar: ProgressBar
 
 func _init() -> void:
     layer = 10
 
 func _ready() -> void:
-    # Barra superior
+    # ===== Barra do topo =====
     var top: HBoxContainer = HBoxContainer.new()
     top.anchor_left = 0; top.anchor_top = 0
     top.anchor_right = 1; top.anchor_bottom = 0
@@ -26,62 +26,120 @@ func _ready() -> void:
     top.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     add_child(top)
 
+    # sem título à esquerda
+    var left_spacer := Control.new()
+    left_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    top.add_child(left_spacer)
+
+    # Título central (maior)
     title_label = Label.new()
     title_label.text = "Cidade"
-    title_label.add_theme_font_size_override("font_size", 22)
+    title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    title_label.add_theme_font_size_override("font_size", 28)
     top.add_child(title_label)
 
-    subtitle_label = Label.new()
-    subtitle_label.text = ""
-    subtitle_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    subtitle_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    top.add_child(subtitle_label)
+    # Lado direito: barras + botão Mapas
+    var right_box := HBoxContainer.new()
+    right_box.alignment = BoxContainer.ALIGNMENT_END
+    top.add_child(right_box)
 
-    health_bar = ProgressBar.new()
-    health_bar.min_value = 0
-    health_bar.max_value = 100
-    health_bar.value = 100
-    health_bar.custom_minimum_size = Vector2(200, 24)
-    top.add_child(health_bar)
+    var bars := VBoxContainer.new()
+    right_box.add_child(bars)
 
-    # Ícone de ataque + barra de cooldown
-    var atk_box: VBoxContainer = VBoxContainer.new()
-    atk_box.custom_minimum_size = Vector2(48, 56)
-    atk_box.alignment = BoxContainer.ALIGNMENT_CENTER
-    top.add_child(atk_box)
+    # ---- Linha HP ----
+    var hp_row := HBoxContainer.new()
+    hp_row.custom_minimum_size = Vector2(300, 24)
+    bars.add_child(hp_row)
 
-    atk_icon = TextureRect.new()
-    atk_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-    atk_icon.custom_minimum_size = Vector2(48, 48)
-    var icon_path: String = "res://art/ui/attack_icon.png"
-    if ResourceLoader.exists(icon_path):
-        atk_icon.texture = load(icon_path)
-    atk_box.add_child(atk_icon)
+    var hp_text := Label.new()
+    hp_text.text = "HP"
+    hp_text.add_theme_font_size_override("font_size", 16)
+    hp_text.custom_minimum_size = Vector2(32, 0)
+    hp_row.add_child(hp_text)
 
-    atk_fallback_label = Label.new()
-    atk_fallback_label.text = "J" if atk_icon.texture == null else ""
-    atk_fallback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    atk_fallback_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-    atk_fallback_label.custom_minimum_size = Vector2(48, 48)
-    if atk_icon.texture == null:
-        atk_box.add_child(atk_fallback_label)
+    hp_bar = ProgressBar.new()
+    hp_bar.min_value = 0
+    hp_bar.max_value = 100
+    hp_bar.value = 100
+    hp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    hp_bar.custom_minimum_size = Vector2(240, 20)
+    # estilo HP (vermelho)
+    var hp_bg := StyleBoxFlat.new()
+    hp_bg.bg_color = Color(0.12, 0.12, 0.12)
+    hp_bg.corner_radius_top_left = 6
+    hp_bg.corner_radius_top_right = 6
+    hp_bg.corner_radius_bottom_left = 6
+    hp_bg.corner_radius_bottom_right = 6
+    var hp_fill := StyleBoxFlat.new()
+    hp_fill.bg_color = Color(0.85, 0.18, 0.18)
+    hp_fill.corner_radius_top_left = 6
+    hp_fill.corner_radius_top_right = 6
+    hp_fill.corner_radius_bottom_left = 6
+    hp_fill.corner_radius_bottom_right = 6
+    hp_bar.add_theme_stylebox_override("background", hp_bg)
+    hp_bar.add_theme_stylebox_override("fill", hp_fill)
+    hp_row.add_child(hp_bar)
 
-    atk_cd_bar = ProgressBar.new()
-    atk_cd_bar.min_value = 0
-    atk_cd_bar.max_value = 100
-    atk_cd_bar.value = 100
-    atk_cd_bar.custom_minimum_size = Vector2(48, 6)
-    atk_cd_bar.add_theme_stylebox_override("fill", StyleBoxFlat.new())
-    atk_box.add_child(atk_cd_bar)
+    # valor "100/100"
+    hp_value_label = Label.new()
+    hp_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    hp_value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    hp_value_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    hp_value_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    hp_row.add_child(hp_value_label)
+    _update_hp_text(100, 100)
 
-    # Botão de mapas (somente mouse)
+    # ---- Linha XP ----
+    var xp_row := HBoxContainer.new()
+    xp_row.custom_minimum_size = Vector2(300, 20)
+    bars.add_child(xp_row)
+
+    var xp_text := Label.new()
+    xp_text.text = "XP"
+    xp_text.add_theme_font_size_override("font_size", 16)
+    xp_text.custom_minimum_size = Vector2(32, 0)
+    xp_row.add_child(xp_text)
+
+    xp_bar = ProgressBar.new()
+    xp_bar.min_value = 0
+    xp_bar.max_value = 100
+    xp_bar.value = 0
+    xp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    xp_bar.custom_minimum_size = Vector2(240, 16)
+    # estilo XP (azul)
+    var xp_bg := StyleBoxFlat.new()
+    xp_bg.bg_color = Color(0.12, 0.12, 0.12)
+    xp_bg.corner_radius_top_left = 6
+    xp_bg.corner_radius_top_right = 6
+    xp_bg.corner_radius_bottom_left = 6
+    xp_bg.corner_radius_bottom_right = 6
+    var xp_fill := StyleBoxFlat.new()
+    xp_fill.bg_color = Color(0.2, 0.5, 1.0)
+    xp_fill.corner_radius_top_left = 6
+    xp_fill.corner_radius_top_right = 6
+    xp_fill.corner_radius_bottom_left = 6
+    xp_fill.corner_radius_bottom_right = 6
+    xp_bar.add_theme_stylebox_override("background", xp_bg)
+    xp_bar.add_theme_stylebox_override("fill", xp_fill)
+    xp_row.add_child(xp_bar)
+
+    xp_value_label = Label.new()
+    xp_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    xp_value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    xp_value_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    xp_value_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    xp_row.add_child(xp_value_label)
+    _update_xp_text(0, 100)
+
+    # Botão Mapas (somente mouse)
     map_button = Button.new()
     map_button.text = "Mapas"
     map_button.focus_mode = Control.FOCUS_NONE
     map_button.pressed.connect(_open_map_menu)
-    top.add_child(map_button)
+    right_box.add_child(map_button)
 
-    # Popup do menu (não tem focus_mode em Godot 4)
+    # Popup do menu
     popup_menu = PopupMenu.new()
     add_child(popup_menu)
     popup_menu.add_item("Floresta")
@@ -90,6 +148,7 @@ func _ready() -> void:
         on_select_map.emit(selected_map)
     )
 
+    # Dialog
     dialog = AcceptDialog.new()
     dialog.title = "Aviso"
     add_child(dialog)
@@ -98,34 +157,32 @@ func _open_map_menu() -> void:
     popup_menu.position = map_button.get_global_position() + Vector2(0, map_button.size.y)
     popup_menu.popup()
 
+# ================== API pública ==================
 func set_player(p: Player) -> void:
     player_ref = p
 
 func update_health(current: int, maxv: int) -> void:
-    health_bar.max_value = maxv
-    health_bar.value = current
+    hp_bar.max_value = maxv
+    hp_bar.value = current
+    _update_hp_text(current, maxv)
+
+func update_xp(current: int, maxv: int) -> void:
+    xp_bar.max_value = maxv
+    xp_bar.value = current
+    _update_xp_text(current, maxv)
 
 func set_map_title(t: String) -> void:
     title_label.text = t
 
-func set_subtitle(t: String) -> void:
-    subtitle_label.text = t
+# Mantido por compatibilidade; não faz nada agora.
+func set_subtitle(_t: String) -> void:
+    pass
 
 func show_popup(texto: String) -> void:
     dialog.dialog_text = texto
     dialog.popup_centered()
 
-func _process(_delta: float) -> void:
-    if player_ref != null:
-        var ratio: float = player_ref.get_attack_cooldown_ratio()
-        atk_cd_bar.value = int(round(ratio * 100.0))
-        var alpha: float = 0.4 + 0.6 * ratio
-        if atk_icon.texture != null:
-            atk_icon.modulate = Color(1, 1, 1, alpha)
-        if atk_fallback_label != null:
-            atk_fallback_label.modulate = Color(1, 1, 1, alpha)
-
-# ---------------- Dano flutuante (em tela) ----------------
+# Dano flutuante (em tela)
 func show_damage_popup_at_world(world_pos: Vector2, txt: String, color: Color) -> void:
     var cam: Camera2D = get_viewport().get_camera_2d()
     var screen_pos: Vector2 = world_pos
@@ -144,3 +201,10 @@ func show_damage_popup_at_world(world_pos: Vector2, txt: String, color: Color) -
     t.parallel().tween_property(lbl, "modulate:a", 0.0, 0.6)
     await t.finished
     lbl.queue_free()
+
+# ================== helpers ==================
+func _update_hp_text(cur: int, maxv: int) -> void:
+    hp_value_label.text = str(cur, "/", maxv)
+
+func _update_xp_text(cur: int, maxv: int) -> void:
+    xp_value_label.text = str(cur, "/", maxv)

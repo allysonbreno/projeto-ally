@@ -53,11 +53,7 @@ func _build_world() -> void:
 
     _build_bounds()
 
-    var label: Label = Label.new()
-    label.text = "Floresta"
-    label.position = Vector2(10, 10)
-    add_child(label)
-
+    # Câmera fixa
     var cam2d: Camera2D = Camera2D.new()
     cam2d.position = Vector2.ZERO
     add_child(cam2d)
