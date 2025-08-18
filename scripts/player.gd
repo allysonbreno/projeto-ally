@@ -27,8 +27,8 @@ const PATH_JUMP: String   = "res://art/player/jump_east"
 const PATH_ATTACK: String = "res://art/player/attack_east"
 
 # Tamanho/escala
-const SPRITE_SCALE: Vector2 = Vector2(1.8, 1.8)
-const COLLIDER_SIZE: Vector2 = Vector2(24, 40)
+const SPRITE_SCALE: Vector2 = Vector2(0.9, 0.9)
+const COLLIDER_SIZE: Vector2 = Vector2(28, 60)
 
 # FPS
 const FPS_IDLE: int   = 3

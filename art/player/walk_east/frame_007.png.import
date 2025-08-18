@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bwi4dxy0seoj"
-path="res://.godot/imported/frame_003.png-067f22222492fdd79e164cc43c665283.ctex"
+uid="uid://b0l6aali0kbok"
+path="res://.godot/imported/frame_007.png-ba51efd0f7ba6cb072f72fae3f5ada86.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/player/idle_east/frame_003.png"
-dest_files=["res://.godot/imported/frame_003.png-067f22222492fdd79e164cc43c665283.ctex"]
+source_file="res://art/player/walk_east/frame_007.png"
+dest_files=["res://.godot/imported/frame_007.png-ba51efd0f7ba6cb072f72fae3f5ada86.ctex"]
 
 [params]
 
