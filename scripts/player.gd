@@ -177,41 +177,41 @@ func _spawn_attack_hitbox() -> void:
 	shape.size = Vector2(28, 24)
 	cshape.shape = shape
 
-        var dir_x: float = float(facing_sign)
-        if dir_x == 0.0:
-                dir_x = 1.0
-        var offset: Vector2 = Vector2(22, 0) * dir_x
-        area.position = position + offset
-        area.add_child(cshape)
+	var dir_x: float = float(facing_sign)
+	if dir_x == 0.0:
+		dir_x = 1.0
+	var offset: Vector2 = Vector2(22, 0) * dir_x
+	area.position = position + offset
+	area.add_child(cshape)
 
-        area.monitoring = true
-        area.monitorable = true
-        area.collision_layer = 0
-        area.collision_mask = 0
-        area.set_collision_mask_value(2, true)
+	area.monitoring = true
+	area.monitorable = true
+	area.collision_layer = 0
+	area.collision_mask = 0
+	area.set_collision_mask_value(2, true)
 
-        # Adiciona o hitbox na cena para que a colisão funcione
-        if get_parent() != null:
-                get_parent().add_child(area)
-        else:
-                add_child(area)
+	# Adiciona o hitbox na cena para que a colisão funcione
+	if get_parent() != null:
+		get_parent().add_child(area)
+	else:
+		add_child(area)
 
-        # Remove o hitbox automaticamente após curto intervalo
-        get_tree().create_timer(0.1).timeout.connect(func():
-                if is_instance_valid(area):
-                        area.queue_free()
-        )
+	# Remove o hitbox automaticamente após curto intervalo
+	get_tree().create_timer(0.1).timeout.connect(func():
+		if is_instance_valid(area):
+			area.queue_free()
+	)
 
-        area.body_entered.connect(func(body):
-                if body is Enemy:
-                        body.take_damage(34)
-                        if main and main.has_method("play_sfx_id"):
-                                main.play_sfx_id("hit")
-                        if main and main.has_method("show_damage_popup_at_world"):
-                                main.show_damage_popup_at_world(body.global_position, "-34", Color(1, 0.8, 0.2, 1))
-                if is_instance_valid(area):
-                        area.queue_free()
-        )
+	area.body_entered.connect(func(body):
+		if body is Enemy:
+			body.take_damage(34)
+			if main and main.has_method("play_sfx_id"):
+				main.play_sfx_id("hit")
+			if main and main.has_method("show_damage_popup_at_world"):
+				main.show_damage_popup_at_world(body.global_position, "-34", Color(1, 0.8, 0.2, 1))
+		if is_instance_valid(area):
+			area.queue_free()
+	)
 
 func take_damage(amount: int) -> void:
 	if main and main.has_method("damage_player"):
