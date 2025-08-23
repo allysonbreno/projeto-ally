@@ -190,17 +190,32 @@ func _spawn_attack_hitbox() -> void:
 	area.collision_mask = 0
 	area.set_collision_mask_value(2, true)
 
-	area.body_entered.connect(func(body):
-		if body is Enemy:
-			body.take_damage(34)
-			if main and main.has_method("play_sfx_id"):
-				main.play_sfx_id("hit")
-			if main and main.has_method("show_damage_popup_at_world"):
-				main.show_damage_popup_at_world(body.global_position, "-34", Color(1, 0.8, 0.2, 1))
-	)
-	get_parent().add_child(area)
-	await get_tree().create_timer(0.07).timeout
-	area.queue_free()
+	# Adiciona o hitbox na cena para que a colisão funcione
+	if get_parent() != null:
+		get_parent().add_child(area)
+	else:
+		add_child(area)
+
+	# Remove o hitbox automaticamente após curto intervalo
+	var timer := get_tree().create_timer(0.1)
+	timer.timeout.connect(_on_attack_hitbox_timeout.bind(area))
+
+	area.body_entered.connect(_on_attack_hitbox_body_entered.bind(area))
+
+func _on_attack_hitbox_timeout(hitbox: Area2D) -> void:
+	if is_instance_valid(hitbox):
+		hitbox.queue_free()
+
+func _on_attack_hitbox_body_entered(body: Node, hitbox: Area2D) -> void:
+	if body is Enemy:
+		body.take_damage(34)
+		# play SFX / show popup via `main`
+		if main and main.has_method("play_sfx_id"):
+		        main.play_sfx_id("hit")
+		if main and main.has_method("show_damage_popup_at_world"):
+		        main.show_damage_popup_at_world(body.global_position, "-34", Color(1, 0.8, 0.2, 1))
+	if is_instance_valid(hitbox):
+		hitbox.queue_free()
 
 func take_damage(amount: int) -> void:
 	if main and main.has_method("damage_player"):
