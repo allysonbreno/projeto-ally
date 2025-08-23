@@ -25,5 +25,5 @@ static func setup() -> void:
     add_action("move_left", [key(KEY_A), key(KEY_LEFT)])
     add_action("move_right", [key(KEY_D), key(KEY_RIGHT)])
     add_action("jump", [key(KEY_SPACE), key(KEY_W), key(KEY_UP)])
-    add_action("attack", [mouse_button(MOUSE_BUTTON_LEFT), key(KEY_J)])
+    add_action("attack", [key(KEY_CTRL), key(KEY_J)])
     add_action("map_menu", [key(KEY_M)])
