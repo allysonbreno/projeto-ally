@@ -23,132 +23,132 @@ const FPS_WALK: int = 8
 const FPS_ATK: int = 7
 
 func _ready() -> void:
-	var shape: RectangleShape2D = RectangleShape2D.new()
-	shape.size = COLLIDER_SIZE
-	var col: CollisionShape2D = CollisionShape2D.new()
-	col.shape = shape
-	add_child(col)
+    var shape: RectangleShape2D = RectangleShape2D.new()
+    shape.size = COLLIDER_SIZE
+    var col: CollisionShape2D = CollisionShape2D.new()
+    col.shape = shape
+    add_child(col)
 
-	set_collision_layer_value(2, true)
-	set_collision_mask_value(1, true)
-	set_collision_mask_value(3, true)
+    set_collision_layer_value(2, true)
+    set_collision_mask_value(1, true)
+    set_collision_mask_value(3, true)
 
-	sprite = AnimatedSprite2D.new()
-	add_child(sprite)
-	frames = SpriteFrames.new()
-	sprite.frames = frames
-	sprite.centered = true
-	sprite.scale = SPRITE_SCALE
+    sprite = AnimatedSprite2D.new()
+    add_child(sprite)
+    frames = SpriteFrames.new()
+    sprite.frames = frames
+    sprite.centered = true
+    sprite.scale = SPRITE_SCALE
 
-	_add_animation_from_dir("walk", PATH_WALK, FPS_WALK, true)
-	_add_animation_from_dir("attack", PATH_ATK, FPS_ATK, false)
+    _add_animation_from_dir("walk", PATH_WALK, FPS_WALK, true)
+    _add_animation_from_dir("attack", PATH_ATK, FPS_ATK, false)
 
-	if frames.has_animation("walk") and frames.get_frame_count("walk") > 0 and not frames.has_animation("idle"):
-		frames.add_animation("idle")
-		frames.set_animation_speed("idle", 1)
-		frames.set_animation_loop("idle", true)
-		frames.add_frame("idle", frames.get_frame_texture("walk", 0))
+    if frames.has_animation("walk") and frames.get_frame_count("walk") > 0 and not frames.has_animation("idle"):
+        frames.add_animation("idle")
+        frames.set_animation_speed("idle", 1)
+        frames.set_animation_loop("idle", true)
+        frames.add_frame("idle", frames.get_frame_texture("walk", 0))
 
-	sprite.play("idle")
+    sprite.play("idle")
 
 func _physics_process(delta: float) -> void:
-	if not is_on_floor():
-		velocity.y += gravity * delta
+    if not is_on_floor():
+        velocity.y += gravity * delta
 
-	if is_attacking:
-		velocity.x = 0.0
-		move_and_slide()
-		return
+    if is_attacking:
+        velocity.x = 0.0
+        move_and_slide()
+        return
 
-	if player and player.is_inside_tree():
-		var to_player: Vector2 = player.global_position - global_position
-		var horiz: float = float(sign(to_player.x))
-		velocity.x = horiz * speed
+    if player and player.is_inside_tree():
+        var to_player: Vector2 = player.global_position - global_position
+        var horiz: float = float(sign(to_player.x))
+        velocity.x = horiz * speed
 
-		if absf(velocity.x) > 1.0:
-			sprite.flip_h = (velocity.x < 0)
+        if absf(velocity.x) > 1.0:
+            sprite.flip_h = (velocity.x < 0)
 
-		if absf(velocity.x) > 1.0:
-			_play_if_not("walk")
-		else:
-			_play_if_not("idle")
+        if absf(velocity.x) > 1.0:
+            _play_if_not("walk")
+        else:
+            _play_if_not("idle")
 
-		attack_timer -= delta
-		if attack_timer <= 0.0 and to_player.length() <= contact_range + 6.0:
-			_do_attack()
-	else:
-		velocity.x = 0.0
-		_play_if_not("idle")
+        attack_timer -= delta
+        if attack_timer <= 0.0 and to_player.length() <= contact_range + 6.0:
+            _do_attack()
+    else:
+        velocity.x = 0.0
+        _play_if_not("idle")
 
-	move_and_slide()
+    move_and_slide()
 
 func _do_attack() -> void:
-	if is_attacking:
-		return
-	is_attacking = true
+    if is_attacking:
+        return
+    is_attacking = true
 
-	_play_once_if_has("attack")
-	var anim_len: float = _anim_length("attack")
-	if anim_len <= 0.0:
-		anim_len = 0.5
+    _play_once_if_has("attack")
+    var anim_len: float = _anim_length("attack")
+    if anim_len <= 0.0:
+        anim_len = 0.5
 
-	var hit_time: float = clamp(anim_len * 0.4, 0.05, anim_len - 0.05)
-	await get_tree().create_timer(hit_time).timeout
-	if player:
-		player.take_damage(12)
+    var hit_time: float = clamp(anim_len * 0.4, 0.05, anim_len - 0.05)
+    await get_tree().create_timer(hit_time).timeout
+    if player:
+        player.take_damage(12)
 
-	await get_tree().create_timer(max(0.0, anim_len - hit_time)).timeout
-	is_attacking = false
-	attack_timer = max(attack_interval, anim_len * 0.9)
+    await get_tree().create_timer(max(0.0, anim_len - hit_time)).timeout
+    is_attacking = false
+    attack_timer = max(attack_interval, anim_len * 0.9)
 
 func take_damage(amount: int) -> void:
-	hp -= amount
-	if main and main.has_method("show_damage_popup_at_world"):
-		main.show_damage_popup_at_world(global_position, "-" + str(amount), Color(1, 0.5, 0.1, 1))
-	if hp <= 0:
-		queue_free()
-		if main and main.has_method("on_enemy_killed"):
-			main.on_enemy_killed()
+    hp -= amount
+    if main and main.has_method("show_damage_popup_at_world"):
+        main.show_damage_popup_at_world(global_position, "-" + str(amount), Color(1, 0.5, 0.1, 1))
+    if hp <= 0:
+        queue_free()
+        if main and main.has_method("on_enemy_killed"):
+            main.on_enemy_killed()
 
 # helpers
 func _add_animation_from_dir(anim_name: String, dir_path: String, fps: int, loop: bool) -> void:
-	var files: Array[String] = _list_pngs_sorted(dir_path)
-	if files.is_empty():
-		return
-	frames.add_animation(anim_name)
-	frames.set_animation_loop(anim_name, loop)
-	frames.set_animation_speed(anim_name, fps)
-	for f in files:
-		var tex: Resource = load(f)
-		if tex is Texture2D:
-			frames.add_frame(anim_name, tex)
+    var files: Array[String] = _list_pngs_sorted(dir_path)
+    if files.is_empty():
+        return
+    frames.add_animation(anim_name)
+    frames.set_animation_loop(anim_name, loop)
+    frames.set_animation_speed(anim_name, fps)
+    for f in files:
+        var tex: Resource = load(f)
+        if tex is Texture2D:
+            frames.add_frame(anim_name, tex)
 
 func _list_pngs_sorted(dir_path: String) -> Array[String]:
-	var out: Array[String] = []
-	var d: DirAccess = DirAccess.open(dir_path)
-	if d == null:
-		return out
-	d.list_dir_begin()
-	var entry: String = d.get_next()
-	while entry != "":
-		if not d.current_is_dir() and entry.to_lower().ends_with(".png"):
-			out.append(dir_path + "/" + entry)
-		entry = d.get_next()
-	d.list_dir_end()
-	out.sort()
-	return out
+    var out: Array[String] = []
+    var d: DirAccess = DirAccess.open(dir_path)
+    if d == null:
+        return out
+    d.list_dir_begin()
+    var entry: String = d.get_next()
+    while entry != "":
+        if not d.current_is_dir() and entry.to_lower().ends_with(".png"):
+            out.append(dir_path + "/" + entry)
+        entry = d.get_next()
+    d.list_dir_end()
+    out.sort()
+    return out
 
 func _play_if_not(anim: String) -> void:
-	if sprite.animation != anim and frames.has_animation(anim):
-		sprite.play(anim)
+    if sprite.animation != anim and frames.has_animation(anim):
+        sprite.play(anim)
 
 func _play_once_if_has(anim: String) -> void:
-	if frames.has_animation(anim):
-		sprite.play(anim)
+    if frames.has_animation(anim):
+        sprite.play(anim)
 
 func _anim_length(anim: String) -> float:
-	if not frames.has_animation(anim):
-		return 0.0
-	var fps: float = max(1.0, float(frames.get_animation_speed(anim)))
-	var count: float = float(frames.get_frame_count(anim))
-	return count / fps
+    if not frames.has_animation(anim):
+        return 0.0
+    var fps: float = max(1.0, float(frames.get_animation_speed(anim)))
+    var count: float = float(frames.get_frame_count(anim))
+    return count / fps

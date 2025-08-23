@@ -9,7 +9,9 @@ var xp_bar: ProgressBar
 var xp_value_label: Label
 
 var map_button: Button
+var status_button: Button
 var popup_menu: PopupMenu
+var status_dialog: AcceptDialog
 var dialog: AcceptDialog
 
 var player_ref: Player
@@ -132,12 +134,23 @@ func _ready() -> void:
     xp_row.add_child(xp_value_label)
     _update_xp_text(0, 100)
 
-    # Botão Mapas (somente mouse)
+    # Botões container
+    var buttons_container := HBoxContainer.new()
+    right_box.add_child(buttons_container)
+    
+    # Botão Status
+    status_button = Button.new()
+    status_button.text = "Status"
+    status_button.focus_mode = Control.FOCUS_NONE
+    status_button.pressed.connect(_open_status_dialog)
+    buttons_container.add_child(status_button)
+    
+    # Botão Mapas
     map_button = Button.new()
     map_button.text = "Mapas"
     map_button.focus_mode = Control.FOCUS_NONE
     map_button.pressed.connect(_open_map_menu)
-    right_box.add_child(map_button)
+    buttons_container.add_child(map_button)
 
     # Popup do menu
     popup_menu = PopupMenu.new()
@@ -152,10 +165,31 @@ func _ready() -> void:
     dialog = AcceptDialog.new()
     dialog.title = "Aviso"
     add_child(dialog)
+    
+    # Status Dialog
+    status_dialog = AcceptDialog.new()
+    status_dialog.title = "Status do Personagem"
+    add_child(status_dialog)
 
 func _open_map_menu() -> void:
     popup_menu.position = map_button.get_global_position() + Vector2(0, map_button.size.y)
     popup_menu.popup()
+
+func _open_status_dialog() -> void:
+    var main_node = get_parent()
+    if main_node and main_node.has_method("get_player_level"):
+        var level = main_node.get_player_level()
+        var hp = main_node.player_hp
+        var hp_max = main_node.player_hp_max
+        var xp = main_node.player_xp
+        var xp_max = main_node.player_xp_max
+        
+        var status_text = "Nível: %d\nHP: %d/%d\nXP: %d/%d" % [level, hp, hp_max, xp, xp_max]
+        status_dialog.dialog_text = status_text
+        status_dialog.popup_centered()
+    else:
+        status_dialog.dialog_text = "Nível: 1\nHP: 100/100\nXP: 0/100"
+        status_dialog.popup_centered()
 
 # ================== API pública ==================
 func set_player(p: Player) -> void:

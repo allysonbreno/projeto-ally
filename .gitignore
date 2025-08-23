@@ -4,6 +4,9 @@
 # Godot 3 (legado)
 .import/
 
+# Prevenir que Godot leia arquivos .gd no .git
+.git/
+
 # Builds/exports
 export/
 
