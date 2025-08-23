@@ -21,6 +21,11 @@ var player_intelligence: int = 5 # Inteligência (futuro uso)
 var player_vitality: int = 5    # Vitalidade - aumenta HP
 var available_points: int = 0   # Pontos disponíveis para distribuir
 
+# Sistema de Inventário
+var inventory_slots: Array[Dictionary] = []  # 5 slots do inventário
+var equipped_weapon: Dictionary = {}         # Slot de equipamento da espada
+const MAX_INVENTORY_SLOTS: int = 5
+
 # Inputs
 const InputSetupScript := preload("res://scripts/input_setup.gd")
 
@@ -32,11 +37,17 @@ const SFX_DB := { "attack": -2.0, "hit": -3.0, "hurt": -4.0, "die": -3.0, "compl
 var sfx_players: Dictionary = {} # sfx_name -> AudioStreamPlayer
 
 func _ready() -> void:
+    # Adiciona ao grupo main para ser encontrado pelos itens
+    add_to_group("main")
+    
     # inputs
     InputSetupScript.setup()
     
     # Calcula HP baseado na vitalidade
     _calculate_max_hp()
+    
+    # Inicializa inventário
+    _initialize_inventory()
 
     # containers
     map_container = Node.new()
@@ -183,7 +194,13 @@ func _calculate_max_hp() -> void:
 
 func get_player_damage() -> int:
     var base_damage = 34
-    return base_damage + player_strength
+    var weapon_damage = 0
+    
+    # Adiciona dano da arma equipada
+    if not equipped_weapon.is_empty():
+        weapon_damage = equipped_weapon.get("damage", 0)
+    
+    return base_damage + player_strength + weapon_damage
 
 func get_damage_reduction() -> int:
     return player_defense
@@ -219,6 +236,49 @@ func add_attribute_point(attribute: String) -> void:
             hud.update_health(player_hp, player_hp_max)  # Atualiza barra de HP
     
     available_points -= 1
+
+# ---- Sistema de Inventário ----
+func _initialize_inventory() -> void:
+    inventory_slots.clear()
+    for i in range(MAX_INVENTORY_SLOTS):
+        inventory_slots.append({})  # Slot vazio
+
+func add_item_to_inventory(item: Dictionary) -> bool:
+    # Procura slot vazio
+    for i in range(inventory_slots.size()):
+        if inventory_slots[i].is_empty():
+            inventory_slots[i] = item
+            return true
+    return false  # Inventário cheio
+
+func remove_item_from_inventory(slot_index: int) -> Dictionary:
+    if slot_index >= 0 and slot_index < inventory_slots.size():
+        var item = inventory_slots[slot_index]
+        inventory_slots[slot_index] = {}
+        return item
+    return {}
+
+func equip_weapon(slot_index: int) -> void:
+    var item = inventory_slots[slot_index]
+    if item.get("type", "") == "weapon":
+        # Remove arma atual se houver
+        if not equipped_weapon.is_empty():
+            add_item_to_inventory(equipped_weapon)
+        
+        # Equipa nova arma
+        equipped_weapon = item
+        inventory_slots[slot_index] = {}
+
+func unequip_weapon() -> void:
+    if not equipped_weapon.is_empty():
+        if add_item_to_inventory(equipped_weapon):
+            equipped_weapon = {}
+
+func get_inventory_data() -> Dictionary:
+    return {
+        "slots": inventory_slots,
+        "equipped_weapon": equipped_weapon
+    }
 
 func _show_level_up_message() -> void:
     # Encontra o player na cena atual

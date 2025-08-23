@@ -10,8 +10,10 @@ var xp_value_label: Label
 
 var map_button: Button
 var status_button: Button
+var inventory_button: Button
 var popup_menu: PopupMenu
 var status_dialog: AcceptDialog
+var inventory_window: Window
 var dialog: AcceptDialog
 
 # Interface de distribuição de pontos
@@ -157,6 +159,13 @@ func _ready() -> void:
     status_button.pressed.connect(_open_status_dialog)
     buttons_container.add_child(status_button)
     
+    # Botão Inventário
+    inventory_button = Button.new()
+    inventory_button.text = "Inventário"
+    inventory_button.focus_mode = Control.FOCUS_NONE
+    inventory_button.pressed.connect(_open_inventory_window)
+    buttons_container.add_child(inventory_button)
+    
     # Botão Mapas
     map_button = Button.new()
     map_button.text = "Mapas"
@@ -185,6 +194,9 @@ func _ready() -> void:
     
     # Interface de distribuição de pontos
     _create_points_distribution_window()
+    
+    # Interface de inventário
+    _create_inventory_window()
 
 func _open_map_menu() -> void:
     popup_menu.position = map_button.get_global_position() + Vector2(0, map_button.size.y)
@@ -398,3 +410,153 @@ func _update_hp_text(cur: int, maxv: int) -> void:
 
 func _update_xp_text(cur: int, maxv: int) -> void:
     xp_value_label.text = str(cur, "/", maxv)
+
+# ================== Interface de Inventário ==================
+func _create_inventory_window() -> void:
+    inventory_window = Window.new()
+    inventory_window.title = "Inventário"
+    inventory_window.size = Vector2i(350, 500)
+    inventory_window.visible = false
+    add_child(inventory_window)
+    
+    var vbox := VBoxContainer.new()
+    inventory_window.add_child(vbox)
+    vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    vbox.add_theme_constant_override("separation", 10)
+    
+    # Título
+    var title := Label.new()
+    title.text = "Inventário"
+    title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    title.add_theme_font_size_override("font_size", 18)
+    vbox.add_child(title)
+    
+    # Slot de equipamento (Arma)
+    var weapon_label := Label.new()
+    weapon_label.text = "Arma Equipada:"
+    weapon_label.add_theme_font_size_override("font_size", 14)
+    vbox.add_child(weapon_label)
+    
+    var weapon_container := HBoxContainer.new()
+    vbox.add_child(weapon_container)
+    
+    var weapon_slot := Button.new()
+    weapon_slot.custom_minimum_size = Vector2(64, 64)
+    weapon_slot.text = "Vazio"
+    weapon_slot.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    weapon_slot.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+    weapon_slot.expand_icon = true
+    weapon_slot.pressed.connect(_unequip_weapon)
+    weapon_container.add_child(weapon_slot)
+    
+    var weapon_info := Label.new()
+    weapon_info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    weapon_info.text = "Nenhuma arma equipada"
+    weapon_container.add_child(weapon_info)
+    
+    # Separador
+    var separator := HSeparator.new()
+    vbox.add_child(separator)
+    
+    # Slots do inventário
+    var inv_label := Label.new()
+    inv_label.text = "Inventário (5 slots):"
+    inv_label.add_theme_font_size_override("font_size", 14)
+    vbox.add_child(inv_label)
+    
+    var grid := GridContainer.new()
+    grid.columns = 5
+    grid.add_theme_constant_override("h_separation", 5)
+    vbox.add_child(grid)
+    
+    # Criar 5 slots
+    for i in range(5):
+        var slot := Button.new()
+        slot.custom_minimum_size = Vector2(60, 60)
+        slot.text = str(i + 1)
+        slot.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        slot.vertical_icon_alignment = VERTICAL_ALIGNMENT_CENTER
+        slot.expand_icon = true
+        var slot_index = i
+        slot.pressed.connect(func(): _equip_item_from_slot(slot_index))
+        grid.add_child(slot)
+    
+    # Botão Fechar
+    var close_button := Button.new()
+    close_button.text = "Fechar"
+    close_button.pressed.connect(func(): inventory_window.visible = false)
+    vbox.add_child(close_button)
+
+func _open_inventory_window() -> void:
+    _update_inventory_display()
+    inventory_window.popup_centered()
+
+func _update_inventory_display() -> void:
+    var main_node = get_parent()
+    if main_node and main_node.has_method("get_inventory_data"):
+        var inventory_data = main_node.get_inventory_data()
+        
+        # Obter referências aos nós corretamente
+        var vbox = inventory_window.get_child(0)  # VBoxContainer principal
+        var weapon_container: HBoxContainer = null
+        var grid: GridContainer = null
+        
+        # Procurar pelos nós na estrutura
+        for child in vbox.get_children():
+            if child is HBoxContainer:
+                weapon_container = child
+            elif child is GridContainer:
+                grid = child
+        
+        if weapon_container:
+            var weapon_slot = weapon_container.get_child(0)  # Button
+            var weapon_info = weapon_container.get_child(1)  # Label
+            
+            if inventory_data.equipped_weapon.is_empty():
+                weapon_slot.text = "Vazio"
+                weapon_slot.icon = null
+                weapon_info.text = "Nenhuma arma equipada"
+            else:
+                var weapon = inventory_data.equipped_weapon
+                weapon_slot.text = ""  # Remove texto quando tem arma
+                weapon_info.text = "%s\n+%d Dano" % [weapon.get("name", ""), weapon.get("damage", 0)]
+                
+                # Carregar ícone da arma
+                var icon_path = "res://art/items/" + weapon.get("icon", "default.png")
+                if ResourceLoader.exists(icon_path):
+                    var icon_texture = load(icon_path)
+                    weapon_slot.icon = icon_texture
+                else:
+                    weapon_slot.text = weapon.get("name", "Arma")  # Fallback para texto
+        
+        # Atualizar slots do inventário
+        if grid:
+            for i in range(5):
+                var slot = grid.get_child(i)
+                var item = inventory_data.slots[i]
+                
+                if item.is_empty():
+                    slot.text = str(i + 1)
+                    slot.icon = null
+                else:
+                    slot.text = ""  # Remove texto quando tem item
+                    
+                    # Carregar ícone do item
+                    var icon_path = "res://art/items/" + item.get("icon", "default.png")
+                    if ResourceLoader.exists(icon_path):
+                        var icon_texture = load(icon_path)
+                        slot.icon = icon_texture
+                    else:
+                        slot.text = item.get("name", "Item")  # Fallback para texto
+
+func _equip_item_from_slot(slot_index: int) -> void:
+    var main_node = get_parent()
+    if main_node and main_node.has_method("equip_weapon"):
+        main_node.equip_weapon(slot_index)
+        _update_inventory_display()
+
+func _unequip_weapon() -> void:
+    var main_node = get_parent()
+    if main_node and main_node.has_method("unequip_weapon"):
+        main_node.unequip_weapon()
+        _update_inventory_display()

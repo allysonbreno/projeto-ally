@@ -106,9 +106,32 @@ func take_damage(amount: int) -> void:
     if main and main.has_method("show_damage_popup_at_world"):
         main.show_damage_popup_at_world(global_position, "-" + str(amount), Color(1, 0.5, 0.1, 1))
     if hp <= 0:
+        _drop_item()
         queue_free()
         if main and main.has_method("on_enemy_killed"):
             main.on_enemy_killed()
+
+func _drop_item() -> void:
+    # 100% chance de dropar espada
+    var sword_item = {
+        "name": "Espada de Ferro",
+        "type": "weapon",
+        "damage": 15,
+        "icon": "sword.png"
+    }
+    
+    # Criar item no chão
+    var ItemDropScene = load("res://scripts/item_drop.gd")
+    var item_drop = ItemDropScene.new()
+    
+    # Posicionar no local da morte
+    item_drop.position = global_position
+    
+    # Configurar item
+    item_drop.setup_item(sword_item)
+    
+    # Adicionar à cena
+    get_parent().add_child(item_drop)
 
 # helpers
 func _add_animation_from_dir(anim_name: String, dir_path: String, fps: int, loop: bool) -> void:
