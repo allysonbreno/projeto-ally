@@ -205,12 +205,16 @@ func _spawn_attack_hitbox() -> void:
 
 func _on_attack_hitbox_body_entered(body: Node, hitbox: Area2D) -> void:
     if body is Enemy:
-        body.take_damage(34)
+        var damage = 34  # Dano base padrão
+        if main and main.has_method("get_player_damage"):
+            damage = main.get_player_damage()
+        
+        body.take_damage(damage)
         # play SFX / show popup via `main`
         if main and main.has_method("play_sfx_id"):
             main.play_sfx_id("hit")
         if main and main.has_method("show_damage_popup_at_world"):
-            main.show_damage_popup_at_world(body.global_position, "-34", Color(1, 0.8, 0.2, 1))
+            main.show_damage_popup_at_world(body.global_position, "-" + str(damage), Color(1, 0.8, 0.2, 1))
     if is_instance_valid(hitbox):
         hitbox.queue_free()
 

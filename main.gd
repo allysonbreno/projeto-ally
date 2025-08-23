@@ -14,6 +14,13 @@ var player_level: int = 1
 var player_xp: int = 0
 var player_xp_max: int = 100
 
+# Sistema de Atributos
+var player_strength: int = 5    # Força - aumenta dano
+var player_defense: int = 5     # Defesa - reduz dano recebido
+var player_intelligence: int = 5 # Inteligência (futuro uso)
+var player_vitality: int = 5    # Vitalidade - aumenta HP
+var available_points: int = 0   # Pontos disponíveis para distribuir
+
 # Inputs
 const InputSetupScript := preload("res://scripts/input_setup.gd")
 
@@ -27,6 +34,9 @@ var sfx_players: Dictionary = {} # sfx_name -> AudioStreamPlayer
 func _ready() -> void:
     # inputs
     InputSetupScript.setup()
+    
+    # Calcula HP baseado na vitalidade
+    _calculate_max_hp()
 
     # containers
     map_container = Node.new()
@@ -78,10 +88,13 @@ func reset_player() -> void:
     hud.update_health(player_hp, player_hp_max)
 
 func damage_player(amount: int, hit_world_pos: Vector2 = Vector2.ZERO) -> void:
-    player_hp = max(0, player_hp - amount)
+    # Calcula dano final com defesa
+    var final_damage = max(1, amount - get_damage_reduction())  # Mínimo 1 de dano
+    
+    player_hp = max(0, player_hp - final_damage)
     hud.update_health(player_hp, player_hp_max)
     play_sfx_id("hurt")
-    show_damage_popup_at_world(hit_world_pos, "-" + str(amount), Color(1, 0.3, 0.3, 1.0))
+    show_damage_popup_at_world(hit_world_pos, "-" + str(final_damage), Color(1, 0.3, 0.3, 1.0))
 
     if player_hp <= 0:
         await get_tree().process_frame
@@ -151,6 +164,9 @@ func level_up() -> void:
     player_level += 1
     player_xp_max = int(player_xp_max * 1.2)  # Aumenta 20% XP necessário
     
+    # Ganha 5 pontos de atributo
+    available_points += 5
+    
     hud.update_xp(player_xp, player_xp_max)
     
     # Mostra mensagem flutuante acima do player
@@ -158,6 +174,51 @@ func level_up() -> void:
 
 func get_player_level() -> int:
     return player_level
+
+# ---- Sistema de Atributos ----
+func _calculate_max_hp() -> void:
+    var base_hp = 100
+    player_hp_max = base_hp + (player_vitality * 20)
+    player_hp = min(player_hp, player_hp_max)  # Não deixa HP atual maior que máximo
+
+func get_player_damage() -> int:
+    var base_damage = 34
+    return base_damage + player_strength
+
+func get_damage_reduction() -> int:
+    return player_defense
+
+func get_player_stats() -> Dictionary:
+    return {
+        "level": player_level,
+        "hp": player_hp,
+        "hp_max": player_hp_max,
+        "xp": player_xp,
+        "xp_max": player_xp_max,
+        "strength": player_strength,
+        "defense": player_defense,
+        "intelligence": player_intelligence,
+        "vitality": player_vitality,
+        "available_points": available_points
+    }
+
+func add_attribute_point(attribute: String) -> void:
+    if available_points <= 0:
+        return
+        
+    match attribute:
+        "strength":
+            player_strength += 1
+        "defense":
+            player_defense += 1
+        "intelligence":
+            player_intelligence += 1
+        "vitality":
+            player_vitality += 1
+            _calculate_max_hp()  # Recalcula HP máximo
+            hud.update_health(player_hp, player_hp_max)  # Atualiza barra de HP
+    
+    available_points -= 1
 
 func _show_level_up_message() -> void:
     # Encontra o player na cena atual

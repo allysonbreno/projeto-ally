@@ -14,6 +14,18 @@ var popup_menu: PopupMenu
 var status_dialog: AcceptDialog
 var dialog: AcceptDialog
 
+# Interface de distribuição de pontos
+var points_window: Window
+var strength_label: Label
+var defense_label: Label
+var intelligence_label: Label
+var vitality_label: Label
+var available_points_label: Label
+var strength_button: Button
+var defense_button: Button
+var intelligence_button: Button
+var vitality_button: Button
+
 var player_ref: Player
 
 func _init() -> void:
@@ -170,6 +182,9 @@ func _ready() -> void:
     status_dialog = AcceptDialog.new()
     status_dialog.title = "Status do Personagem"
     add_child(status_dialog)
+    
+    # Interface de distribuição de pontos
+    _create_points_distribution_window()
 
 func _open_map_menu() -> void:
     popup_menu.position = map_button.get_global_position() + Vector2(0, map_button.size.y)
@@ -177,18 +192,28 @@ func _open_map_menu() -> void:
 
 func _open_status_dialog() -> void:
     var main_node = get_parent()
-    if main_node and main_node.has_method("get_player_level"):
-        var level = main_node.get_player_level()
-        var hp = main_node.player_hp
-        var hp_max = main_node.player_hp_max
-        var xp = main_node.player_xp
-        var xp_max = main_node.player_xp_max
+    if main_node and main_node.has_method("get_player_stats"):
+        var stats = main_node.get_player_stats()
         
-        var status_text = "Nível: %d\nHP: %d/%d\nXP: %d/%d" % [level, hp, hp_max, xp, xp_max]
-        status_dialog.dialog_text = status_text
-        status_dialog.popup_centered()
+        # Se tem pontos disponíveis, abre a interface de distribuição
+        if stats.available_points > 0:
+            _open_points_distribution_window()
+        else:
+            # Senão, mostra apenas o status
+            var status_text = "=== STATUS DO PERSONAGEM ===\n\n"
+            status_text += "Nível: %d\n" % stats.level
+            status_text += "HP: %d/%d\n" % [stats.hp, stats.hp_max]
+            status_text += "XP: %d/%d\n\n" % [stats.xp, stats.xp_max]
+            status_text += "=== ATRIBUTOS ===\n"
+            status_text += "Força: %d (+%d dano)\n" % [stats.strength, stats.strength]
+            status_text += "Defesa: %d (-%d dano recebido)\n" % [stats.defense, stats.defense]
+            status_text += "Inteligência: %d\n" % stats.intelligence
+            status_text += "Vitalidade: %d (+%d HP máximo)" % [stats.vitality, stats.vitality * 20]
+            
+            status_dialog.dialog_text = status_text
+            status_dialog.popup_centered()
     else:
-        status_dialog.dialog_text = "Nível: 1\nHP: 100/100\nXP: 0/100"
+        status_dialog.dialog_text = "Erro ao carregar status"
         status_dialog.popup_centered()
 
 # ================== API pública ==================
@@ -235,6 +260,137 @@ func show_damage_popup_at_world(world_pos: Vector2, txt: String, color: Color) -
     t.parallel().tween_property(lbl, "modulate:a", 0.0, 0.6)
     await t.finished
     lbl.queue_free()
+
+# ================== Interface de Pontos ==================
+func _create_points_distribution_window() -> void:
+    points_window = Window.new()
+    points_window.title = "Distribuir Pontos de Atributo"
+    points_window.size = Vector2i(400, 350)
+    points_window.visible = false
+    add_child(points_window)
+    
+    var vbox := VBoxContainer.new()
+    points_window.add_child(vbox)
+    vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    vbox.add_theme_constant_override("separation", 10)
+    
+    # Título
+    var title := Label.new()
+    title.text = "Distribuir Pontos de Atributo"
+    title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    title.add_theme_font_size_override("font_size", 18)
+    vbox.add_child(title)
+    
+    # Pontos disponíveis
+    available_points_label = Label.new()
+    available_points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    available_points_label.add_theme_font_size_override("font_size", 14)
+    vbox.add_child(available_points_label)
+    
+    # Separador
+    var separator := HSeparator.new()
+    vbox.add_child(separator)
+    
+    # Força
+    var strength_container := HBoxContainer.new()
+    vbox.add_child(strength_container)
+    strength_label = Label.new()
+    strength_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    strength_container.add_child(strength_label)
+    strength_button = Button.new()
+    strength_button.text = "+"
+    strength_button.custom_minimum_size = Vector2(30, 30)
+    strength_button.pressed.connect(_add_strength_point)
+    strength_container.add_child(strength_button)
+    
+    # Defesa
+    var defense_container := HBoxContainer.new()
+    vbox.add_child(defense_container)
+    defense_label = Label.new()
+    defense_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    defense_container.add_child(defense_label)
+    defense_button = Button.new()
+    defense_button.text = "+"
+    defense_button.custom_minimum_size = Vector2(30, 30)
+    defense_button.pressed.connect(_add_defense_point)
+    defense_container.add_child(defense_button)
+    
+    # Inteligência
+    var intelligence_container := HBoxContainer.new()
+    vbox.add_child(intelligence_container)
+    intelligence_label = Label.new()
+    intelligence_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    intelligence_container.add_child(intelligence_label)
+    intelligence_button = Button.new()
+    intelligence_button.text = "+"
+    intelligence_button.custom_minimum_size = Vector2(30, 30)
+    intelligence_button.pressed.connect(_add_intelligence_point)
+    intelligence_container.add_child(intelligence_button)
+    
+    # Vitalidade
+    var vitality_container := HBoxContainer.new()
+    vbox.add_child(vitality_container)
+    vitality_label = Label.new()
+    vitality_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    vitality_container.add_child(vitality_label)
+    vitality_button = Button.new()
+    vitality_button.text = "+"
+    vitality_button.custom_minimum_size = Vector2(30, 30)
+    vitality_button.pressed.connect(_add_vitality_point)
+    vitality_container.add_child(vitality_button)
+    
+    # Botão Fechar
+    var close_button := Button.new()
+    close_button.text = "Fechar"
+    close_button.pressed.connect(func(): points_window.visible = false)
+    vbox.add_child(close_button)
+
+func _open_points_distribution_window() -> void:
+    _update_points_display()
+    points_window.popup_centered()
+
+func _update_points_display() -> void:
+    var main_node = get_parent()
+    if main_node and main_node.has_method("get_player_stats"):
+        var stats = main_node.get_player_stats()
+        
+        available_points_label.text = "Pontos Disponíveis: %d" % stats.available_points
+        strength_label.text = "Força: %d (+%d dano)" % [stats.strength, stats.strength]
+        defense_label.text = "Defesa: %d (-%d dano recebido)" % [stats.defense, stats.defense]
+        intelligence_label.text = "Inteligência: %d" % stats.intelligence
+        vitality_label.text = "Vitalidade: %d (+%d HP máximo)" % [stats.vitality, stats.vitality * 20]
+        
+        # Habilita/desabilita botões baseado em pontos disponíveis
+        var has_points = stats.available_points > 0
+        strength_button.disabled = not has_points
+        defense_button.disabled = not has_points
+        intelligence_button.disabled = not has_points
+        vitality_button.disabled = not has_points
+
+# ================== Funções de Distribuição ==================
+func _add_strength_point() -> void:
+    var main_node = get_parent()
+    if main_node and main_node.has_method("add_attribute_point"):
+        main_node.add_attribute_point("strength")
+        _update_points_display()
+
+func _add_defense_point() -> void:
+    var main_node = get_parent()
+    if main_node and main_node.has_method("add_attribute_point"):
+        main_node.add_attribute_point("defense")
+        _update_points_display()
+
+func _add_intelligence_point() -> void:
+    var main_node = get_parent()
+    if main_node and main_node.has_method("add_attribute_point"):
+        main_node.add_attribute_point("intelligence")
+        _update_points_display()
+
+func _add_vitality_point() -> void:
+    var main_node = get_parent()
+    if main_node and main_node.has_method("add_attribute_point"):
+        main_node.add_attribute_point("vitality")
+        _update_points_display()
 
 # ================== helpers ==================
 func _update_hp_text(cur: int, maxv: int) -> void:
