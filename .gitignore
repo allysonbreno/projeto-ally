@@ -20,3 +20,4 @@ Thumbs.db
 .mono/
 **/obj/
 **/bin/
+builds/

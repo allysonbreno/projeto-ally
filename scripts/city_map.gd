@@ -151,6 +151,11 @@ func _spawn_player() -> void:
     var stand_y: float = (vp.y * 0.5 - BOTTOM_MARGIN) - 20.0
     player.position = Vector2(0.0, stand_y)
     player.main = main
+    
+    # Aplicar auto attack se estiver ativo
+    if main and main.has_method("get_auto_attack_enabled"):
+        player.set_auto_attack(main.get_auto_attack_enabled())
+    
     add_child(player)
     if "hud" in main:
         main.hud.set_player(player)

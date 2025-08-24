@@ -26,6 +26,9 @@ var inventory_slots: Array[Dictionary] = []  # 5 slots do inventário
 var equipped_weapon: Dictionary = {}         # Slot de equipamento da espada
 const MAX_INVENTORY_SLOTS: int = 5
 
+# Sistema de Auto Attack
+var auto_attack_enabled: bool = false
+
 # Inputs
 const InputSetupScript := preload("res://scripts/input_setup.gd")
 
@@ -279,6 +282,18 @@ func get_inventory_data() -> Dictionary:
         "slots": inventory_slots,
         "equipped_weapon": equipped_weapon
     }
+
+# ---- Sistema de Auto Attack ----
+func set_auto_attack(enabled: bool) -> void:
+    auto_attack_enabled = enabled
+    
+    # Propagar para o player atual
+    var player = _find_player_in_scene()
+    if player and player.has_method("set_auto_attack"):
+        player.set_auto_attack(enabled)
+
+func get_auto_attack_enabled() -> bool:
+    return auto_attack_enabled
 
 func _show_level_up_message() -> void:
     # Encontra o player na cena atual

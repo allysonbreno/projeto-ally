@@ -150,6 +150,11 @@ func _spawn_player() -> void:
     player.position = Vector2(left_x, stand_y)
     player.velocity = Vector2.ZERO
     player.main = main
+    
+    # Aplicar auto attack se estiver ativo
+    if main and main.has_method("get_auto_attack_enabled"):
+        player.set_auto_attack(main.get_auto_attack_enabled())
+    
     add_child(player)
     if "hud" in main:
         main.hud.set_player(player)

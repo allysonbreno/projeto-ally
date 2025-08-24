@@ -16,6 +16,10 @@ var _can_attack: bool = true
 var is_attacking: bool = false
 var attack_cd_remaining: float = 0.0
 
+# --- Auto Attack ---
+var auto_attack_enabled: bool = false
+var auto_attack_timer: float = 0.0
+
 # --- Sprite/animação ---
 var sprite: AnimatedSprite2D
 var frames: SpriteFrames
@@ -27,20 +31,20 @@ const PATH_JUMP: String   = "res://art/player/jump_east"
 const PATH_ATTACK: String = "res://art/player/attack_east"
 
 # Tamanho/escala
-const SPRITE_SCALE: Vector2 = Vector2(0.9, 0.9)
+const SPRITE_SCALE: Vector2 = Vector2(0.2, 0.2)
 const COLLIDER_SIZE: Vector2 = Vector2(28, 60)
 
 # FPS
-const FPS_IDLE: int   = 3
-const FPS_WALK: int   = 10
-const FPS_JUMP: int   = 12
+const FPS_IDLE: int   = 4
+const FPS_WALK: int   = 8
+const FPS_JUMP: int   = 3
 const FPS_ATTACK: int = 10
 
 # Orientação base de cada animação (true = frames originais olham para a DIREITA/Este; false = para a ESQUERDA/Oeste)
-const IDLE_FACES_RIGHT: bool   = false	# ajuste aqui se trocar os frames de idle
-const WALK_FACES_RIGHT: bool   = true
-const JUMP_FACES_RIGHT: bool   = true
-const ATTACK_FACES_RIGHT: bool = true
+const IDLE_FACES_RIGHT: bool   = false	# sprites olham para a esquerda por padrão
+const WALK_FACES_RIGHT: bool   = false
+const JUMP_FACES_RIGHT: bool   = false
+const ATTACK_FACES_RIGHT: bool = false
 
 func _ready() -> void:
     # colisão
@@ -85,12 +89,12 @@ func _physics_process(delta: float) -> void:
     if not is_on_floor():
         velocity.y += gravity * delta
 
+    # Sistema de movimento (permitido durante auto attack)
     var input_dir: float = 0.0
-    if not is_attacking:
-        if Input.is_action_pressed("move_left") or Input.is_action_pressed("ui_left"):
-            input_dir -= 1.0
-        if Input.is_action_pressed("move_right") or Input.is_action_pressed("ui_right"):
-            input_dir += 1.0
+    if Input.is_action_pressed("move_left") or Input.is_action_pressed("ui_left"):
+        input_dir -= 1.0
+    if Input.is_action_pressed("move_right") or Input.is_action_pressed("ui_right"):
+        input_dir += 1.0
     velocity.x = input_dir * speed
 
     # atualiza direção quando há input
@@ -103,8 +107,16 @@ func _physics_process(delta: float) -> void:
 
     move_and_slide()
 
+    # Sistema de ataque manual
     if Input.is_action_just_pressed("attack"):
         _try_attack()
+
+    # Sistema de auto attack
+    if auto_attack_enabled:
+        auto_attack_timer -= delta
+        if auto_attack_timer <= 0.0:
+            _try_attack()
+            auto_attack_timer = attack_cooldown  # Reset timer
 
     # troca animação
     if not is_attacking:
@@ -285,3 +297,8 @@ func _play_if_not(anim: String) -> void:
 func _play_once_if_has(anim: String) -> void:
     if frames.has_animation(anim):
         sprite.play(anim)
+
+# ------ Sistema Auto Attack ------
+func set_auto_attack(enabled: bool) -> void:
+    auto_attack_enabled = enabled
+    auto_attack_timer = 0.0  # Reset timer quando mudar estado

@@ -11,6 +11,7 @@ var xp_value_label: Label
 var map_button: Button
 var status_button: Button
 var inventory_button: Button
+var auto_attack_checkbox: CheckBox
 var popup_menu: PopupMenu
 var status_dialog: AcceptDialog
 var inventory_window: Window
@@ -148,6 +149,13 @@ func _ready() -> void:
     xp_row.add_child(xp_value_label)
     _update_xp_text(0, 100)
 
+    # Auto Attack checkbox
+    auto_attack_checkbox = CheckBox.new()
+    auto_attack_checkbox.text = "Auto Attack"
+    auto_attack_checkbox.focus_mode = Control.FOCUS_NONE
+    auto_attack_checkbox.toggled.connect(_on_auto_attack_toggled)
+    bars.add_child(auto_attack_checkbox)
+
     # Botões container
     var buttons_container := HBoxContainer.new()
     right_box.add_child(buttons_container)
@@ -279,6 +287,7 @@ func _create_points_distribution_window() -> void:
     points_window.title = "Distribuir Pontos de Atributo"
     points_window.size = Vector2i(400, 350)
     points_window.visible = false
+    points_window.close_requested.connect(func(): points_window.visible = false)
     add_child(points_window)
     
     var vbox := VBoxContainer.new()
@@ -411,12 +420,18 @@ func _update_hp_text(cur: int, maxv: int) -> void:
 func _update_xp_text(cur: int, maxv: int) -> void:
     xp_value_label.text = str(cur, "/", maxv)
 
+func _on_auto_attack_toggled(button_pressed: bool) -> void:
+    var main_node = get_parent()
+    if main_node and main_node.has_method("set_auto_attack"):
+        main_node.set_auto_attack(button_pressed)
+
 # ================== Interface de Inventário ==================
 func _create_inventory_window() -> void:
     inventory_window = Window.new()
     inventory_window.title = "Inventário"
     inventory_window.size = Vector2i(350, 500)
     inventory_window.visible = false
+    inventory_window.close_requested.connect(func(): inventory_window.visible = false)
     add_child(inventory_window)
     
     var vbox := VBoxContainer.new()
