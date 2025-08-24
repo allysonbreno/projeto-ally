@@ -66,18 +66,11 @@ func _ready() -> void:
     sprite.centered = true
     sprite.scale = SPRITE_SCALE
 
-    # animações
-    var idle_ok: bool = _add_animation_idle_if_exists()
-    _add_animation_from_dir("walk", PATH_WALK, FPS_WALK, true)
-    _add_animation_from_dir("jump", PATH_JUMP, FPS_JUMP, false)
-    _add_animation_from_dir("attack", PATH_ATTACK, FPS_ATTACK, false)
-
-    # fallback de idle caso não exista pasta idle_east
-    if not idle_ok and frames.has_animation("walk") and not frames.has_animation("idle"):
-        frames.add_animation("idle")
-        frames.set_animation_speed("idle", 1)
-        frames.set_animation_loop("idle", true)
-        frames.add_frame("idle", frames.get_frame_texture("walk", 0))
+    # animações usando recursos pré-carregados
+    _add_preloaded_animation("idle", PlayerSprites.get_frames("idle"), FPS_IDLE, true)
+    _add_preloaded_animation("walk", PlayerSprites.get_frames("walk"), FPS_WALK, true)
+    _add_preloaded_animation("jump", PlayerSprites.get_frames("jump"), FPS_JUMP, false)
+    _add_preloaded_animation("attack", PlayerSprites.get_frames("attack"), FPS_ATTACK, false)
 
     sprite.play("idle")
     _apply_flip_for_current_anim()
@@ -235,6 +228,16 @@ func take_damage(amount: int) -> void:
         main.damage_player(amount, global_position)
 
 # ------ helpers de animação ------
+func _add_preloaded_animation(anim_name: String, textures: Array, fps: int, loop: bool) -> void:
+    if textures.is_empty():
+        return
+    frames.add_animation(anim_name)
+    frames.set_animation_loop(anim_name, loop)
+    frames.set_animation_speed(anim_name, fps)
+    for texture in textures:
+        if texture is Texture2D:
+            frames.add_frame(anim_name, texture)
+
 func _add_animation_idle_if_exists() -> bool:
     if not DirAccess.dir_exists_absolute(PATH_IDLE):
         return false
@@ -246,12 +249,12 @@ func _add_animation_idle_if_exists() -> bool:
     frames.set_animation_speed("idle", FPS_IDLE)
     if files.size() == 2:
         for i in [0, 1, 0, 1]:
-            var tex: Resource = load(files[i])
+            var tex: Resource = _safe_load_texture(files[i])
             if tex is Texture2D:
                 frames.add_frame("idle", tex)
     else:
         for f in files:
-            var tex2: Resource = load(f)
+            var tex2: Resource = _safe_load_texture(f)
             if tex2 is Texture2D:
                 frames.add_frame("idle", tex2)
     return true
@@ -264,7 +267,7 @@ func _add_animation_from_dir(anim_name: String, dir_path: String, fps: int, loop
     frames.set_animation_loop(anim_name, loop)
     frames.set_animation_speed(anim_name, fps)
     for f in files:
-        var tex: Resource = load(f)
+        var tex: Resource = _safe_load_texture(f)
         if tex is Texture2D:
             frames.add_frame(anim_name, tex)
 
@@ -302,3 +305,32 @@ func _play_once_if_has(anim: String) -> void:
 func set_auto_attack(enabled: bool) -> void:
     auto_attack_enabled = enabled
     auto_attack_timer = 0.0  # Reset timer quando mudar estado
+
+# ------ Helper para carregamento seguro de texturas ------
+func _safe_load_texture(path: String) -> Resource:
+    # Primeiro tenta carregar diretamente
+    var texture = load(path)
+    if texture != null:
+        return texture
+    
+    # Se falhou, tenta diferentes estratégias
+    # 1. Verifica se existe um arquivo .import correspondente
+    var import_path = path + ".import"
+    if FileAccess.file_exists(import_path):
+        var file = FileAccess.open(import_path, FileAccess.READ)
+        if file:
+            var content = file.get_as_text()
+            file.close()
+            
+            # Procura pelo caminho do arquivo importado
+            var lines = content.split("\n")
+            for line in lines:
+                if line.begins_with("path="):
+                    var imported_path = line.split("=", false, 1)[1].strip_edges().trim_prefix("\"").trim_suffix("\"")
+                    var imported_texture = load(imported_path)
+                    if imported_texture != null:
+                        return imported_texture
+    
+    # Como estratégia final, retorna null para debug
+    print("Falha ao carregar textura: ", path)
+    return null

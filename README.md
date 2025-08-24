@@ -1,8 +1,10 @@
 # Projeto Ally - Jogo 2D RPG
 
-## Versão Atual: v2.0
+## Versão Atual: v2.1
 
-Um jogo 2D desenvolvido em Godot 4 com sistema completo de RPG, incluindo combate, progressão de personagem, inventário e drop de itens.
+Um jogo 2D desenvolvido em Godot 4 com sistema completo de RPG, incluindo combate, progressão de personagem, inventário, drop de itens e sistema de auto attack. 
+
+**🎯 Status do Projeto:** Jogo completo e funcional, disponível para Windows e Android!
 
 ## 🎮 Funcionalidades Implementadas
 
@@ -21,6 +23,7 @@ Um jogo 2D desenvolvido em Godot 4 com sistema completo de RPG, incluindo combat
 
 ### Sistema de Combate
 - **Ataque do Player**: Combate corpo a corpo
+- **Sistema de Auto Attack**: Ataque automático ativável/desativável
 - **Sistema de Dano**: Calculado com força + dano da arma equipada
 - **Redução de Dano**: Baseada no atributo defesa
 - **Hitbox de Ataque**: Sistema de colisão para ataques
@@ -84,6 +87,7 @@ projeto-ally/
 - **Movimento**: WASD ou setas
 - **Pular**: Space
 - **Atacar**: Mouse esquerdo
+- **Auto Attack**: A (ativa/desativa ataque automático)
 - **Coletar Item**: Enter (quando próximo)
 - **Interface**: Clique nos botões da HUD
 
@@ -102,6 +106,13 @@ projeto-ally/
 - **Inteligência**: Reservado para magias futuras
 
 ## 📈 Histórico de Versões
+
+### v2.1 - Sistema de Auto Attack e Distribuição Completa ⭐
+- ✅ Sistema de auto attack ativável/desativável
+- ✅ Sprites corrigidos para builds compilados
+- ✅ Build Windows com instalador NSIS
+- ✅ Build Android APK assinado
+- ✅ Recursos pré-carregados para melhor performance
 
 ### v2.0 - Sistema de Inventário e Drop
 - ✅ Inventário completo com 5 slots
@@ -128,10 +139,30 @@ projeto-ally/
 
 ## 🔧 Tecnologias
 
-- **Engine**: Godot 4.x
+- **Engine**: Godot 4.4.1
 - **Linguagem**: GDScript
 - **Resolução**: Adaptável
-- **Plataforma**: Desktop (Windows/Linux/Mac)
+- **Plataformas**: Windows (Instalador) e Android (APK)
+
+## 📦 Downloads
+
+### Windows
+- **Instalador**: `builds/Projeto Ally v2.1 Installer.exe` (48MB)
+- **Inclui**: Executável, recursos e desinstalador
+- **Compatibilidade**: Windows 7+ (x64)
+
+### Android  
+- **APK**: `builds/projeto-ally-signed.apk` (31.6MB)
+- **Arquitetura**: ARM64-v8a
+- **Android**: 5.0+ (API 21+)
+- **Permissões**: Mínimas necessárias
+
+## 🔧 Desenvolvimento
+
+Para compilar o projeto:
+- Consulte `README_BUILD.md` para instruções detalhadas
+- Requer Android SDK para builds Android
+- NSIS para geração do instalador Windows
 
 ## 🎨 Assets
 
@@ -142,4 +173,6 @@ projeto-ally/
 
 ---
 
-**Desenvolvido com Godot 4 | Versão atual: v2.0**
+**🎮 Projeto Ally v2.1 - RPG 2D Completo**  
+**Desenvolvido com Godot 4.4.1 | Project Brothers**  
+**Disponível para Windows e Android** 🖥️📱
