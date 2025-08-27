@@ -1,0 +1,818 @@
+[17:29:15] Nova conexão: ('127.0.0.1', 62995)
+[17:29:16] Nova conexão: ('127.0.0.1', 62997)
+[17:29:19] ADICIONADO jogador Jogador978 (ID: 29ed2a8f)
+[17:29:19] Lista atual COMPLETA: ['29ed2a8f']
+[17:29:19] ENVIANDO players_list para Jogador978 com 1 jogadores
+[17:29:19] ENVIADO players_list para Jogador978: ['29ed2a8f']
+[17:29:19] Enviando players_list atualizada para todos os 2 clientes
+[17:29:19] Login realizado: Jogador978 (ID: 29ed2a8f)
+[17:29:19] [GODOT:Jogador978] [17:29:19] ✅ Login realizado com sucesso! ID: 29ed2a8f
+[17:29:19] [GODOT:Jogador978] [17:29:19] 📋 Processando players_list - Meu ID: 29ed2a8f
+[17:29:19] [EXECUTAVEL:None] [17:29:19] 📋 Processando players_list - Meu ID: 
+[17:29:19] [EXECUTAVEL:None] [17:29:19] 📋 Jogadores na lista recebida: ["29ed2a8f"]
+[17:29:19] [GODOT:Jogador978] [17:29:19] 📋 Jogadores na lista recebida: ["29ed2a8f"]
+[17:29:19] [EXECUTAVEL:None] [17:29:19] 📋 Jogadores ANTES da atualização: ["29ed2a8f"]
+[17:29:19] [EXECUTAVEL:None] [17:29:19] 🔍 Analisando player_id: 29ed2a8f | É meu ID? false | Já existe? true
+[17:29:19] [EXECUTAVEL:None] [17:29:19] 📊 Lista de novos jogadores ANTES de processar: []
+[17:29:19] [EXECUTAVEL:None] [17:29:19] 📋 Processando jogador: Jogador978 (ID: 29ed2a8f)
+[17:29:19] [EXECUTAVEL:None] [17:29:19] 📋 Lista final de jogadores: ["29ed2a8f"]
+[17:29:19] [EXECUTAVEL:None] [17:29:19] 📋 Novos jogadores detectados: []
+[17:29:19] [GODOT:Jogador978] [17:29:19] 📋 Jogadores ANTES da atualização: []
+[17:29:20] [GODOT:Jogador978] [17:29:19] 🔍 Analisando player_id: 29ed2a8f | É meu ID? true | Já existe? false
+[17:29:20] [GODOT:Jogador978] [17:29:19] 📊 Lista de novos jogadores ANTES de processar: []
+[17:29:20] [GODOT:Jogador978] [17:29:19] 📋 Processando jogador: Jogador978 (ID: 29ed2a8f)
+[17:29:20] [GODOT:Jogador978] [17:29:19] 📋 Lista final de jogadores: ["29ed2a8f"]
+[17:29:20] [GODOT:Jogador978] [17:29:19] 📋 Novos jogadores detectados: []
+[17:29:20] [GODOT:Jogador978] [17:29:19] 📋 Processando players_list - Meu ID: 29ed2a8f
+[17:29:20] [GODOT:Jogador978] [17:29:19] 📋 Jogadores na lista recebida: ["29ed2a8f"]
+[17:29:20] [GODOT:Jogador978] [17:29:19] 📋 Jogadores ANTES da atualização: ["29ed2a8f"]
+[17:29:20] [GODOT:Jogador978] [17:29:19] 🔍 Analisando player_id: 29ed2a8f | É meu ID? true | Já existe? true
+[17:29:20] [GODOT:Jogador978] [17:29:19] 📊 Lista de novos jogadores ANTES de processar: []
+[17:29:20] [GODOT:Jogador978] [17:29:19] 📋 Processando jogador: Jogador978 (ID: 29ed2a8f)
+[17:29:20] [GODOT:Jogador978] [17:29:19] 📋 Lista final de jogadores: ["29ed2a8f"]
+[17:29:20] [GODOT:Jogador978] [17:29:19] 📋 Novos jogadores detectados: []
+[17:29:20] [GODOT:Jogador978] 🔗 Conectando sinais do MultiplayerManager...
+[17:29:20] [GODOT:Jogador978] 🔗 DEBUG: Manager existe? true
+[17:29:20] [GODOT:Jogador978] 🔗 DEBUG: connect() retornou: 0 (0=sucesso)
+[17:29:20] [GODOT:Jogador978] ✅ Sinal player_connected conectado!
+[17:29:20] [GODOT:Jogador978] 🔗 DEBUG: Sinal is_connected? true
+[17:29:20] [GODOT:Jogador978] ✅ Todos os sinais conectados!
+[17:29:20] [GODOT:Jogador978] 👤 Jogador local criado: Jogador978
+[17:29:20] [GODOT:Jogador978] 🔍 VERIFICANDO jogadores já existentes...
+[17:29:20] [GODOT:Jogador978] 🔍 Players data disponível: ["29ed2a8f"]
+[17:29:20] [GODOT:Jogador978] 🔍 Meu ID local: 29ed2a8f
+[17:29:20] [GODOT:Jogador978] 🎮 Jogo multiplayer configurado!
+[17:29:20] [GODOT:Jogador978] 🎮 UI INICIAL: Total players = 1
+[17:29:25] ADICIONADO jogador Jogador942 (ID: d8caee03)
+[17:29:25] Lista atual COMPLETA: ['29ed2a8f', 'd8caee03']
+[17:29:25] ENVIANDO players_list para Jogador942 com 2 jogadores
+[17:29:25] ENVIADO players_list para Jogador942: ['29ed2a8f', 'd8caee03']
+[17:29:25] Enviando players_list atualizada para todos os 2 clientes
+[17:29:25] Login realizado: Jogador942 (ID: d8caee03)
+[17:29:25] [EXECUTAVEL:Jogador942] [17:29:25] ✅ Login realizado com sucesso! ID: d8caee03
+[17:29:25] [EXECUTAVEL:Jogador942] [17:29:25] 📋 Processando players_list - Meu ID: d8caee03
+[17:29:25] [EXECUTAVEL:Jogador942] [17:29:25] 📋 Jogadores na lista recebida: ["29ed2a8f", "d8caee03"]
+[17:29:25] [EXECUTAVEL:Jogador942] [17:29:25] 📋 Jogadores ANTES da atualização: ["29ed2a8f"]
+[17:29:25] [GODOT:Jogador978] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:29:25] [GODOT:Jogador978] 📨 _on_player_connected chamado para: Jogador942 (ID: d8caee03)
+[17:29:25] [GODOT:Jogador978] 📨 Jogador atual: Jogador978
+[17:29:25] [GODOT:Jogador978] 📨 player_info completo: { "id": "d8caee03", "name": "Jogador942", "position": { "x": 100.0, "y": 350.0 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:29:25.698837" }
+[17:29:25] [GODOT:Jogador978] 🔍 ADICIONADO ao remote_players: d8caee03 | Dicionário agora tem: ["d8caee03"]
+[17:29:25] [GODOT:Jogador978] 🔍 Tamanho do remote_players: 1
+[17:29:25] [GODOT:Jogador978] 📍 Player Jogador942 posicionado em: (100.0, 350.0)
+[17:29:25] [GODOT:Jogador978] 🔍 Posição final de Jogador942: (100.0, 350.0)
+[17:29:25] [GODOT:Jogador978] 👥 Jogador remoto criado: Jogador942 | Total players: 2
+[17:29:25] [GODOT:Jogador978] [17:29:25] 📋 Processando players_list - Meu ID: 29ed2a8f
+[17:29:25] [GODOT:Jogador978] [17:29:25] 📋 Jogadores na lista recebida: ["29ed2a8f", "d8caee03"]
+[17:29:25] [GODOT:Jogador978] [17:29:25] 📋 Jogadores ANTES da atualização: ["29ed2a8f", "d8caee03"]
+[17:29:25] [EXECUTAVEL:Jogador942] [17:29:25] 🔍 Analisando player_id: 29ed2a8f | É meu ID? false | Já existe? true
+[17:29:25] [EXECUTAVEL:Jogador942] [17:29:25] 🔍 Analisando player_id: d8caee03 | É meu ID? true | Já existe? false
+[17:29:25] [GODOT:Jogador978] [17:29:25] 🔍 Analisando player_id: 29ed2a8f | É meu ID? true | Já existe? true
+[17:29:25] [GODOT:Jogador978] [17:29:25] 🔍 Analisando player_id: d8caee03 | É meu ID? false | Já existe? true
+[17:29:25] [GODOT:Jogador978] [17:29:25] 📊 Lista de novos jogadores ANTES de processar: []
+[17:29:25] [GODOT:Jogador978] [17:29:25] 📋 Processando jogador: Jogador978 (ID: 29ed2a8f)
+[17:29:25] [GODOT:Jogador978] [17:29:25] 📋 Processando jogador: Jogador942 (ID: d8caee03)
+[17:29:25] [GODOT:Jogador978] [17:29:25] 📋 Lista final de jogadores: ["29ed2a8f", "d8caee03"]
+[17:29:25] [GODOT:Jogador978] [17:29:25] 📋 Novos jogadores detectados: []
+[17:29:26] [GODOT:Jogador978] 🎮 UI ATUALIZADA: Total players mudou de 1 para 2
+[17:29:26] [GODOT:Jogador978] 🎮 UI DEBUG: remote_players.size() = 1, keys = ["d8caee03"]
+[17:29:26] [EXECUTAVEL:Jogador942] [17:29:25] 📊 Lista de novos jogadores ANTES de processar: []
+[17:29:26] [EXECUTAVEL:Jogador942] [17:29:25] 📋 Processando jogador: Jogador978 (ID: 29ed2a8f)
+[17:29:26] [EXECUTAVEL:Jogador942] [17:29:25] 📋 Processando jogador: Jogador942 (ID: d8caee03)
+[17:29:26] [EXECUTAVEL:Jogador942] [17:29:25] 📋 Lista final de jogadores: ["29ed2a8f", "d8caee03"]
+[17:29:26] [EXECUTAVEL:Jogador942] [17:29:25] 📋 Novos jogadores detectados: []
+[17:29:26] [EXECUTAVEL:Jogador942] [17:29:25] 📋 Processando players_list - Meu ID: d8caee03
+[17:29:26] [EXECUTAVEL:Jogador942] [17:29:25] 📋 Jogadores na lista recebida: ["29ed2a8f", "d8caee03"]
+[17:29:26] [EXECUTAVEL:Jogador942] [17:29:25] 📋 Jogadores ANTES da atualização: ["29ed2a8f", "d8caee03"]
+[17:29:26] [EXECUTAVEL:Jogador942] [17:29:25] 🔍 Analisando player_id: 29ed2a8f | É meu ID? false | Já existe? true
+[17:29:26] [EXECUTAVEL:Jogador942] [17:29:25] 🔍 Analisando player_id: d8caee03 | É meu ID? true | Já existe? true
+[17:29:26] [EXECUTAVEL:Jogador942] [17:29:25] 📊 Lista de novos jogadores ANTES de processar: []
+[17:29:26] [EXECUTAVEL:Jogador942] [17:29:25] 📋 Processando jogador: Jogador978 (ID: 29ed2a8f)
+[17:29:26] [EXECUTAVEL:Jogador942] [17:29:25] 📋 Processando jogador: Jogador942 (ID: d8caee03)
+[17:29:26] [EXECUTAVEL:Jogador942] [17:29:25] 📋 Lista final de jogadores: ["29ed2a8f", "d8caee03"]
+[17:29:26] [EXECUTAVEL:Jogador942] [17:29:25] 📋 Novos jogadores detectados: []
+[17:29:26] [EXECUTAVEL:Jogador942] 🔗 Conectando sinais do MultiplayerManager...
+[17:29:26] [EXECUTAVEL:Jogador942] 🔗 DEBUG: Manager existe? true
+[17:29:26] [EXECUTAVEL:Jogador942] 🔗 DEBUG: connect() retornou: 0 (0=sucesso)
+[17:29:26] [EXECUTAVEL:Jogador942] ✅ Sinal player_connected conectado!
+[17:29:26] [EXECUTAVEL:Jogador942] 🔗 DEBUG: Sinal is_connected? true
+[17:29:26] [EXECUTAVEL:Jogador942] ✅ Todos os sinais conectados!
+[17:29:26] [EXECUTAVEL:Jogador942] 👤 Jogador local criado: Jogador942
+[17:29:26] [EXECUTAVEL:Jogador942] 🔍 VERIFICANDO jogadores já existentes...
+[17:29:26] [EXECUTAVEL:Jogador942] 🔍 Players data disponível: ["29ed2a8f", "d8caee03"]
+[17:29:26] [EXECUTAVEL:Jogador942] 🔍 Meu ID local: d8caee03
+[17:29:26] [EXECUTAVEL:Jogador942] 🔍 ENCONTRADO jogador existente: Jogador978 (ID: 29ed2a8f)
+[17:29:26] [EXECUTAVEL:Jogador942] 🔍 FORÇANDO criação via _on_player_connected...
+[17:29:26] [EXECUTAVEL:Jogador942] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:29:26] [EXECUTAVEL:Jogador942] 📨 _on_player_connected chamado para: Jogador978 (ID: 29ed2a8f)
+[17:29:26] [EXECUTAVEL:Jogador942] 📨 Jogador atual: Jogador942
+[17:29:26] [EXECUTAVEL:Jogador942] 📨 player_info completo: { "id": "29ed2a8f", "name": "Jogador978", "position": { "x": 352.999877929688, "y": 545.9765625 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:29:19.944009" }
+[17:29:26] [EXECUTAVEL:Jogador942] 🔍 ADICIONADO ao remote_players: 29ed2a8f | Dicionário agora tem: ["29ed2a8f"]
+[17:29:26] [EXECUTAVEL:Jogador942] 🔍 Tamanho do remote_players: 1
+[17:29:26] [EXECUTAVEL:Jogador942] 📍 Player Jogador978 posicionado em: (352.9999, 545.9766)
+[17:29:26] [EXECUTAVEL:Jogador942] 🔍 Posição final de Jogador978: (352.9999, 545.9766)
+[17:29:26] [EXECUTAVEL:Jogador942] 👥 Jogador remoto criado: Jogador978 | Total players: 2
+[17:29:26] [EXECUTAVEL:Jogador942] 🎮 Jogo multiplayer configurado!
+[17:29:26] [EXECUTAVEL:Jogador942] 🎮 UI INICIAL: Total players = 2
+[17:29:51] Ação do jogador Jogador942: jump
+[17:29:54] Conexão fechada: ('127.0.0.1', 62997)
+[17:29:54] Jogador desconectado: Jogador942 (ID: d8caee03)
+[17:29:54] Conexão removida: ('127.0.0.1', 62997)
+[17:29:54] [GODOT:Jogador978] 📨 _on_player_disconnected chamado para ID: d8caee03
+[17:29:54] [GODOT:Jogador978] 👋 Jogador remoto removido: Jogador942 (ID: d8caee03) | Restantes: 0
+[17:29:54] [GODOT:Jogador978] 🎮 UI ATUALIZADA: Total players mudou de 2 para 1
+[17:29:54] [GODOT:Jogador978] 🎮 UI DEBUG: remote_players.size() = 0, keys = []
+[17:29:54] Conexão fechada: ('127.0.0.1', 62995)
+[17:29:54] Jogador desconectado: Jogador978 (ID: 29ed2a8f)
+[17:29:54] Conexão removida: ('127.0.0.1', 62995)[17:31:10] Nova conexão: ('127.0.0.1', 63170)
+[17:31:14] Conexão fechada: ('127.0.0.1', 63170)
+[17:31:14] Conexão removida: ('127.0.0.1', 63170)
+[17:31:45] Nova conexão: ('127.0.0.1', 63221)
+[17:31:46] ADICIONADO jogador cuzinhodebolachao (ID: 0ff6b571)
+[17:31:46] Lista atual COMPLETA: ['0ff6b571']
+[17:31:46] ENVIANDO players_list para cuzinhodebolachao com 1 jogadores
+[17:31:46] ENVIADO players_list para cuzinhodebolachao: ['0ff6b571']
+[17:31:46] Enviando players_list atualizada para todos os 1 clientes
+[17:31:46] Login realizado: cuzinhodebolachao (ID: 0ff6b571)
+[17:31:46] [GODOT:cuzinhodebolachao] [17:31:46] ✅ Login realizado com sucesso! ID: 0ff6b571
+[17:31:46] [GODOT:cuzinhodebolachao] [17:31:46] 📋 Processando players_list - Meu ID: 0ff6b571
+[17:31:46] [GODOT:cuzinhodebolachao] [17:31:46] 📋 Jogadores na lista recebida: ["0ff6b571"]
+[17:31:46] [GODOT:cuzinhodebolachao] [17:31:46] 📋 Jogadores ANTES da atualização: []
+[17:31:46] [GODOT:cuzinhodebolachao] [17:31:46] 🔍 Analisando player_id: 0ff6b571 | É meu ID? true | Já existe? false
+[17:31:46] [GODOT:cuzinhodebolachao] [17:31:46] 📊 Lista de novos jogadores ANTES de processar: []
+[17:31:46] [GODOT:cuzinhodebolachao] [17:31:46] 📋 Processando jogador: cuzinhodebolachao (ID: 0ff6b571)
+[17:31:46] [GODOT:cuzinhodebolachao] [17:31:46] 📋 Lista final de jogadores: ["0ff6b571"]
+[17:31:46] [GODOT:cuzinhodebolachao] [17:31:46] 📋 Novos jogadores detectados: []
+[17:31:46] [GODOT:cuzinhodebolachao] [17:31:46] 📋 Processando players_list - Meu ID: 0ff6b571
+[17:31:46] [GODOT:cuzinhodebolachao] [17:31:46] 📋 Jogadores na lista recebida: ["0ff6b571"]
+[17:31:46] [GODOT:cuzinhodebolachao] [17:31:46] 📋 Jogadores ANTES da atualização: ["0ff6b571"]
+[17:31:46] [GODOT:cuzinhodebolachao] [17:31:46] 🔍 Analisando player_id: 0ff6b571 | É meu ID? true | Já existe? true
+[17:31:46] [GODOT:cuzinhodebolachao] [17:31:46] 📊 Lista de novos jogadores ANTES de processar: []
+[17:31:46] [GODOT:cuzinhodebolachao] [17:31:46] 📋 Processando jogador: cuzinhodebolachao (ID: 0ff6b571)
+[17:31:47] [GODOT:cuzinhodebolachao] [17:31:46] 📋 Lista final de jogadores: ["0ff6b571"]
+[17:31:47] [GODOT:cuzinhodebolachao] [17:31:46] 📋 Novos jogadores detectados: []
+[17:31:47] [GODOT:cuzinhodebolachao] 🔗 Conectando sinais do MultiplayerManager...
+[17:31:47] [GODOT:cuzinhodebolachao] 🔗 DEBUG: Manager existe? true
+[17:31:47] [GODOT:cuzinhodebolachao] 🔗 DEBUG: connect() retornou: 0 (0=sucesso)
+[17:31:47] [GODOT:cuzinhodebolachao] ✅ Sinal player_connected conectado!
+[17:31:47] [GODOT:cuzinhodebolachao] 🔗 DEBUG: Sinal is_connected? true
+[17:31:47] [GODOT:cuzinhodebolachao] ✅ Todos os sinais conectados!
+[17:31:47] [GODOT:cuzinhodebolachao] 👤 Jogador local criado: cuzinhodebolachao
+[17:31:47] [GODOT:cuzinhodebolachao] 🔍 VERIFICANDO jogadores já existentes...
+[17:31:47] [GODOT:cuzinhodebolachao] 🔍 Players data disponível: ["0ff6b571"]
+[17:31:47] [GODOT:cuzinhodebolachao] 🔍 Meu ID local: 0ff6b571
+[17:31:47] [GODOT:cuzinhodebolachao] 🎮 Jogo multiplayer configurado!
+[17:31:47] [GODOT:cuzinhodebolachao] 🎮 UI INICIAL: Total players = 1
+[17:31:50] Ação do jogador cuzinhodebolachao: jump
+[17:31:52] Nova conexão: ('127.0.0.1', 63230)
+[17:31:53] ADICIONADO jogador ursinhopoh (ID: b77e4300)
+[17:31:53] Lista atual COMPLETA: ['0ff6b571', 'b77e4300']
+[17:31:53] ENVIANDO players_list para ursinhopoh com 2 jogadores
+[17:31:53] ENVIADO players_list para ursinhopoh: ['0ff6b571', 'b77e4300']
+[17:31:53] Enviando players_list atualizada para todos os 2 clientes
+[17:31:53] Login realizado: ursinhopoh (ID: b77e4300)
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] ✅ Login realizado com sucesso! ID: b77e4300
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 📋 Processando players_list - Meu ID: b77e4300
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 📋 Jogadores na lista recebida: ["0ff6b571", "b77e4300"]
+[17:31:53] [GODOT:cuzinhodebolachao] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:31:53] [GODOT:cuzinhodebolachao] 📨 _on_player_connected chamado para: ursinhopoh (ID: b77e4300)
+[17:31:53] [GODOT:cuzinhodebolachao] 📨 Jogador atual: cuzinhodebolachao
+[17:31:53] [GODOT:cuzinhodebolachao] 📨 player_info completo: { "id": "b77e4300", "name": "ursinhopoh", "position": { "x": 100.0, "y": 350.0 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:31:53.560833" }
+[17:31:53] [GODOT:cuzinhodebolachao] 🔍 ADICIONADO ao remote_players: b77e4300 | Dicionário agora tem: ["b77e4300"]
+[17:31:53] [GODOT:cuzinhodebolachao] 🔍 Tamanho do remote_players: 1
+[17:31:53] [GODOT:cuzinhodebolachao] 📍 Player ursinhopoh posicionado em: (100.0, 350.0)
+[17:31:53] [GODOT:cuzinhodebolachao] 🔍 Posição final de ursinhopoh: (100.0, 350.0)
+[17:31:53] [GODOT:cuzinhodebolachao] 👥 Jogador remoto criado: ursinhopoh | Total players: 2
+[17:31:53] [GODOT:cuzinhodebolachao] [17:31:53] 📋 Processando players_list - Meu ID: 0ff6b571
+[17:31:53] [GODOT:cuzinhodebolachao] [17:31:53] 📋 Jogadores na lista recebida: ["0ff6b571", "b77e4300"]
+[17:31:53] [GODOT:cuzinhodebolachao] [17:31:53] 📋 Jogadores ANTES da atualização: ["0ff6b571", "b77e4300"]
+[17:31:53] [GODOT:cuzinhodebolachao] [17:31:53] 🔍 Analisando player_id: 0ff6b571 | É meu ID? true | Já existe? true
+[17:31:53] [GODOT:cuzinhodebolachao] [17:31:53] 🔍 Analisando player_id: b77e4300 | É meu ID? false | Já existe? true
+[17:31:53] [GODOT:cuzinhodebolachao] [17:31:53] 📊 Lista de novos jogadores ANTES de processar: []
+[17:31:53] [GODOT:cuzinhodebolachao] [17:31:53] 📋 Processando jogador: cuzinhodebolachao (ID: 0ff6b571)
+[17:31:53] [GODOT:cuzinhodebolachao] [17:31:53] 📋 Processando jogador: ursinhopoh (ID: b77e4300)
+[17:31:53] [GODOT:cuzinhodebolachao] [17:31:53] 📋 Lista final de jogadores: ["0ff6b571", "b77e4300"]
+[17:31:53] [GODOT:cuzinhodebolachao] [17:31:53] 📋 Novos jogadores detectados: []
+[17:31:53] [GODOT:cuzinhodebolachao] 🎮 UI ATUALIZADA: Total players mudou de 1 para 2
+[17:31:53] [GODOT:cuzinhodebolachao] 🎮 UI DEBUG: remote_players.size() = 1, keys = ["b77e4300"]
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 📋 Jogadores ANTES da atualização: []
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 🔍 Analisando player_id: 0ff6b571 | É meu ID? false | Já existe? false
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] ➕ NOVO jogador identificado: 0ff6b571
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 🔍 Analisando player_id: b77e4300 | É meu ID? true | Já existe? false
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 📊 Lista de novos jogadores ANTES de processar: ["0ff6b571"]
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 📋 Processando jogador: cuzinhodebolachao (ID: 0ff6b571)
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 📋 Processando jogador: ursinhopoh (ID: b77e4300)
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] ✅ EMITINDO player_connected para: cuzinhodebolachao (ID: 0ff6b571)
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 📋 Lista final de jogadores: ["0ff6b571", "b77e4300"]
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 📋 Novos jogadores detectados: ["0ff6b571"]
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 📋 Processando players_list - Meu ID: b77e4300
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 📋 Jogadores na lista recebida: ["0ff6b571", "b77e4300"]
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 📋 Jogadores ANTES da atualização: ["0ff6b571", "b77e4300"]
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 🔍 Analisando player_id: 0ff6b571 | É meu ID? false | Já existe? true
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 🔍 Analisando player_id: b77e4300 | É meu ID? true | Já existe? true
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 📊 Lista de novos jogadores ANTES de processar: []
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 📋 Processando jogador: cuzinhodebolachao (ID: 0ff6b571)
+[17:31:53] [EXECUTAVEL:ursinhopoh] [17:31:53] 📋 Processando jogador: ursinhopoh (ID: b77e4300)
+[17:31:54] [EXECUTAVEL:ursinhopoh] [17:31:53] 📋 Lista final de jogadores: ["0ff6b571", "b77e4300"]
+[17:31:54] [EXECUTAVEL:ursinhopoh] [17:31:53] 📋 Novos jogadores detectados: []
+[17:31:54] [EXECUTAVEL:ursinhopoh] 🔗 Conectando sinais do MultiplayerManager...
+[17:31:54] [EXECUTAVEL:ursinhopoh] 🔗 DEBUG: Manager existe? true
+[17:31:54] [EXECUTAVEL:ursinhopoh] 🔗 DEBUG: connect() retornou: 0 (0=sucesso)
+[17:31:54] [EXECUTAVEL:ursinhopoh] ✅ Sinal player_connected conectado!
+[17:31:54] [EXECUTAVEL:ursinhopoh] 🔗 DEBUG: Sinal is_connected? true
+[17:31:54] [EXECUTAVEL:ursinhopoh] ✅ Todos os sinais conectados!
+[17:31:54] [EXECUTAVEL:ursinhopoh] 👤 Jogador local criado: ursinhopoh
+[17:31:54] [EXECUTAVEL:ursinhopoh] 🔍 VERIFICANDO jogadores já existentes...
+[17:31:54] [EXECUTAVEL:ursinhopoh] 🔍 Players data disponível: ["0ff6b571", "b77e4300"]
+[17:31:54] [EXECUTAVEL:ursinhopoh] 🔍 Meu ID local: b77e4300
+[17:31:54] [EXECUTAVEL:ursinhopoh] 🔍 ENCONTRADO jogador existente: cuzinhodebolachao (ID: 0ff6b571)
+[17:31:54] [EXECUTAVEL:ursinhopoh] 🔍 FORÇANDO criação via _on_player_connected...
+[17:31:54] [EXECUTAVEL:ursinhopoh] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:31:54] [EXECUTAVEL:ursinhopoh] 📨 _on_player_connected chamado para: cuzinhodebolachao (ID: 0ff6b571)
+[17:31:54] [EXECUTAVEL:ursinhopoh] 📨 Jogador atual: ursinhopoh
+[17:31:54] [EXECUTAVEL:ursinhopoh] 📨 player_info completo: { "id": "0ff6b571", "name": "cuzinhodebolachao", "position": { "x": 239.356811523438, "y": 545.924011230469 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:31:46.923063" }
+[17:31:54] [EXECUTAVEL:ursinhopoh] 🔍 ADICIONADO ao remote_players: 0ff6b571 | Dicionário agora tem: ["0ff6b571"]
+[17:31:54] [EXECUTAVEL:ursinhopoh] 🔍 Tamanho do remote_players: 1
+[17:31:54] [EXECUTAVEL:ursinhopoh] 📍 Player cuzinhodebolachao posicionado em: (239.3568, 545.924)
+[17:31:54] [EXECUTAVEL:ursinhopoh] 🔍 Posição final de cuzinhodebolachao: (239.3568, 545.924)
+[17:31:54] [EXECUTAVEL:ursinhopoh] 👥 Jogador remoto criado: cuzinhodebolachao | Total players: 2
+[17:31:54] [EXECUTAVEL:ursinhopoh] 🎮 Jogo multiplayer configurado!
+[17:31:54] [EXECUTAVEL:ursinhopoh] 🎮 UI INICIAL: Total players = 2
+[17:31:59] Ação do jogador cuzinhodebolachao: jump
+[17:32:00] Ação do jogador cuzinhodebolachao: jump
+[17:32:01] Ação do jogador cuzinhodebolachao: jump
+[17:32:02] Ação do jogador cuzinhodebolachao: jump
+[17:32:03] Ação do jogador cuzinhodebolachao: jump
+[17:32:05] Ação do jogador ursinhopoh: jump
+[17:32:06] Ação do jogador ursinhopoh: jump
+[17:32:18] Conexão fechada: ('127.0.0.1', 63221)
+[17:32:18] Jogador desconectado: cuzinhodebolachao (ID: 0ff6b571)
+[17:32:18] Conexão removida: ('127.0.0.1', 63221)
+[17:32:18] [EXECUTAVEL:ursinhopoh] 📨 _on_player_disconnected chamado para ID: 0ff6b571
+[17:32:18] [EXECUTAVEL:ursinhopoh] 👋 Jogador remoto removido: cuzinhodebolachao (ID: 0ff6b571) | Restantes: 0
+[17:32:18] [EXECUTAVEL:ursinhopoh] 🎮 UI ATUALIZADA: Total players mudou de 2 para 1
+[17:32:18] [EXECUTAVEL:ursinhopoh] 🎮 UI DEBUG: remote_players.size() = 0, keys = []
+[17:32:19] Conexão fechada: ('127.0.0.1', 63230)
+[17:32:19] Jogador desconectado: ursinhopoh (ID: b77e4300)
+[17:32:19] Conexão removida: ('127.0.0.1', 63230)
+[17:34:05] Nova conexão: ('127.0.0.1', 63414)
+[17:34:06] ADICIONADO jogador XANDE (ID: 8f393a44)
+[17:34:06] Lista atual COMPLETA: ['8f393a44']
+[17:34:06] ENVIANDO players_list para XANDE com 1 jogadores
+[17:34:06] ENVIADO players_list para XANDE: ['8f393a44']
+[17:34:06] Enviando players_list atualizada para todos os 1 clientes
+[17:34:06] Login realizado: XANDE (ID: 8f393a44)
+[17:34:06] [GODOT:XANDE] [17:34:06] ✅ Login realizado com sucesso! ID: 8f393a44
+[17:34:06] [GODOT:XANDE] [17:34:06] 📋 Processando players_list - Meu ID: 8f393a44
+[17:34:06] [GODOT:XANDE] [17:34:06] 📋 Jogadores na lista recebida: ["8f393a44"]
+[17:34:06] [GODOT:XANDE] [17:34:06] 📋 Jogadores ANTES da atualização: []
+[17:34:06] [GODOT:XANDE] [17:34:06] 🔍 Analisando player_id: 8f393a44 | É meu ID? true | Já existe? false
+[17:34:06] [GODOT:XANDE] [17:34:06] 📊 Lista de novos jogadores ANTES de processar: []
+[17:34:06] [GODOT:XANDE] [17:34:06] 📋 Processando jogador: XANDE (ID: 8f393a44)
+[17:34:06] [GODOT:XANDE] [17:34:06] 📋 Lista final de jogadores: ["8f393a44"]
+[17:34:06] [GODOT:XANDE] [17:34:06] 📋 Novos jogadores detectados: []
+[17:34:06] [GODOT:XANDE] [17:34:06] 📋 Processando players_list - Meu ID: 8f393a44
+[17:34:06] [GODOT:XANDE] [17:34:06] 📋 Jogadores na lista recebida: ["8f393a44"]
+[17:34:06] [GODOT:XANDE] [17:34:06] 📋 Jogadores ANTES da atualização: ["8f393a44"]
+[17:34:06] [GODOT:XANDE] [17:34:06] 🔍 Analisando player_id: 8f393a44 | É meu ID? true | Já existe? true
+[17:34:06] [GODOT:XANDE] [17:34:06] 📊 Lista de novos jogadores ANTES de processar: []
+[17:34:06] [GODOT:XANDE] [17:34:06] 📋 Processando jogador: XANDE (ID: 8f393a44)
+[17:34:06] [GODOT:XANDE] [17:34:06] 📋 Lista final de jogadores: ["8f393a44"]
+[17:34:06] [GODOT:XANDE] [17:34:06] 📋 Novos jogadores detectados: []
+[17:34:07] [GODOT:XANDE] 🔗 Conectando sinais do MultiplayerManager...
+[17:34:07] [GODOT:XANDE] 🔗 DEBUG: Manager existe? true
+[17:34:07] [GODOT:XANDE] 🔗 DEBUG: connect() retornou: 0 (0=sucesso)
+[17:34:07] [GODOT:XANDE] ✅ Sinal player_connected conectado!
+[17:34:07] [GODOT:XANDE] 🔗 DEBUG: Sinal is_connected? true
+[17:34:07] [GODOT:XANDE] ✅ Todos os sinais conectados!
+[17:34:07] [GODOT:XANDE] 👤 Jogador local criado: XANDE
+[17:34:07] [GODOT:XANDE] 🔍 VERIFICANDO jogadores já existentes...
+[17:34:07] [GODOT:XANDE] 🔍 Players data disponível: ["8f393a44"]
+[17:34:07] [GODOT:XANDE] 🔍 Meu ID local: 8f393a44
+[17:34:07] [GODOT:XANDE] 🎮 Jogo multiplayer configurado!
+[17:34:07] [GODOT:XANDE] 🎮 UI INICIAL: Total players = 1
+[17:34:10] Ação do jogador XANDE: jump
+[17:34:16] Nova conexão: ('127.0.0.1', 63428)
+[17:34:17] ADICIONADO jogador ANDRE (ID: ab3db326)
+[17:34:17] Lista atual COMPLETA: ['8f393a44', 'ab3db326']
+[17:34:17] ENVIANDO players_list para ANDRE com 2 jogadores
+[17:34:17] ENVIADO players_list para ANDRE: ['8f393a44', 'ab3db326']
+[17:34:17] Enviando players_list atualizada para todos os 2 clientes
+[17:34:17] Login realizado: ANDRE (ID: ab3db326)
+[17:34:17] [GODOT:XANDE] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:34:17] [GODOT:XANDE] 📨 _on_player_connected chamado para: ANDRE (ID: ab3db326)
+[17:34:17] [GODOT:XANDE] 📨 Jogador atual: XANDE
+[17:34:17] [GODOT:XANDE] 📨 player_info completo: { "id": "ab3db326", "name": "ANDRE", "position": { "x": 100.0, "y": 350.0 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:34:17.781641" }
+[17:34:17] [EXECUTAVEL:ANDRE] [17:34:17] ✅ Login realizado com sucesso! ID: ab3db326
+[17:34:17] [GODOT:XANDE] 🔍 ADICIONADO ao remote_players: ab3db326 | Dicionário agora tem: ["ab3db326"]
+[17:34:17] [GODOT:XANDE] 🔍 Tamanho do remote_players: 1
+[17:34:17] [GODOT:XANDE] 📍 Player ANDRE posicionado em: (100.0, 350.0)
+[17:34:17] [GODOT:XANDE] 🔍 Posição final de ANDRE: (100.0, 350.0)
+[17:34:17] [GODOT:XANDE] 👥 Jogador remoto criado: ANDRE | Total players: 2
+[17:34:17] [GODOT:XANDE] [17:34:17] 📋 Processando players_list - Meu ID: 8f393a44
+[17:34:17] [GODOT:XANDE] [17:34:17] 📋 Jogadores na lista recebida: ["8f393a44", "ab3db326"]
+[17:34:17] [EXECUTAVEL:ANDRE] [17:34:17] 📋 Processando players_list - Meu ID: ab3db326
+[17:34:17] [EXECUTAVEL:ANDRE] [17:34:17] 📋 Jogadores na lista recebida: ["8f393a44", "ab3db326"]
+[17:34:17] [EXECUTAVEL:ANDRE] [17:34:17] 📋 Jogadores ANTES da atualização: []
+[17:34:17] [EXECUTAVEL:ANDRE] [17:34:17] 🔍 Analisando player_id: 8f393a44 | É meu ID? false | Já existe? false
+[17:34:17] [EXECUTAVEL:ANDRE] [17:34:17] ➕ NOVO jogador identificado: 8f393a44
+[17:34:17] [EXECUTAVEL:ANDRE] [17:34:17] 🔍 Analisando player_id: ab3db326 | É meu ID? true | Já existe? false
+[17:34:17] [EXECUTAVEL:ANDRE] [17:34:17] 📊 Lista de novos jogadores ANTES de processar: ["8f393a44"]
+[17:34:17] [EXECUTAVEL:ANDRE] [17:34:17] 📋 Processando jogador: XANDE (ID: 8f393a44)
+[17:34:17] [EXECUTAVEL:ANDRE] [17:34:17] 📋 Processando jogador: ANDRE (ID: ab3db326)
+[17:34:17] [EXECUTAVEL:ANDRE] [17:34:17] ✅ EMITINDO player_connected para: XANDE (ID: 8f393a44)
+[17:34:17] [EXECUTAVEL:ANDRE] [17:34:17] 📋 Lista final de jogadores: ["8f393a44", "ab3db326"]
+[17:34:17] [EXECUTAVEL:ANDRE] [17:34:17] 📋 Novos jogadores detectados: ["8f393a44"]
+[17:34:17] [EXECUTAVEL:ANDRE] [17:34:17] 📋 Processando players_list - Meu ID: ab3db326
+[17:34:17] [EXECUTAVEL:ANDRE] [17:34:17] 📋 Jogadores na lista recebida: ["8f393a44", "ab3db326"]
+[17:34:18] [EXECUTAVEL:ANDRE] [17:34:17] 📋 Jogadores ANTES da atualização: ["8f393a44", "ab3db326"]
+[17:34:18] [EXECUTAVEL:ANDRE] [17:34:17] 🔍 Analisando player_id: 8f393a44 | É meu ID? false | Já existe? true
+[17:34:18] [EXECUTAVEL:ANDRE] [17:34:17] 🔍 Analisando player_id: ab3db326 | É meu ID? true | Já existe? true
+[17:34:18] [EXECUTAVEL:ANDRE] [17:34:17] 📊 Lista de novos jogadores ANTES de processar: []
+[17:34:18] [EXECUTAVEL:ANDRE] [17:34:17] 📋 Processando jogador: XANDE (ID: 8f393a44)
+[17:34:18] [EXECUTAVEL:ANDRE] [17:34:17] 📋 Processando jogador: ANDRE (ID: ab3db326)
+[17:34:18] [EXECUTAVEL:ANDRE] [17:34:17] 📋 Lista final de jogadores: ["8f393a44", "ab3db326"]
+[17:34:18] [EXECUTAVEL:ANDRE] [17:34:17] 📋 Novos jogadores detectados: []
+[17:34:18] [GODOT:XANDE] [17:34:17] 📋 Jogadores ANTES da atualização: ["8f393a44", "ab3db326"]
+[17:34:18] [GODOT:XANDE] [17:34:17] 🔍 Analisando player_id: 8f393a44 | É meu ID? true | Já existe? true
+[17:34:18] [GODOT:XANDE] [17:34:17] 🔍 Analisando player_id: ab3db326 | É meu ID? false | Já existe? true
+[17:34:18] [GODOT:XANDE] [17:34:17] 📊 Lista de novos jogadores ANTES de processar: []
+[17:34:18] [GODOT:XANDE] [17:34:17] 📋 Processando jogador: XANDE (ID: 8f393a44)
+[17:34:18] [GODOT:XANDE] [17:34:17] 📋 Processando jogador: ANDRE (ID: ab3db326)
+[17:34:18] [GODOT:XANDE] [17:34:17] 📋 Lista final de jogadores: ["8f393a44", "ab3db326"]
+[17:34:18] [GODOT:XANDE] [17:34:17] 📋 Novos jogadores detectados: []
+[17:34:18] [GODOT:XANDE] 🎮 UI ATUALIZADA: Total players mudou de 1 para 2
+[17:34:18] [GODOT:XANDE] 🎮 UI DEBUG: remote_players.size() = 1, keys = ["ab3db326"]
+[17:34:18] [EXECUTAVEL:ANDRE] 🔗 Conectando sinais do MultiplayerManager...
+[17:34:18] [EXECUTAVEL:ANDRE] 🔗 DEBUG: Manager existe? true
+[17:34:18] [EXECUTAVEL:ANDRE] 🔗 DEBUG: connect() retornou: 0 (0=sucesso)
+[17:34:18] [EXECUTAVEL:ANDRE] ✅ Sinal player_connected conectado!
+[17:34:18] [EXECUTAVEL:ANDRE] 🔗 DEBUG: Sinal is_connected? true
+[17:34:18] [EXECUTAVEL:ANDRE] ✅ Todos os sinais conectados!
+[17:34:18] [EXECUTAVEL:ANDRE] 👤 Jogador local criado: ANDRE
+[17:34:18] [EXECUTAVEL:ANDRE] 🔍 VERIFICANDO jogadores já existentes...
+[17:34:18] [EXECUTAVEL:ANDRE] 🔍 Players data disponível: ["8f393a44", "ab3db326"]
+[17:34:18] [EXECUTAVEL:ANDRE] 🔍 Meu ID local: ab3db326
+[17:34:18] [EXECUTAVEL:ANDRE] 🔍 ENCONTRADO jogador existente: XANDE (ID: 8f393a44)
+[17:34:18] [EXECUTAVEL:ANDRE] 🔍 FORÇANDO criação via _on_player_connected...
+[17:34:18] [EXECUTAVEL:ANDRE] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:34:18] [EXECUTAVEL:ANDRE] 📨 _on_player_connected chamado para: XANDE (ID: 8f393a44)
+[17:34:18] [EXECUTAVEL:ANDRE] 📨 Jogador atual: ANDRE
+[17:34:18] [EXECUTAVEL:ANDRE] 📨 player_info completo: { "id": "8f393a44", "name": "XANDE", "position": { "x": 320.023345947266, "y": 545.938293457031 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:34:06.792166" }
+[17:34:18] [EXECUTAVEL:ANDRE] 🔍 ADICIONADO ao remote_players: 8f393a44 | Dicionário agora tem: ["8f393a44"]
+[17:34:18] [EXECUTAVEL:ANDRE] 🔍 Tamanho do remote_players: 1
+[17:34:18] [EXECUTAVEL:ANDRE] 📍 Player XANDE posicionado em: (320.0233, 545.9383)
+[17:34:18] [EXECUTAVEL:ANDRE] 🔍 Posição final de XANDE: (320.0233, 545.9383)
+[17:34:18] [EXECUTAVEL:ANDRE] 👥 Jogador remoto criado: XANDE | Total players: 2
+[17:34:18] [EXECUTAVEL:ANDRE] 🎮 Jogo multiplayer configurado!
+[17:34:18] [EXECUTAVEL:ANDRE] 🎮 UI INICIAL: Total players = 2
+[17:36:10] Conexão fechada: ('127.0.0.1', 63428)
+[17:36:10] Jogador desconectado: ANDRE (ID: ab3db326)
+[17:36:10] Conexão removida: ('127.0.0.1', 63428)
+[17:36:10] [GODOT:XANDE] 📨 _on_player_disconnected chamado para ID: ab3db326
+[17:36:10] [GODOT:XANDE] 👋 Jogador remoto removido: ANDRE (ID: ab3db326) | Restantes: 0
+[17:36:10] [GODOT:XANDE] 🎮 UI ATUALIZADA: Total players mudou de 2 para 1
+[17:36:10] [GODOT:XANDE] 🎮 UI DEBUG: remote_players.size() = 0, keys = []
+[17:36:11] Conexão fechada: ('127.0.0.1', 63414)
+[17:36:11] Jogador desconectado: XANDE (ID: 8f393a44)
+[17:36:11] Conexão removida: ('127.0.0.1', 63414)
+[17:38:08] Nova conexão: ('127.0.0.1', 63750)
+[17:38:27] ADICIONADO jogador Jogador445 (ID: c7cf5852)
+[17:38:27] Lista atual COMPLETA: ['c7cf5852']
+[17:38:27] ENVIANDO players_list para Jogador445 com 1 jogadores
+[17:38:27] ENVIADO players_list para Jogador445: ['c7cf5852']
+[17:38:27] Enviando players_list atualizada para todos os 1 clientes
+[17:38:27] Login realizado: Jogador445 (ID: c7cf5852)
+[17:38:27] [GODOT:Jogador445] [17:38:27] ✅ Login realizado com sucesso! ID: c7cf5852
+[17:38:27] [GODOT:Jogador445] [17:38:27] 📋 Processando players_list - Meu ID: c7cf5852
+[17:38:27] [GODOT:Jogador445] [17:38:27] 📋 Jogadores na lista recebida: ["c7cf5852"]
+[17:38:27] [GODOT:Jogador445] [17:38:27] 📋 Jogadores ANTES da atualização: []
+[17:38:27] [GODOT:Jogador445] [17:38:27] 🔍 Analisando player_id: c7cf5852 | É meu ID? true | Já existe? false
+[17:38:27] [GODOT:Jogador445] [17:38:27] 📊 Lista de novos jogadores ANTES de processar: []
+[17:38:27] [GODOT:Jogador445] [17:38:27] 📋 Processando jogador: Jogador445 (ID: c7cf5852)
+[17:38:27] [GODOT:Jogador445] [17:38:27] 📋 Lista final de jogadores: ["c7cf5852"]
+[17:38:27] [GODOT:Jogador445] [17:38:27] 📋 Novos jogadores detectados: []
+[17:38:27] [GODOT:Jogador445] [17:38:27] 📋 Processando players_list - Meu ID: c7cf5852
+[17:38:27] [GODOT:Jogador445] [17:38:27] 📋 Jogadores na lista recebida: ["c7cf5852"]
+[17:38:27] [GODOT:Jogador445] [17:38:27] 📋 Jogadores ANTES da atualização: ["c7cf5852"]
+[17:38:27] [GODOT:Jogador445] [17:38:27] 🔍 Analisando player_id: c7cf5852 | É meu ID? true | Já existe? true
+[17:38:27] [GODOT:Jogador445] [17:38:27] 📊 Lista de novos jogadores ANTES de processar: []
+[17:38:27] [GODOT:Jogador445] [17:38:27] 📋 Processando jogador: Jogador445 (ID: c7cf5852)
+[17:38:27] [GODOT:Jogador445] [17:38:27] 📋 Lista final de jogadores: ["c7cf5852"]
+[17:38:27] [GODOT:Jogador445] [17:38:27] 📋 Novos jogadores detectados: []
+[17:38:27] [GODOT:Jogador445] [17:38:27] ❌ Falha no login: Nome já está em uso
+[17:38:28] [GODOT:Jogador445] 🔗 Conectando sinais do MultiplayerManager...
+[17:38:28] [GODOT:Jogador445] 🔗 DEBUG: Manager existe? true
+[17:38:28] [GODOT:Jogador445] 🔗 DEBUG: connect() retornou: 0 (0=sucesso)
+[17:38:28] [GODOT:Jogador445] ✅ Sinal player_connected conectado!
+[17:38:28] [GODOT:Jogador445] 🔗 DEBUG: Sinal is_connected? true
+[17:38:28] [GODOT:Jogador445] ✅ Todos os sinais conectados!
+[17:38:28] [GODOT:Jogador445] 👤 Jogador local criado: Jogador445
+[17:38:28] [GODOT:Jogador445] 🔍 VERIFICANDO jogadores já existentes...
+[17:38:28] [GODOT:Jogador445] 🔍 Players data disponível: ["c7cf5852"]
+[17:38:28] [GODOT:Jogador445] 🔍 Meu ID local: c7cf5852
+[17:38:28] [GODOT:Jogador445] 🎮 Jogo multiplayer configurado!
+[17:38:28] [GODOT:Jogador445] 🎮 UI INICIAL: Total players = 1
+[17:38:30] Nova conexão: ('127.0.0.1', 63780)
+[17:38:31] ADICIONADO jogador Jogador545 (ID: d539c07b)
+[17:38:31] Lista atual COMPLETA: ['c7cf5852', 'd539c07b']
+[17:38:31] ENVIANDO players_list para Jogador545 com 2 jogadores
+[17:38:31] ENVIADO players_list para Jogador545: ['c7cf5852', 'd539c07b']
+[17:38:31] Enviando players_list atualizada para todos os 2 clientes
+[17:38:31] Login realizado: Jogador545 (ID: d539c07b)
+[17:38:31] [GODOT:Jogador445] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:38:31] [GODOT:Jogador445] 📨 _on_player_connected chamado para: Jogador545 (ID: d539c07b)
+[17:38:31] [GODOT:Jogador445] 📨 Jogador atual: Jogador445
+[17:38:31] [GODOT:Jogador445] 📨 player_info completo: { "id": "d539c07b", "name": "Jogador545", "position": { "x": 100.0, "y": 350.0 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:38:31.329584" }
+[17:38:31] [GODOT:Jogador445] 🔍 ADICIONADO ao remote_players: d539c07b | Dicionário agora tem: ["d539c07b"]
+[17:38:31] [GODOT:Jogador445] 🔍 Tamanho do remote_players: 1
+[17:38:31] [GODOT:Jogador445] 📍 Player Jogador545 posicionado em: (100.0, 350.0)
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] ✅ Login realizado com sucesso! ID: d539c07b
+[17:38:31] [GODOT:Jogador445] 🔍 Posição final de Jogador545: (100.0, 350.0)
+[17:38:31] [GODOT:Jogador445] 👥 Jogador remoto criado: Jogador545 | Total players: 2
+[17:38:31] [GODOT:Jogador445] 🎮 UI ATUALIZADA: Total players mudou de 1 para 2
+[17:38:31] [GODOT:Jogador445] 🎮 UI DEBUG: remote_players.size() = 1, keys = ["d539c07b"]
+[17:38:31] [GODOT:Jogador445] [17:38:31] 📋 Processando players_list - Meu ID: c7cf5852
+[17:38:31] [GODOT:Jogador445] [17:38:31] 📋 Jogadores na lista recebida: ["c7cf5852", "d539c07b"]
+[17:38:31] [GODOT:Jogador445] [17:38:31] 📋 Jogadores ANTES da atualização: ["c7cf5852", "d539c07b"]
+[17:38:31] [GODOT:Jogador445] [17:38:31] 🔍 Analisando player_id: c7cf5852 | É meu ID? true | Já existe? true
+[17:38:31] [GODOT:Jogador445] [17:38:31] 🔍 Analisando player_id: d539c07b | É meu ID? false | Já existe? true
+[17:38:31] [GODOT:Jogador445] [17:38:31] 📊 Lista de novos jogadores ANTES de processar: []
+[17:38:31] [GODOT:Jogador445] [17:38:31] 📋 Processando jogador: Jogador445 (ID: c7cf5852)
+[17:38:31] [GODOT:Jogador445] [17:38:31] 📋 Processando jogador: Jogador545 (ID: d539c07b)
+[17:38:31] [GODOT:Jogador445] [17:38:31] 📋 Lista final de jogadores: ["c7cf5852", "d539c07b"]
+[17:38:31] [GODOT:Jogador445] [17:38:31] 📋 Novos jogadores detectados: []
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 📋 Processando players_list - Meu ID: d539c07b
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 📋 Jogadores na lista recebida: ["c7cf5852", "d539c07b"]
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 📋 Jogadores ANTES da atualização: []
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 🔍 Analisando player_id: c7cf5852 | É meu ID? false | Já existe? false
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] ➕ NOVO jogador identificado: c7cf5852
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 🔍 Analisando player_id: d539c07b | É meu ID? true | Já existe? false
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 📊 Lista de novos jogadores ANTES de processar: ["c7cf5852"]
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 📋 Processando jogador: Jogador445 (ID: c7cf5852)
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 📋 Processando jogador: Jogador545 (ID: d539c07b)
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] ✅ EMITINDO player_connected para: Jogador445 (ID: c7cf5852)
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 📋 Lista final de jogadores: ["c7cf5852", "d539c07b"]
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 📋 Novos jogadores detectados: ["c7cf5852"]
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 📋 Processando players_list - Meu ID: d539c07b
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 📋 Jogadores na lista recebida: ["c7cf5852", "d539c07b"]
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 📋 Jogadores ANTES da atualização: ["c7cf5852", "d539c07b"]
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 🔍 Analisando player_id: c7cf5852 | É meu ID? false | Já existe? true
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 🔍 Analisando player_id: d539c07b | É meu ID? true | Já existe? true
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 📊 Lista de novos jogadores ANTES de processar: []
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 📋 Processando jogador: Jogador445 (ID: c7cf5852)
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 📋 Processando jogador: Jogador545 (ID: d539c07b)
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 📋 Lista final de jogadores: ["c7cf5852", "d539c07b"]
+[17:38:31] [EXECUTAVEL:Jogador545] [17:38:31] 📋 Novos jogadores detectados: []
+[17:38:32] [EXECUTAVEL:Jogador545] 🔗 Conectando sinais do MultiplayerManager...
+[17:38:32] [EXECUTAVEL:Jogador545] 🔗 DEBUG: Manager existe? true
+[17:38:32] [EXECUTAVEL:Jogador545] 🔗 DEBUG: connect() retornou: 0 (0=sucesso)
+[17:38:32] [EXECUTAVEL:Jogador545] ✅ Sinal player_connected conectado!
+[17:38:32] [EXECUTAVEL:Jogador545] 🔗 DEBUG: Sinal is_connected? true
+[17:38:32] [EXECUTAVEL:Jogador545] ✅ Todos os sinais conectados!
+[17:38:32] [EXECUTAVEL:Jogador545] 👤 Jogador local criado: Jogador545
+[17:38:32] [EXECUTAVEL:Jogador545] 🔍 VERIFICANDO jogadores já existentes...
+[17:38:32] [EXECUTAVEL:Jogador545] 🔍 Players data disponível: ["c7cf5852", "d539c07b"]
+[17:38:32] [EXECUTAVEL:Jogador545] 🔍 Meu ID local: d539c07b
+[17:38:32] [EXECUTAVEL:Jogador545] 🔍 ENCONTRADO jogador existente: Jogador445 (ID: c7cf5852)
+[17:38:32] [EXECUTAVEL:Jogador545] 🔍 FORÇANDO criação via _on_player_connected...
+[17:38:32] [EXECUTAVEL:Jogador545] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:38:32] [EXECUTAVEL:Jogador545] 📨 _on_player_connected chamado para: Jogador445 (ID: c7cf5852)
+[17:38:32] [EXECUTAVEL:Jogador545] 📨 Jogador atual: Jogador545
+[17:38:32] [EXECUTAVEL:Jogador545] 📨 player_info completo: { "id": "c7cf5852", "name": "Jogador445", "position": { "x": 100.0, "y": 350.0 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:38:27.126958" }
+[17:38:32] [EXECUTAVEL:Jogador545] 🔍 ADICIONADO ao remote_players: c7cf5852 | Dicionário agora tem: ["c7cf5852"]
+[17:38:32] [EXECUTAVEL:Jogador545] 🔍 Tamanho do remote_players: 1
+[17:38:32] [EXECUTAVEL:Jogador545] 📍 Player Jogador445 posicionado em: (100.0, 350.0)
+[17:38:32] [EXECUTAVEL:Jogador545] 🔍 Posição final de Jogador445: (100.0, 350.0)
+[17:38:32] [EXECUTAVEL:Jogador545] 👥 Jogador remoto criado: Jogador445 | Total players: 2
+[17:38:32] [EXECUTAVEL:Jogador545] 🎮 Jogo multiplayer configurado!
+[17:38:32] [EXECUTAVEL:Jogador545] 🎮 UI INICIAL: Total players = 2
+[17:38:33] Ação do jogador Jogador545: jump
+[17:38:46] Nova conexão: ('127.0.0.1', 63801)
+[17:38:46] ADICIONADO jogador Jogador127 (ID: d19ad60b)
+[17:38:46] Lista atual COMPLETA: ['c7cf5852', 'd539c07b', 'd19ad60b']
+[17:38:46] ENVIANDO players_list para Jogador127 com 3 jogadores
+[17:38:46] ENVIADO players_list para Jogador127: ['c7cf5852', 'd539c07b', 'd19ad60b']
+[17:38:46] Enviando players_list atualizada para todos os 3 clientes
+[17:38:46] Login realizado: Jogador127 (ID: d19ad60b)
+[17:38:46] [EXECUTAVEL:Jogador127] [17:38:46] ✅ Login realizado com sucesso! ID: d19ad60b
+[17:38:46] [EXECUTAVEL:Jogador545] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:38:46] [EXECUTAVEL:Jogador545] 📨 _on_player_connected chamado para: Jogador127 (ID: d19ad60b)
+[17:38:46] [EXECUTAVEL:Jogador545] 📨 Jogador atual: Jogador545
+[17:38:46] [EXECUTAVEL:Jogador545] 📨 player_info completo: { "id": "d19ad60b", "name": "Jogador127", "position": { "x": 100.0, "y": 350.0 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:38:46.945909" }
+[17:38:46] [EXECUTAVEL:Jogador545] 🔍 ADICIONADO ao remote_players: d19ad60b | Dicionário agora tem: ["c7cf5852", "d19ad60b"]
+[17:38:47] [EXECUTAVEL:Jogador545] 🔍 Tamanho do remote_players: 2
+[17:38:47] [EXECUTAVEL:Jogador545] 📍 Player Jogador127 posicionado em: (100.0, 350.0)
+[17:38:47] [EXECUTAVEL:Jogador545] 🔍 Posição final de Jogador127: (100.0, 350.0)
+[17:38:47] [EXECUTAVEL:Jogador545] 👥 Jogador remoto criado: Jogador127 | Total players: 3
+[17:38:47] [EXECUTAVEL:Jogador545] 🎮 UI ATUALIZADA: Total players mudou de 2 para 3
+[17:38:47] [EXECUTAVEL:Jogador545] 🎮 UI DEBUG: remote_players.size() = 2, keys = ["c7cf5852", "d19ad60b"]
+[17:38:47] [GODOT:Jogador445] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:38:47] [GODOT:Jogador445] 📨 _on_player_connected chamado para: Jogador127 (ID: d19ad60b)
+[17:38:47] [GODOT:Jogador445] 📨 Jogador atual: Jogador445
+[17:38:47] [GODOT:Jogador445] 📨 player_info completo: { "id": "d19ad60b", "name": "Jogador127", "position": { "x": 100.0, "y": 350.0 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:38:46.945909" }
+[17:38:47] [GODOT:Jogador445] 🔍 ADICIONADO ao remote_players: d19ad60b | Dicionário agora tem: ["d539c07b", "d19ad60b"]
+[17:38:47] [GODOT:Jogador445] 🔍 Tamanho do remote_players: 2
+[17:38:47] [GODOT:Jogador445] 📍 Player Jogador127 posicionado em: (100.0, 350.0)
+[17:38:47] [GODOT:Jogador445] 🔍 Posição final de Jogador127: (100.0, 350.0)
+[17:38:47] [GODOT:Jogador445] 👥 Jogador remoto criado: Jogador127 | Total players: 3
+[17:38:47] [GODOT:Jogador445] 🎮 UI ATUALIZADA: Total players mudou de 2 para 3
+[17:38:47] [GODOT:Jogador445] 🎮 UI DEBUG: remote_players.size() = 2, keys = ["d539c07b", "d19ad60b"]
+[17:38:47] [GODOT:Jogador445] [17:38:46] 📋 Processando players_list - Meu ID: c7cf5852
+[17:38:47] [GODOT:Jogador445] [17:38:46] 📋 Jogadores na lista recebida: ["c7cf5852", "d539c07b", "d19ad60b"]
+[17:38:47] [GODOT:Jogador445] [17:38:46] 📋 Jogadores ANTES da atualização: ["c7cf5852", "d539c07b", "d19ad60b"]
+[17:38:47] [GODOT:Jogador445] [17:38:46] 🔍 Analisando player_id: c7cf5852 | É meu ID? true | Já existe? true
+[17:38:47] [GODOT:Jogador445] [17:38:47] 🔍 Analisando player_id: d539c07b | É meu ID? false | Já existe? true
+[17:38:47] [GODOT:Jogador445] [17:38:47] 🔍 Analisando player_id: d19ad60b | É meu ID? false | Já existe? true
+[17:38:47] [GODOT:Jogador445] [17:38:47] 📊 Lista de novos jogadores ANTES de processar: []
+[17:38:47] [GODOT:Jogador445] [17:38:47] 📋 Processando jogador: Jogador445 (ID: c7cf5852)
+[17:38:47] [GODOT:Jogador445] [17:38:47] 📋 Processando jogador: Jogador545 (ID: d539c07b)
+[17:38:47] [GODOT:Jogador445] [17:38:47] 📋 Processando jogador: Jogador127 (ID: d19ad60b)
+[17:38:47] [GODOT:Jogador445] [17:38:47] 📋 Lista final de jogadores: ["c7cf5852", "d539c07b", "d19ad60b"]
+[17:38:47] [GODOT:Jogador445] [17:38:47] 📋 Novos jogadores detectados: []
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:46] 📋 Processando players_list - Meu ID: d19ad60b
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:46] 📋 Jogadores na lista recebida: ["c7cf5852", "d539c07b", "d19ad60b"]
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:46] 📋 Jogadores ANTES da atualização: []
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:46] 🔍 Analisando player_id: c7cf5852 | É meu ID? false | Já existe? false
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:46] ➕ NOVO jogador identificado: c7cf5852
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:46] 🔍 Analisando player_id: d539c07b | É meu ID? false | Já existe? false
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] ➕ NOVO jogador identificado: d539c07b
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 🔍 Analisando player_id: d19ad60b | É meu ID? true | Já existe? false
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 📊 Lista de novos jogadores ANTES de processar: ["c7cf5852", "d539c07b"]
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 📋 Processando jogador: Jogador445 (ID: c7cf5852)
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 📋 Processando jogador: Jogador545 (ID: d539c07b)
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 📋 Processando jogador: Jogador127 (ID: d19ad60b)
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] ✅ EMITINDO player_connected para: Jogador445 (ID: c7cf5852)
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] ✅ EMITINDO player_connected para: Jogador545 (ID: d539c07b)
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 📋 Lista final de jogadores: ["c7cf5852", "d539c07b", "d19ad60b"]
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 📋 Novos jogadores detectados: ["c7cf5852", "d539c07b"]
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 📋 Processando players_list - Meu ID: d19ad60b
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 📋 Jogadores na lista recebida: ["c7cf5852", "d539c07b", "d19ad60b"]
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 📋 Jogadores ANTES da atualização: ["c7cf5852", "d539c07b", "d19ad60b"]
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 🔍 Analisando player_id: c7cf5852 | É meu ID? false | Já existe? true
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 🔍 Analisando player_id: d539c07b | É meu ID? false | Já existe? true
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 🔍 Analisando player_id: d19ad60b | É meu ID? true | Já existe? true
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 📊 Lista de novos jogadores ANTES de processar: []
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 📋 Processando jogador: Jogador445 (ID: c7cf5852)
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 📋 Processando jogador: Jogador545 (ID: d539c07b)
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 📋 Processando jogador: Jogador127 (ID: d19ad60b)
+[17:38:47] [EXECUTAVEL:Jogador127] [17:38:47] 📋 Lista final de jogadores: ["c7cf5852", "d539c07b", "d19ad60b"]
+[17:38:48] [EXECUTAVEL:Jogador127] [17:38:47] 📋 Novos jogadores detectados: []
+[17:38:48] [EXECUTAVEL:Jogador545] [17:38:46] 📋 Processando players_list - Meu ID: d539c07b
+[17:38:48] [EXECUTAVEL:Jogador545] [17:38:46] 📋 Jogadores na lista recebida: ["c7cf5852", "d539c07b", "d19ad60b"]
+[17:38:48] [EXECUTAVEL:Jogador545] [17:38:46] 📋 Jogadores ANTES da atualização: ["c7cf5852", "d539c07b", "d19ad60b"]
+[17:38:48] [EXECUTAVEL:Jogador545] [17:38:46] 🔍 Analisando player_id: c7cf5852 | É meu ID? false | Já existe? true
+[17:38:48] [EXECUTAVEL:Jogador545] [17:38:47] 🔍 Analisando player_id: d539c07b | É meu ID? true | Já existe? true
+[17:38:48] [EXECUTAVEL:Jogador545] [17:38:47] 🔍 Analisando player_id: d19ad60b | É meu ID? false | Já existe? true
+[17:38:48] [EXECUTAVEL:Jogador545] [17:38:47] 📊 Lista de novos jogadores ANTES de processar: []
+[17:38:48] [EXECUTAVEL:Jogador545] [17:38:47] 📋 Processando jogador: Jogador445 (ID: c7cf5852)
+[17:38:48] [EXECUTAVEL:Jogador545] [17:38:47] 📋 Processando jogador: Jogador545 (ID: d539c07b)
+[17:38:48] [EXECUTAVEL:Jogador545] [17:38:47] 📋 Processando jogador: Jogador127 (ID: d19ad60b)
+[17:38:48] [EXECUTAVEL:Jogador545] [17:38:47] 📋 Lista final de jogadores: ["c7cf5852", "d539c07b", "d19ad60b"]
+[17:38:48] [EXECUTAVEL:Jogador545] [17:38:47] 📋 Novos jogadores detectados: []
+[17:38:48] [EXECUTAVEL:Jogador127] 🔗 Conectando sinais do MultiplayerManager...
+[17:38:48] [EXECUTAVEL:Jogador127] 🔗 DEBUG: Manager existe? true
+[17:38:48] [EXECUTAVEL:Jogador127] 🔗 DEBUG: connect() retornou: 0 (0=sucesso)
+[17:38:48] [EXECUTAVEL:Jogador127] ✅ Sinal player_connected conectado!
+[17:38:48] [EXECUTAVEL:Jogador127] 🔗 DEBUG: Sinal is_connected? true
+[17:38:48] [EXECUTAVEL:Jogador127] ✅ Todos os sinais conectados!
+[17:38:48] [EXECUTAVEL:Jogador127] 👤 Jogador local criado: Jogador127
+[17:38:48] [EXECUTAVEL:Jogador127] 🔍 VERIFICANDO jogadores já existentes...
+[17:38:48] [EXECUTAVEL:Jogador127] 🔍 Players data disponível: ["c7cf5852", "d539c07b", "d19ad60b"]
+[17:38:48] [EXECUTAVEL:Jogador127] 🔍 Meu ID local: d19ad60b
+[17:38:48] [EXECUTAVEL:Jogador127] 🔍 ENCONTRADO jogador existente: Jogador445 (ID: c7cf5852)
+[17:38:48] [EXECUTAVEL:Jogador127] 🔍 FORÇANDO criação via _on_player_connected...
+[17:38:48] [EXECUTAVEL:Jogador127] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:38:48] [EXECUTAVEL:Jogador127] 📨 _on_player_connected chamado para: Jogador445 (ID: c7cf5852)
+[17:38:48] [EXECUTAVEL:Jogador127] 📨 Jogador atual: Jogador127
+[17:38:48] [EXECUTAVEL:Jogador127] 📨 player_info completo: { "id": "c7cf5852", "name": "Jogador445", "position": { "x": 100.0, "y": 350.0 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:38:27.126958" }
+[17:38:48] [EXECUTAVEL:Jogador127] 🔍 ADICIONADO ao remote_players: c7cf5852 | Dicionário agora tem: ["c7cf5852"]
+[17:38:48] [EXECUTAVEL:Jogador127] 🔍 Tamanho do remote_players: 1
+[17:38:48] [EXECUTAVEL:Jogador127] 📍 Player Jogador445 posicionado em: (100.0, 350.0)
+[17:38:48] [EXECUTAVEL:Jogador127] 🔍 Posição final de Jogador445: (100.0, 350.0)
+[17:38:48] [EXECUTAVEL:Jogador127] 👥 Jogador remoto criado: Jogador445 | Total players: 2
+[17:38:48] [EXECUTAVEL:Jogador127] 🔍 ENCONTRADO jogador existente: Jogador545 (ID: d539c07b)
+[17:38:48] [EXECUTAVEL:Jogador127] 🔍 FORÇANDO criação via _on_player_connected...
+[17:38:48] [EXECUTAVEL:Jogador127] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:38:48] [EXECUTAVEL:Jogador127] 📨 _on_player_connected chamado para: Jogador545 (ID: d539c07b)
+[17:38:48] [EXECUTAVEL:Jogador127] 📨 Jogador atual: Jogador127
+[17:38:48] [EXECUTAVEL:Jogador127] 📨 player_info completo: { "id": "d539c07b", "name": "Jogador545", "position": { "x": 312.666687011719, "y": 545.924011230469 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:38:31.329584" }
+[17:38:48] [EXECUTAVEL:Jogador127] 🔍 ADICIONADO ao remote_players: d539c07b | Dicionário agora tem: ["c7cf5852", "d539c07b"]
+[17:38:48] [EXECUTAVEL:Jogador127] 🔍 Tamanho do remote_players: 2
+[17:38:48] [EXECUTAVEL:Jogador127] 📍 Player Jogador545 posicionado em: (312.6667, 545.924)
+[17:38:48] [EXECUTAVEL:Jogador127] 🔍 Posição final de Jogador545: (312.6667, 545.924)
+[17:38:48] [EXECUTAVEL:Jogador127] 👥 Jogador remoto criado: Jogador545 | Total players: 3
+[17:38:48] [EXECUTAVEL:Jogador127] 🎮 Jogo multiplayer configurado!
+[17:38:48] [EXECUTAVEL:Jogador127] 🎮 UI INICIAL: Total players = 3
+[17:39:55] Nova conexão: ('127.0.0.1', 63895)
+[17:39:56] ADICIONADO jogador Jogador277 (ID: ab90ab65)
+[17:39:56] Lista atual COMPLETA: ['c7cf5852', 'd539c07b', 'd19ad60b', 'ab90ab65']
+[17:39:56] ENVIANDO players_list para Jogador277 com 4 jogadores
+[17:39:56] ENVIADO players_list para Jogador277: ['c7cf5852', 'd539c07b', 'd19ad60b', 'ab90ab65']
+[17:39:56] Enviando players_list atualizada para todos os 4 clientes
+[17:39:56] Login realizado: Jogador277 (ID: ab90ab65)
+[17:39:56] [EXECUTAVEL:Jogador127] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:39:56] [EXECUTAVEL:Jogador127] 📨 _on_player_connected chamado para: Jogador277 (ID: ab90ab65)
+[17:39:56] [EXECUTAVEL:Jogador127] 📨 Jogador atual: Jogador127
+[17:39:56] [EXECUTAVEL:Jogador127] 📨 player_info completo: { "id": "ab90ab65", "name": "Jogador277", "position": { "x": 100.0, "y": 350.0 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:39:56.240328" }
+[17:39:56] [EXECUTAVEL:Jogador127] 🔍 ADICIONADO ao remote_players: ab90ab65 | Dicionário agora tem: ["c7cf5852", "d539c07b", "ab90ab65"]
+[17:39:56] [EXECUTAVEL:Jogador127] 🔍 Tamanho do remote_players: 3
+[17:39:56] [EXECUTAVEL:Jogador127] 📍 Player Jogador277 posicionado em: (100.0, 350.0)
+[17:39:56] [EXECUTAVEL:Jogador127] 🔍 Posição final de Jogador277: (100.0, 350.0)
+[17:39:56] [EXECUTAVEL:Jogador127] 👥 Jogador remoto criado: Jogador277 | Total players: 4
+[17:39:56] [EXECUTAVEL:Jogador127] 🎮 UI ATUALIZADA: Total players mudou de 3 para 4
+[17:39:56] [EXECUTAVEL:Jogador127] 🎮 UI DEBUG: remote_players.size() = 3, keys = ["c7cf5852", "d539c07b", "ab90ab65"]
+[17:39:56] [EXECUTAVEL:Jogador277] [17:39:56] ✅ Login realizado com sucesso! ID: ab90ab65
+[17:39:56] [EXECUTAVEL:Jogador545] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:39:56] [EXECUTAVEL:Jogador545] 📨 _on_player_connected chamado para: Jogador277 (ID: ab90ab65)
+[17:39:56] [EXECUTAVEL:Jogador545] 📨 Jogador atual: Jogador545
+[17:39:56] [EXECUTAVEL:Jogador545] 📨 player_info completo: { "id": "ab90ab65", "name": "Jogador277", "position": { "x": 100.0, "y": 350.0 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:39:56.240328" }
+[17:39:56] [EXECUTAVEL:Jogador545] 🔍 ADICIONADO ao remote_players: ab90ab65 | Dicionário agora tem: ["c7cf5852", "d19ad60b", "ab90ab65"]
+[17:39:56] [EXECUTAVEL:Jogador545] 🔍 Tamanho do remote_players: 3
+[17:39:56] [EXECUTAVEL:Jogador545] 📍 Player Jogador277 posicionado em: (100.0, 350.0)
+[17:39:56] [EXECUTAVEL:Jogador545] 🔍 Posição final de Jogador277: (100.0, 350.0)
+[17:39:56] [EXECUTAVEL:Jogador545] 👥 Jogador remoto criado: Jogador277 | Total players: 4
+[17:39:56] [EXECUTAVEL:Jogador545] 🎮 UI ATUALIZADA: Total players mudou de 3 para 4
+[17:39:56] [EXECUTAVEL:Jogador545] 🎮 UI DEBUG: remote_players.size() = 3, keys = ["c7cf5852", "d19ad60b", "ab90ab65"]
+[17:39:56] [GODOT:Jogador445] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:39:56] [GODOT:Jogador445] 📨 _on_player_connected chamado para: Jogador277 (ID: ab90ab65)
+[17:39:56] [GODOT:Jogador445] 📨 Jogador atual: Jogador445
+[17:39:56] [GODOT:Jogador445] 📨 player_info completo: { "id": "ab90ab65", "name": "Jogador277", "position": { "x": 100.0, "y": 350.0 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:39:56.240328" }
+[17:39:56] [GODOT:Jogador445] 🔍 ADICIONADO ao remote_players: ab90ab65 | Dicionário agora tem: ["d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:56] [GODOT:Jogador445] 🔍 Tamanho do remote_players: 3
+[17:39:56] [GODOT:Jogador445] 📍 Player Jogador277 posicionado em: (100.0, 350.0)
+[17:39:56] [GODOT:Jogador445] 🔍 Posição final de Jogador277: (100.0, 350.0)
+[17:39:56] [GODOT:Jogador445] 👥 Jogador remoto criado: Jogador277 | Total players: 4
+[17:39:56] [GODOT:Jogador445] 🎮 UI ATUALIZADA: Total players mudou de 3 para 4
+[17:39:56] [GODOT:Jogador445] 🎮 UI DEBUG: remote_players.size() = 3, keys = ["d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:56] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Processando players_list - Meu ID: ab90ab65
+[17:39:56] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Jogadores na lista recebida: ["c7cf5852", "d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:56] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Jogadores ANTES da atualização: []
+[17:39:56] [EXECUTAVEL:Jogador277] [17:39:56] 🔍 Analisando player_id: c7cf5852 | É meu ID? false | Já existe? false
+[17:39:56] [EXECUTAVEL:Jogador277] [17:39:56] ➕ NOVO jogador identificado: c7cf5852
+[17:39:56] [EXECUTAVEL:Jogador277] [17:39:56] 🔍 Analisando player_id: d539c07b | É meu ID? false | Já existe? false
+[17:39:56] [EXECUTAVEL:Jogador277] [17:39:56] ➕ NOVO jogador identificado: d539c07b
+[17:39:56] [EXECUTAVEL:Jogador277] [17:39:56] 🔍 Analisando player_id: d19ad60b | É meu ID? false | Já existe? false
+[17:39:56] [EXECUTAVEL:Jogador277] [17:39:56] ➕ NOVO jogador identificado: d19ad60b
+[17:39:56] [EXECUTAVEL:Jogador277] [17:39:56] 🔍 Analisando player_id: ab90ab65 | É meu ID? true | Já existe? false
+[17:39:56] [EXECUTAVEL:Jogador277] [17:39:56] 📊 Lista de novos jogadores ANTES de processar: ["c7cf5852", "d539c07b", "d19ad60b"]
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Processando jogador: Jogador445 (ID: c7cf5852)
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Processando jogador: Jogador545 (ID: d539c07b)
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Processando jogador: Jogador127 (ID: d19ad60b)
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Processando jogador: Jogador277 (ID: ab90ab65)
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] ✅ EMITINDO player_connected para: Jogador445 (ID: c7cf5852)
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] ✅ EMITINDO player_connected para: Jogador545 (ID: d539c07b)
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] ✅ EMITINDO player_connected para: Jogador127 (ID: d19ad60b)
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Lista final de jogadores: ["c7cf5852", "d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Novos jogadores detectados: ["c7cf5852", "d539c07b", "d19ad60b"]
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Processando players_list - Meu ID: ab90ab65
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Jogadores na lista recebida: ["c7cf5852", "d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Jogadores ANTES da atualização: ["c7cf5852", "d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 🔍 Analisando player_id: c7cf5852 | É meu ID? false | Já existe? true
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 🔍 Analisando player_id: d539c07b | É meu ID? false | Já existe? true
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 🔍 Analisando player_id: d19ad60b | É meu ID? false | Já existe? true
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 🔍 Analisando player_id: ab90ab65 | É meu ID? true | Já existe? true
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 📊 Lista de novos jogadores ANTES de processar: []
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Processando jogador: Jogador445 (ID: c7cf5852)
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Processando jogador: Jogador545 (ID: d539c07b)
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Processando jogador: Jogador127 (ID: d19ad60b)
+[17:39:57] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Processando jogador: Jogador277 (ID: ab90ab65)
+[17:39:57] [GODOT:Jogador445] [17:39:56] 📋 Processando players_list - Meu ID: c7cf5852
+[17:39:57] [GODOT:Jogador445] [17:39:56] 📋 Jogadores na lista recebida: ["c7cf5852", "d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:57] [GODOT:Jogador445] [17:39:56] 📋 Jogadores ANTES da atualização: ["c7cf5852", "d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:57] [GODOT:Jogador445] [17:39:56] 🔍 Analisando player_id: c7cf5852 | É meu ID? true | Já existe? true
+[17:39:57] [GODOT:Jogador445] [17:39:56] 🔍 Analisando player_id: d539c07b | É meu ID? false | Já existe? true
+[17:39:57] [GODOT:Jogador445] [17:39:56] 🔍 Analisando player_id: d19ad60b | É meu ID? false | Já existe? true
+[17:39:57] [GODOT:Jogador445] [17:39:56] 🔍 Analisando player_id: ab90ab65 | É meu ID? false | Já existe? true
+[17:39:57] [GODOT:Jogador445] [17:39:56] 📊 Lista de novos jogadores ANTES de processar: []
+[17:39:57] [GODOT:Jogador445] [17:39:56] 📋 Processando jogador: Jogador445 (ID: c7cf5852)
+[17:39:57] [GODOT:Jogador445] [17:39:56] 📋 Processando jogador: Jogador545 (ID: d539c07b)
+[17:39:57] [GODOT:Jogador445] [17:39:56] 📋 Processando jogador: Jogador127 (ID: d19ad60b)
+[17:39:57] [GODOT:Jogador445] [17:39:56] 📋 Processando jogador: Jogador277 (ID: ab90ab65)
+[17:39:57] [GODOT:Jogador445] [17:39:56] 📋 Lista final de jogadores: ["c7cf5852", "d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:57] [GODOT:Jogador445] [17:39:56] 📋 Novos jogadores detectados: []
+[17:39:57] [EXECUTAVEL:Jogador127] [17:39:56] 📋 Processando players_list - Meu ID: d19ad60b
+[17:39:57] [EXECUTAVEL:Jogador127] [17:39:56] 📋 Jogadores na lista recebida: ["c7cf5852", "d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:57] [EXECUTAVEL:Jogador127] [17:39:56] 📋 Jogadores ANTES da atualização: ["c7cf5852", "d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:57] [EXECUTAVEL:Jogador127] [17:39:56] 🔍 Analisando player_id: c7cf5852 | É meu ID? false | Já existe? true
+[17:39:57] [EXECUTAVEL:Jogador127] [17:39:56] 🔍 Analisando player_id: d539c07b | É meu ID? false | Já existe? true
+[17:39:57] [EXECUTAVEL:Jogador127] [17:39:56] 🔍 Analisando player_id: d19ad60b | É meu ID? true | Já existe? true
+[17:39:57] [EXECUTAVEL:Jogador127] [17:39:56] 🔍 Analisando player_id: ab90ab65 | É meu ID? false | Já existe? true
+[17:39:57] [EXECUTAVEL:Jogador127] [17:39:56] 📊 Lista de novos jogadores ANTES de processar: []
+[17:39:57] [EXECUTAVEL:Jogador127] [17:39:56] 📋 Processando jogador: Jogador445 (ID: c7cf5852)
+[17:39:57] [EXECUTAVEL:Jogador127] [17:39:56] 📋 Processando jogador: Jogador545 (ID: d539c07b)
+[17:39:57] [EXECUTAVEL:Jogador127] [17:39:56] 📋 Processando jogador: Jogador127 (ID: d19ad60b)
+[17:39:57] [EXECUTAVEL:Jogador127] [17:39:56] 📋 Processando jogador: Jogador277 (ID: ab90ab65)
+[17:39:58] [EXECUTAVEL:Jogador127] [17:39:56] 📋 Lista final de jogadores: ["c7cf5852", "d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:58] [EXECUTAVEL:Jogador127] [17:39:56] 📋 Novos jogadores detectados: []
+[17:39:58] [EXECUTAVEL:Jogador545] [17:39:56] 📋 Processando players_list - Meu ID: d539c07b
+[17:39:58] [EXECUTAVEL:Jogador545] [17:39:56] 📋 Jogadores na lista recebida: ["c7cf5852", "d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:58] [EXECUTAVEL:Jogador545] [17:39:56] 📋 Jogadores ANTES da atualização: ["c7cf5852", "d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:58] [EXECUTAVEL:Jogador545] [17:39:56] 🔍 Analisando player_id: c7cf5852 | É meu ID? false | Já existe? true
+[17:39:58] [EXECUTAVEL:Jogador545] [17:39:56] 🔍 Analisando player_id: d539c07b | É meu ID? true | Já existe? true
+[17:39:58] [EXECUTAVEL:Jogador545] [17:39:56] 🔍 Analisando player_id: d19ad60b | É meu ID? false | Já existe? true
+[17:39:58] [EXECUTAVEL:Jogador545] [17:39:56] 🔍 Analisando player_id: ab90ab65 | É meu ID? false | Já existe? true
+[17:39:58] [EXECUTAVEL:Jogador545] [17:39:56] 📊 Lista de novos jogadores ANTES de processar: []
+[17:39:58] [EXECUTAVEL:Jogador545] [17:39:56] 📋 Processando jogador: Jogador445 (ID: c7cf5852)
+[17:39:58] [EXECUTAVEL:Jogador545] [17:39:56] 📋 Processando jogador: Jogador545 (ID: d539c07b)
+[17:39:58] [EXECUTAVEL:Jogador545] [17:39:56] 📋 Processando jogador: Jogador127 (ID: d19ad60b)
+[17:39:58] [EXECUTAVEL:Jogador545] [17:39:56] 📋 Processando jogador: Jogador277 (ID: ab90ab65)
+[17:39:58] [EXECUTAVEL:Jogador545] [17:39:56] 📋 Lista final de jogadores: ["c7cf5852", "d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:58] [EXECUTAVEL:Jogador545] [17:39:56] 📋 Novos jogadores detectados: []
+[17:39:58] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Lista final de jogadores: ["c7cf5852", "d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:58] [EXECUTAVEL:Jogador277] [17:39:56] 📋 Novos jogadores detectados: []
+[17:39:58] [EXECUTAVEL:Jogador277] 🔗 Conectando sinais do MultiplayerManager...
+[17:39:58] [EXECUTAVEL:Jogador277] 🔗 DEBUG: Manager existe? true
+[17:39:58] [EXECUTAVEL:Jogador277] 🔗 DEBUG: connect() retornou: 0 (0=sucesso)
+[17:39:58] [EXECUTAVEL:Jogador277] ✅ Sinal player_connected conectado!
+[17:39:58] [EXECUTAVEL:Jogador277] 🔗 DEBUG: Sinal is_connected? true
+[17:39:58] [EXECUTAVEL:Jogador277] ✅ Todos os sinais conectados!
+[17:39:58] [EXECUTAVEL:Jogador277] 👤 Jogador local criado: Jogador277
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 VERIFICANDO jogadores já existentes...
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 Players data disponível: ["c7cf5852", "d539c07b", "d19ad60b", "ab90ab65"]
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 Meu ID local: ab90ab65
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 ENCONTRADO jogador existente: Jogador445 (ID: c7cf5852)
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 FORÇANDO criação via _on_player_connected...
+[17:39:58] [EXECUTAVEL:Jogador277] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:39:58] [EXECUTAVEL:Jogador277] 📨 _on_player_connected chamado para: Jogador445 (ID: c7cf5852)
+[17:39:58] [EXECUTAVEL:Jogador277] 📨 Jogador atual: Jogador277
+[17:39:58] [EXECUTAVEL:Jogador277] 📨 player_info completo: { "id": "c7cf5852", "name": "Jogador445", "position": { "x": 100.0, "y": 350.0 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:38:27.126958" }
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 ADICIONADO ao remote_players: c7cf5852 | Dicionário agora tem: ["c7cf5852"]
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 Tamanho do remote_players: 1
+[17:39:58] [EXECUTAVEL:Jogador277] 📍 Player Jogador445 posicionado em: (100.0, 350.0)
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 Posição final de Jogador445: (100.0, 350.0)
+[17:39:58] [EXECUTAVEL:Jogador277] 👥 Jogador remoto criado: Jogador445 | Total players: 2
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 ENCONTRADO jogador existente: Jogador545 (ID: d539c07b)
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 FORÇANDO criação via _on_player_connected...
+[17:39:58] [EXECUTAVEL:Jogador277] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:39:58] [EXECUTAVEL:Jogador277] 📨 _on_player_connected chamado para: Jogador545 (ID: d539c07b)
+[17:39:58] [EXECUTAVEL:Jogador277] 📨 Jogador atual: Jogador277
+[17:39:58] [EXECUTAVEL:Jogador277] 📨 player_info completo: { "id": "d539c07b", "name": "Jogador545", "position": { "x": 396.999786376953, "y": 545.924011230469 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": 1.0, "hp": 100.0, "connected_at": "2025-08-27T17:38:31.329584" }
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 ADICIONADO ao remote_players: d539c07b | Dicionário agora tem: ["c7cf5852", "d539c07b"]
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 Tamanho do remote_players: 2
+[17:39:58] [EXECUTAVEL:Jogador277] 📍 Player Jogador545 posicionado em: (396.9998, 545.924)
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 Posição final de Jogador545: (396.9998, 545.924)
+[17:39:58] [EXECUTAVEL:Jogador277] 👥 Jogador remoto criado: Jogador545 | Total players: 3
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 ENCONTRADO jogador existente: Jogador127 (ID: d19ad60b)
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 FORÇANDO criação via _on_player_connected...
+[17:39:58] [EXECUTAVEL:Jogador277] 🚨 DEBUG: _on_player_connected INICIADO!
+[17:39:58] [EXECUTAVEL:Jogador277] 📨 _on_player_connected chamado para: Jogador127 (ID: d19ad60b)
+[17:39:58] [EXECUTAVEL:Jogador277] 📨 Jogador atual: Jogador277
+[17:39:58] [EXECUTAVEL:Jogador277] 📨 player_info completo: { "id": "d19ad60b", "name": "Jogador127", "position": { "x": 180.666702270508, "y": 545.9765625 }, "velocity": { "x": 0.0, "y": 0.0 }, "animation": "idle", "facing": -1.0, "hp": 100.0, "connected_at": "2025-08-27T17:38:46.945909" }
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 ADICIONADO ao remote_players: d19ad60b | Dicionário agora tem: ["c7cf5852", "d539c07b", "d19ad60b"]
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 Tamanho do remote_players: 3
+[17:39:58] [EXECUTAVEL:Jogador277] 📍 Player Jogador127 posicionado em: (180.6667, 545.9766)
+[17:39:58] [EXECUTAVEL:Jogador277] 🔍 Posição final de Jogador127: (180.6667, 545.9766)
+[17:39:58] [EXECUTAVEL:Jogador277] 👥 Jogador remoto criado: Jogador127 | Total players: 4
+[17:39:58] [EXECUTAVEL:Jogador277] 🎮 Jogo multiplayer configurado!
+[17:39:58] [EXECUTAVEL:Jogador277] 🎮 UI INICIAL: Total players = 4
+[17:39:58] Ação do jogador Jogador277: jump
+[17:40:00] Ação do jogador Jogador277: jump
+[17:40:01] Ação do jogador Jogador277: jump
+[17:40:02] Ação do jogador Jogador277: jump
+[17:40:02] Ação do jogador Jogador277: jump
+[17:40:03] Ação do jogador Jogador277: jump
+[17:40:05] Ação do jogador Jogador277: jump
+[17:40:06] Ação do jogador Jogador277: jump
+[17:40:07] Ação do jogador Jogador277: jump
+[17:40:13] Ação do jogador Jogador277: jump
+[17:40:14] Ação do jogador Jogador277: jump
+[17:40:15] Ação do jogador Jogador277: jump
+[17:40:16] Ação do jogador Jogador277: jump
+[17:40:18] Ação do jogador Jogador277: jump
+[17:40:19] Conexão fechada: ('127.0.0.1', 63895)
+[17:40:19] Jogador desconectado: Jogador277 (ID: ab90ab65)
+[17:40:19] Conexão removida: ('127.0.0.1', 63895)
+[17:40:19] [EXECUTAVEL:Jogador127] 📨 _on_player_disconnected chamado para ID: ab90ab65
+[17:40:19] [EXECUTAVEL:Jogador127] 👋 Jogador remoto removido: Jogador277 (ID: ab90ab65) | Restantes: 2
+[17:40:19] [EXECUTAVEL:Jogador127] 🎮 UI ATUALIZADA: Total players mudou de 4 para 3
+[17:40:19] [EXECUTAVEL:Jogador127] 🎮 UI DEBUG: remote_players.size() = 2, keys = ["c7cf5852", "d539c07b"]
+[17:40:19] [GODOT:Jogador445] 📨 _on_player_disconnected chamado para ID: ab90ab65
+[17:40:19] [GODOT:Jogador445] 👋 Jogador remoto removido: Jogador277 (ID: ab90ab65) | Restantes: 2
+[17:40:19] [GODOT:Jogador445] 🎮 UI ATUALIZADA: Total players mudou de 4 para 3
+[17:40:19] [GODOT:Jogador445] 🎮 UI DEBUG: remote_players.size() = 2, keys = ["d539c07b", "d19ad60b"]
+[17:40:19] [EXECUTAVEL:Jogador545] 📨 _on_player_disconnected chamado para ID: ab90ab65
+[17:40:19] [EXECUTAVEL:Jogador545] 👋 Jogador remoto removido: Jogador277 (ID: ab90ab65) | Restantes: 2
+[17:40:19] [EXECUTAVEL:Jogador545] 🎮 UI ATUALIZADA: Total players mudou de 4 para 3
+[17:40:19] [EXECUTAVEL:Jogador545] 🎮 UI DEBUG: remote_players.size() = 2, keys = ["c7cf5852", "d19ad60b"]
+[17:40:20] Conexão fechada: ('127.0.0.1', 63801)
+[17:40:20] Jogador desconectado: Jogador127 (ID: d19ad60b)
+[17:40:20] Conexão removida: ('127.0.0.1', 63801)
+[17:40:20] [EXECUTAVEL:Jogador545] 📨 _on_player_disconnected chamado para ID: d19ad60b
+[17:40:20] [EXECUTAVEL:Jogador545] 👋 Jogador remoto removido: Jogador127 (ID: d19ad60b) | Restantes: 1
+[17:40:20] [EXECUTAVEL:Jogador545] 🎮 UI ATUALIZADA: Total players mudou de 3 para 2
+[17:40:20] [EXECUTAVEL:Jogador545] 🎮 UI DEBUG: remote_players.size() = 1, keys = ["c7cf5852"]
+[17:40:20] [GODOT:Jogador445] 📨 _on_player_disconnected chamado para ID: d19ad60b
+[17:40:20] [GODOT:Jogador445] 👋 Jogador remoto removido: Jogador127 (ID: d19ad60b) | Restantes: 1
+[17:40:20] [GODOT:Jogador445] 🎮 UI ATUALIZADA: Total players mudou de 3 para 2
+[17:40:20] [GODOT:Jogador445] 🎮 UI DEBUG: remote_players.size() = 1, keys = ["d539c07b"]
+[17:40:21] Conexão fechada: ('127.0.0.1', 63780)
+[17:40:21] Jogador desconectado: Jogador545 (ID: d539c07b)
+[17:40:21] Conexão removida: ('127.0.0.1', 63780)
+[17:40:21] [GODOT:Jogador445] 📨 _on_player_disconnected chamado para ID: d539c07b
+[17:40:21] [GODOT:Jogador445] 👋 Jogador remoto removido: Jogador545 (ID: d539c07b) | Restantes: 0
+[17:40:21] [GODOT:Jogador445] 🎮 UI ATUALIZADA: Total players mudou de 2 para 1
+[17:40:21] [GODOT:Jogador445] 🎮 UI DEBUG: remote_players.size() = 0, keys = []
+[17:40:22] Conexão fechada: ('127.0.0.1', 63750)
+[17:40:22] Jogador desconectado: Jogador445 (ID: c7cf5852)
+[17:40:22] Conexão removida: ('127.0.0.1', 63750)

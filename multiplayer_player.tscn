@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bvp0jmqx2hryl"]
+
+[ext_resource type="Script" path="res://scripts/multiplayer_player.gd" id="1_mp_player"]
+
+[node name="MultiplayerPlayer" type="CharacterBody2D"]
+script = ExtResource("1_mp_player")
