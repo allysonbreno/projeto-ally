@@ -35,16 +35,13 @@ func _ready():
     # Adicionar ao grupo para ser encontrado pelos inimigos
     add_to_group("multiplayer_manager")
     
-    # Detectar se estamos rodando via Godot ou executável
+    # Sistema de logs desabilitado - não cria arquivos locais
     var is_debug = OS.is_debug_build()
-    var log_file_path = ""
     
     if is_debug:
-        log_file_path = "prompt_explicacao.txt"
-        _init_log_file(log_file_path, "INSTANCIA1 (GODOT)")
+        _init_log_file("", "INSTANCIA1 (GODOT)")
     else:
-        log_file_path = "logs_instancia2.txt"  
-        _init_log_file(log_file_path, "INSTANCIA2 (EXECUTAVEL)")
+        _init_log_file("", "INSTANCIA2 (EXECUTAVEL)")
     
     _log_to_file("MultiplayerManager inicializado")
     print("MultiplayerManager inicializado")
@@ -515,26 +512,9 @@ func _handle_map_change(data: Dictionary):
 var current_log_file = ""
 
 func _init_log_file(file_path: String, instance_name: String):
-    """Inicializa arquivo de log"""
-    # Para executável, usar caminho absoluto na raiz do projeto
-    if not OS.is_debug_build():
-        # Executável: vai um nível acima da pasta builds
-        current_log_file = "../" + file_path
-    else:
-        # Debug (Godot): usar caminho relativo normal
-        current_log_file = file_path
-    
-    _log_to_file("Inicializando log em: " + current_log_file)
-    
-    var file = FileAccess.open(current_log_file, FileAccess.WRITE)
-    if file:
-        file.store_string("SISTEMA DE LOGS MULTIPLAYER - PROJETO ALLY\n\n")
-        file.store_string("Este arquivo é automaticamente atualizado com os logs da %s.\n\n" % instance_name)
-        file.store_string("==== LOGS %s ====\n" % instance_name)
-        file.close()
-        _log_to_file("Arquivo de log inicializado com sucesso")
-    else:
-        print("ERRO: Não conseguiu criar arquivo de log em: " + current_log_file)
+    """Não cria mais arquivo de log local"""
+    # Apenas registra no console
+    print("Sistema de logs iniciado para " + instance_name)
 
 func _handle_player_sync_ack(data: Dictionary):
     """Processa confirmação de sincronização do servidor para reconciliação"""
@@ -563,19 +543,9 @@ func _handle_player_sync_ack(data: Dictionary):
         emit_signal("server_reconciliation", reconciliation_data)
 
 func _log_to_file(message: String, file_path: String = ""):
-    """Salva log no arquivo E envia para o servidor"""
-    if file_path.is_empty():
-        file_path = current_log_file
-    
+    """Apenas envia log para o servidor, sem criar arquivo local"""
     var timestamp = Time.get_datetime_string_from_system().split("T")[1].substr(0, 8)
     var log_message = "[%s] %s" % [timestamp, message]
     
-    # Salvar no arquivo local
-    var file = FileAccess.open(file_path, FileAccess.WRITE_READ)
-    if file:
-        file.seek_end()
-        file.store_string(log_message + "\n")
-        file.close()
-    
-    # Enviar para o servidor em tempo real
+    # Apenas enviar para o servidor em tempo real
     send_log_to_server(log_message)
