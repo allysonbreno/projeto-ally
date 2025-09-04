@@ -3,6 +3,7 @@ class_name MultiplayerPlayer
 
 # Sinais para comunicação com o MultiplayerManager
 signal player_update(position: Vector2, velocity: Vector2, animation: String, facing: int, hp: int)
+signal player_update_with_sequence(position: Vector2, velocity: Vector2, animation: String, facing: int, hp: int, sequence: int)
 signal player_action(action: String, action_data: Dictionary)
 
 # Informações do jogador
@@ -64,6 +65,21 @@ var sync_interval: float = 0.2  # 5 vezes por segundo (reduzido para evitar sobr
 var last_log_time: float = 0.0
 var log_interval: float = 3.0  # Log a cada 3 segundos
 
+# Client-side prediction
+var predicted_position: Vector2
+var predicted_velocity: Vector2
+var input_sequence: int = 0
+var input_buffer: Array = []  # Armazena inputs enviados para reconciliação
+var server_position: Vector2
+var server_velocity: Vector2
+var server_timestamp: float = 0.0
+var reconciliation_threshold: float = 15.0  # pixels de diferença para correção (aumentado)
+
+# Interpolação para jogadores remotos
+var interpolation_buffer: Array = []  # Buffer de estados recebidos
+var interpolation_delay: float = 0.1  # 100ms de atraso para suavizar
+var max_buffer_size: int = 10
+
 func _log(message: String):
     """Log que vai para o servidor via MultiplayerManager"""
     print(message)
@@ -87,10 +103,10 @@ func _ready() -> void:
     _setup_sprite()
     _setup_nametag()
 
-func setup_multiplayer_player(id: String, player_name: String, local: bool) -> void:
+func setup_multiplayer_player(id: String, player_display_name: String, local: bool) -> void:
     """Configura o jogador multiplayer"""
     player_id = id
-    self.player_name = player_name
+    self.player_name = player_display_name
     is_local_player = local
     
     # GARANTIR que os componentes estão criados antes de configurar
@@ -101,6 +117,8 @@ func setup_multiplayer_player(id: String, player_name: String, local: bool) -> v
         _setup_sprite()
         _setup_nametag()
         _log("🔧 COMPONENTES CRIADOS para " + player_name + " - Sprite agora existe? " + str(sprite != null))
+    else:
+        _log("✅ Componentes já existem, não recriando sprite para " + player_name)
     
     # Configurar camadas de colisão para evitar colisão entre jogadores
     if is_local_player:
@@ -109,12 +127,14 @@ func setup_multiplayer_player(id: String, player_name: String, local: bool) -> v
         set_collision_layer_value(3, false)  # Remove da camada de jogadores
         set_collision_mask_value(2, true)    # Colide com ambiente
         set_collision_mask_value(3, false)   # Não colide com outros jogadores
+        print("🎮 PLAYER LOCAL CAMADAS - layer: 1, mask: 2")
     else:
         # Jogadores remotos: camada 3, colide com ambiente (camada 2)
         set_collision_layer_value(1, false)  # Remove da camada padrão
         set_collision_layer_value(3, true)   # Adiciona à camada de jogadores remotos
         set_collision_mask_value(2, true)    # Colide com ambiente
         set_collision_mask_value(3, false)   # Não colide com outros jogadores
+        print("🎮 PLAYER REMOTO CAMADAS - layer: 3, mask: 2")
     
     # Atualizar nametag
     if name_label:
@@ -150,10 +170,28 @@ func _setup_physics() -> void:
     
     # Configurar camadas de colisão depois no setup
     set_collision_layer_value(1, true)
-    set_collision_mask_value(2, true)
+    set_collision_mask_value(2, true)  # Ambiente/Ground
 
 func _setup_sprite() -> void:
     _log("🎨 INICIANDO _setup_sprite para " + player_name)
+    
+    # EVITAR DUPLICAÇÃO: Se o sprite já existe, remove o anterior
+    if sprite != null:
+        _log("⚠️ REMOVENDO sprite anterior para " + player_name)
+        sprite.queue_free()
+        sprite = null
+    
+    # LIMPAR qualquer AnimatedSprite2D existente IMEDIATAMENTE
+    var children_to_remove = []
+    for child in get_children():
+        if child is AnimatedSprite2D:
+            children_to_remove.append(child)
+    
+    for child in children_to_remove:
+        _log("🗑️ REMOVENDO AnimatedSprite2D duplicado para " + player_name)
+        remove_child(child)
+        child.queue_free()
+    
     # Sprite
     sprite = AnimatedSprite2D.new()
     add_child(sprite)
@@ -212,30 +250,72 @@ func _create_simple_animations() -> void:
     frames.set_animation_loop("attack", false)
     frames.set_animation_speed("attack", FPS_ATTACK)
     
-    # Tentar usar sprites existentes se disponíveis
-    _try_load_player_sprites()
-
-func _try_load_player_sprites() -> void:
-    """Tenta carregar sprites do PlayerSprites se disponível"""
-    # Verificar se PlayerSprites existe antes de usar
-    var player_sprites_class = load("res://player_sprites.gd")
-    if player_sprites_class:
-        var player_sprites = player_sprites_class.new()
-        var idle_frames = player_sprites.get_frames("idle")
-        var walk_frames = player_sprites.get_frames("walk")
-        var jump_frames = player_sprites.get_frames("jump")
-        var attack_frames = player_sprites.get_frames("attack")
-        
-        _add_frames_to_animation("idle", idle_frames)
-        _add_frames_to_animation("walk", walk_frames)
-        _add_frames_to_animation("jump", jump_frames)
-        _add_frames_to_animation("attack", attack_frames)
-        
-        _log("🖼️ Sprites carregados para " + player_name + " - Idle frames: " + str(idle_frames.size()))
-    else:
-        _log("⚠️ PlayerSprites não encontrado, criando textura padrão")
-        # Criar uma textura padrão para debug
+    # Tentar usar sprites existentes se disponíveis, senão criar debug
+    if not _try_load_player_sprites():
         _create_debug_texture()
+
+func _try_load_player_sprites() -> bool:
+    """Tenta carregar sprites do player diretamente"""
+    # Carregar sprites diretamente das pastas
+    var loaded = false
+    
+    # Idle sprites
+    var idle_sprites = []
+    for i in range(10):  # 0-9 frames
+        var path = "res://art/player/idle_east/frame_%03d.png" % i
+        if ResourceLoader.exists(path):
+            var texture = load(path)
+            if texture:
+                idle_sprites.append(texture)
+    
+    # Walk sprites  
+    var walk_sprites = []
+    for i in range(8):  # 0-7 frames
+        var path = "res://art/player/walk_east/frame_%03d.png" % i
+        if ResourceLoader.exists(path):
+            var texture = load(path)
+            if texture:
+                walk_sprites.append(texture)
+    
+    # Jump sprites
+    var jump_sprites = []
+    for i in range(9):  # 0-8 frames
+        var path = "res://art/player/jump_east/frame_%03d.png" % i
+        if ResourceLoader.exists(path):
+            var texture = load(path)
+            if texture:
+                jump_sprites.append(texture)
+                
+    # Attack sprites
+    var attack_sprites = []
+    for i in range(5):  # 0-4 frames
+        var path = "res://art/player/attack_east/frame_%03d.png" % i
+        if ResourceLoader.exists(path):
+            var texture = load(path)
+            if texture:
+                attack_sprites.append(texture)
+    
+    # Adicionar sprites às animações se encontrou
+    if not idle_sprites.is_empty():
+        _add_frames_to_animation("idle", idle_sprites)
+        loaded = true
+    
+    if not walk_sprites.is_empty():
+        _add_frames_to_animation("walk", walk_sprites)
+        loaded = true
+        
+    if not jump_sprites.is_empty():
+        _add_frames_to_animation("jump", jump_sprites)
+        loaded = true
+        
+    if not attack_sprites.is_empty():
+        _add_frames_to_animation("attack", attack_sprites)
+        loaded = true
+    
+    if loaded:
+        _log("✅ Player sprites carregados com sucesso para " + player_name)
+    
+    return loaded
 
 func _create_debug_texture() -> void:
     """Cria uma textura colorida para debug quando sprites não carregam"""
@@ -273,10 +353,13 @@ func _physics_process(delta: float) -> void:
     if not is_on_floor():
         velocity.y += gravity * delta
     
-    # Só processar input se for jogador local
     if is_local_player:
-        _process_local_input(delta)
-        _send_sync_update()
+        # Client-side prediction para jogador local
+        _process_local_input_with_prediction(delta)
+        _send_sync_update_with_sequence()
+    else:
+        # Interpolação para jogadores remotos
+        _apply_interpolation(delta)
     
     move_and_slide()
     
@@ -286,43 +369,39 @@ func _physics_process(delta: float) -> void:
     
     _apply_flip_for_current_anim()
 
-func _process_local_input(delta: float) -> void:
-    """Processa input apenas para jogador local"""
-    # Movimento
+func _process_local_input_with_prediction(delta: float) -> void:
+    """Processa input com client-side prediction"""
+    # Capturar input
     var input_dir: float = 0.0
     if Input.is_action_pressed("ui_left"):
         input_dir -= 1.0
     if Input.is_action_pressed("ui_right"):
         input_dir += 1.0
     
-    velocity.x = input_dir * speed
+    var jump_pressed = Input.is_action_just_pressed("ui_up") and is_on_floor() and not is_attacking
+    var attack_pressed = Input.is_action_just_pressed("attack")
     
-    # Atualizar direção
-    if input_dir != 0.0:
-        facing_sign = int(sign(input_dir))
+    # Criar input data para enviar ao servidor
+    var input_data = {
+        "sequence": input_sequence,
+        "input_dir": input_dir,
+        "jump": jump_pressed,
+        "attack": attack_pressed,
+        "timestamp": Time.get_ticks_msec() / 1000.0
+    }
     
-    # Pulo
-    if Input.is_action_just_pressed("ui_up") and is_on_floor() and not is_attacking:
-        velocity.y = -jump_force
-        _play_animation("jump")
-        
-        # Enviar ação de pulo
-        _log("🦘 " + player_name + " enviando pulo!")
-        player_action.emit("jump", {"position": global_position})
+    # Armazenar input para reconciliação posterior
+    input_buffer.append(input_data)
+    if input_buffer.size() > 60:  # Manter apenas últimos 60 inputs (1s a 60fps)
+        input_buffer.pop_front()
     
-    # Ataque manual (Space para ataque temporário)
-    if Input.is_action_just_pressed("ui_accept"):
-        _try_attack()
+    # Aplicar movimento imediatamente (prediction)
+    _apply_input(input_data, delta)
     
-    # Auto attack
-    if auto_attack_enabled:
-        auto_attack_timer -= delta
-        if auto_attack_timer <= 0.0:
-            _try_attack()
-            auto_attack_timer = attack_cooldown
+    input_sequence += 1
 
-func _send_sync_update() -> void:
-    """Envia atualização para o servidor se for jogador local"""
+func _send_sync_update_with_sequence() -> void:
+    """Envia atualização com sequence number para reconciliação"""
     if not is_local_player:
         return
     
@@ -330,55 +409,49 @@ func _send_sync_update() -> void:
     if current_time - last_sync_time >= sync_interval:
         # Log apenas a cada 3 segundos para não poluir
         if current_time - last_log_time >= log_interval:
-            _log("🔄 " + player_name + " enviando sync: pos=" + str(global_position) + " vel=" + str(velocity) + " anim=" + current_animation)
+            # Sync data sent
             last_log_time = current_time
         
-        player_update.emit(global_position, velocity, current_animation, facing_sign, current_hp)
+        # Emitir com sequence atual para reconciliação
+        player_update_with_sequence.emit(global_position, velocity, current_animation, facing_sign, current_hp, input_sequence)
         last_sync_time = current_time
 
 func apply_sync_data(data: Dictionary) -> void:
-    """Aplica dados de sincronização para jogadores remotos"""
-    if is_local_player:
-        return  # Jogador local não recebe sync
-    
-    # Log apenas a cada 3 segundos para não poluir
+    """Aplica dados de sincronização com interpolação ou reconciliação"""
+    print("🚨 APPLY_SYNC_DATA EXECUTADA!")  # Most basic log possible
+    _log("📥 APPLY_SYNC_DATA called - is_local_player: " + str(is_local_player) + " data keys: " + str(data.keys()))
     var current_time = Time.get_ticks_msec() / 1000.0
-    if current_time - last_log_time >= log_interval:
-        _log("📥 " + player_name + " recebendo sync: pos=" + str(data.get("position", "N/A")) + " anim=" + str(data.get("animation", "N/A")))
-        _log("📍 Posição atual de " + player_name + " após sync: " + str(global_position))
-        last_log_time = current_time
     
-    # Atualizar posição
-    if "position" in data:
-        var pos = data.position
-        global_position = Vector2(pos.x, pos.y)
+    if is_local_player:
+        # Calling reconciliation
+        # Reconciliação para jogador local
+        _apply_server_reconciliation(data, current_time)
+    else:
+        # Interpolação para jogadores remotos  
+        _add_to_interpolation_buffer(data, current_time)
     
-    # Atualizar velocidade
-    if "velocity" in data:
-        var vel = data.velocity
-        velocity = Vector2(vel.x, vel.y)
-    
-    # Atualizar animação
+    # Atualizar dados não relacionados à posição
     if "animation" in data:
         _play_animation(data.animation)
-    
-    # Atualizar direção
     if "facing" in data:
         facing_sign = data.facing
-    
-    # Atualizar HP
     if "hp" in data:
         current_hp = data.hp
 
 func _try_attack() -> void:
     """Tenta executar ataque"""
+    _log("⚔️ _try_attack chamado - _can_attack: " + str(_can_attack) + " is_attacking: " + str(is_attacking))
     if not _can_attack or is_attacking:
+        _log("❌ Ataque bloqueado - cooldown ou já atacando")
         return
     
     is_attacking = true
     _can_attack = false
     
     _play_animation("attack")
+    
+    # Tocar som de ataque
+    _play_attack_sound()
     
     # Enviar ação de ataque
     if is_local_player:
@@ -441,18 +514,30 @@ func _spawn_attack_hitbox() -> void:
 
 func _on_attack_hitbox_body_entered(body: Node, hitbox: Area2D) -> void:
     """Callback quando hitbox atinge algo"""
-    if body is Enemy:
-        var damage = 34
+    # EnemyClient removido - usando tipo genérico
+    if body.has_method("take_damage"):
+        # Calcular dano baseado nos atributos do player
+        var damage = _get_attack_damage()
+        
+        # Enviar ataque para servidor em vez de aplicar dano diretamente
+        var main_node = get_tree().get_first_node_in_group("main")
+        if main_node and main_node.current_map_node and main_node.current_map_node.has_method("handle_player_attack"):
+            main_node.current_map_node.handle_player_attack(body.global_position, damage)
+            _log("⚔️ Ataque enviado ao servidor: " + str(damage))
+    elif body is EnemyMultiplayer:
+        # Compatibilidade com sistema antigo (caso ainda tenha alguns)
+        var damage = _get_attack_damage()
         body.take_damage(damage)
-        _log("💥 Dano aplicado: " + str(damage))
+        _log("💥 Dano aplicado (sistema antigo): " + str(damage))
     
     if is_instance_valid(hitbox):
         hitbox.queue_free()
 
 func take_damage(amount: int) -> void:
-    """Recebe dano"""
-    current_hp = max(0, current_hp - amount)
-    _log("❤️ HP: " + str(current_hp) + "/" + str(max_hp))
+    """Recebe dano com cálculo de defesa"""
+    var reduced_damage = _calculate_damage_after_defense(amount)
+    current_hp = max(0, current_hp - reduced_damage)
+    _log("❤️ HP: " + str(current_hp) + "/" + str(max_hp) + " (Dano recebido: " + str(reduced_damage) + ")")
     
     # Enviar atualização se for jogador local
     if is_local_player:
@@ -476,6 +561,58 @@ func _play_animation(anim: String) -> void:
     if current_animation != anim and frames.has_animation(anim):
         sprite.play(anim)
         current_animation = anim
+
+func _play_attack_sound() -> void:
+    """Toca o som de ataque através do main"""
+    var tree = get_tree()
+    if tree == null:
+        return
+    var main_node = tree.get_first_node_in_group("main")
+    if main_node and main_node.has_method("play_sfx_id"):
+        main_node.play_sfx_id("attack")
+
+func _get_attack_damage() -> int:
+    """Calcula dano de ataque baseado nos atributos"""
+    var tree = get_tree()
+    if tree == null:
+        return 10  # Dano base fallback
+    var main_node = tree.get_first_node_in_group("main")
+    if main_node and main_node.has_method("get_player_damage"):
+        var damage = main_node.get_player_damage()
+        _log("🗡️ Dano calculado: " + str(damage))
+        return damage
+    else:
+        _log("⚠️ get_player_damage() não encontrado, usando fallback")
+        return 10  # Dano base fallback
+
+func _calculate_damage_after_defense(raw_damage: int) -> int:
+    """Calcula dano final após aplicar defesa"""
+    var tree = get_tree()
+    if tree == null:
+        return raw_damage  # Sem defesa aplicada
+    var main_node = tree.get_first_node_in_group("main")
+    if main_node and main_node.has_method("get_damage_reduction"):
+        var defense = main_node.get_damage_reduction()
+        # Defesa reduz o dano, mas sempre causa pelo menos 1 de dano
+        var reduced_damage = max(1, raw_damage - defense)
+        return reduced_damage
+    else:
+        return raw_damage  # Sem defesa aplicada
+
+func update_max_hp() -> void:
+    """Atualiza HP máximo baseado na vitalidade"""
+    var tree = get_tree()
+    if tree == null:
+        _log("⚠️ get_tree() null em update_max_hp(), adiando atualização")
+        call_deferred("update_max_hp")
+        return
+        
+    var main_node = tree.get_first_node_in_group("main")
+    if main_node and "player_hp_max" in main_node:
+        max_hp = main_node.player_hp_max
+        # Se HP atual é maior que novo máximo, ajustar
+        if current_hp > max_hp:
+            current_hp = max_hp
 
 func _apply_flip_for_current_anim() -> void:
     """Aplica flip baseado na direção e orientação da animação"""
@@ -512,3 +649,144 @@ func set_auto_attack(enabled: bool) -> void:
     """Define auto ataque"""
     auto_attack_enabled = enabled
     auto_attack_timer = 0.0
+
+# === CLIENT-SIDE PREDICTION & INTERPOLATION ===
+
+func _apply_input(input_data: Dictionary, _delta: float) -> void:
+    """Aplica input específico (usado tanto para prediction quanto reconciliação)"""
+    var input_dir = input_data.get("input_dir", 0.0)
+    var jump = input_data.get("jump", false)
+    var attack = input_data.get("attack", false)
+    
+    # Movimento horizontal
+    velocity.x = input_dir * speed
+    
+    # Atualizar direção
+    if input_dir != 0.0:
+        facing_sign = int(sign(input_dir))
+    
+    # Pulo
+    if jump:
+        velocity.y = -jump_force
+        _play_animation("jump")
+        _log("🦘 " + player_name + " prediction pulo!")
+    
+    # Ataque
+    if attack:
+        _try_attack()
+
+func _apply_server_reconciliation(server_data: Dictionary, current_time: float) -> void:
+    """Reconcilia posição do servidor com predições locais"""
+    _log("🚨 RECONCILIATION FUNCTION CALLED - server_data keys: " + str(server_data.keys()))
+    
+    if not "position" in server_data:
+        _log("❌ No position in server_data, returning early")
+        return
+    
+    var server_pos = Vector2(server_data.position.x, server_data.position.y)
+    var server_seq = server_data.get("sequence", -1)
+    
+    # Calcular diferença apenas horizontal (ignorar gravidade)
+    var horizontal_error = abs(global_position.x - server_pos.x)
+    
+    # DEBUG: SEMPRE mostrar logs a cada 3 segundos para debug
+    var should_log = (current_time - last_log_time >= log_interval)
+    if should_log:
+        _log("🔍 RECONCILIATION DEBUG: local_pos=" + str(global_position) + " server_pos=" + str(server_pos) + " h_error=" + str(horizontal_error) + " threshold=" + str(reconciliation_threshold) + " velocity.x=" + str(velocity.x))
+        last_log_time = current_time
+    
+    # Mostrar bloqueios sempre que ocorrerem
+    if horizontal_error <= reconciliation_threshold:
+        if should_log:
+            _log("✅ Reconciliação BLOQUEADA: erro " + str(horizontal_error) + "px <= threshold " + str(reconciliation_threshold) + "px")
+    elif velocity.x == 0.0:
+        if should_log:
+            _log("✅ Reconciliação BLOQUEADA: velocity.x = 0.0 (player parado)")
+    
+    # Só reconciliar se erro horizontal for significativo E se não estiver parado
+    if horizontal_error > reconciliation_threshold and velocity.x != 0.0:
+        # Horizontal reconciliation applied
+        
+        # Correção: definir apenas posição X do servidor
+        global_position.x = server_pos.x
+        # Manter Y local para preservar física de gravidade
+        
+        # Re-aplicar apenas inputs horizontais posteriores
+        if server_seq >= 0:
+            for input_data in input_buffer:
+                if input_data.sequence > server_seq:
+                    # Aplicar apenas movimento horizontal
+                    var input_dir = input_data.get("input_dir", 0.0)
+                    if input_dir != 0.0:
+                        velocity.x = input_dir * speed
+                        global_position.x += velocity.x * get_physics_process_delta_time()
+    
+    # Atualizar dados do servidor para referência
+    server_position = server_pos
+    if "velocity" in server_data:
+        server_velocity = Vector2(server_data.velocity.x, server_data.velocity.y)
+    server_timestamp = current_time
+
+func _add_to_interpolation_buffer(data: Dictionary, timestamp: float) -> void:
+    """Adiciona estado ao buffer de interpolação"""
+    if not "position" in data:
+        return
+        
+    var state = {
+        "position": Vector2(data.position.x, data.position.y),
+        "velocity": Vector2(data.velocity.x, data.velocity.y) if "velocity" in data else Vector2.ZERO,
+        "timestamp": timestamp
+    }
+    
+    interpolation_buffer.append(state)
+    
+    # Manter buffer limitado
+    if interpolation_buffer.size() > max_buffer_size:
+        interpolation_buffer.pop_front()
+    
+    # Ordenar por timestamp
+    interpolation_buffer.sort_custom(func(a, b): return a.timestamp < b.timestamp)
+
+func _apply_interpolation(delta: float) -> void:
+    """Aplica interpolação suave entre estados recebidos"""
+    if interpolation_buffer.size() < 2:
+        return
+    
+    var current_time = Time.get_ticks_msec() / 1000.0
+    var render_time = current_time - interpolation_delay
+    
+    # Encontrar dois estados para interpolar
+    var from_state = null
+    var to_state = null
+    
+    for i in range(interpolation_buffer.size() - 1):
+        var current_state = interpolation_buffer[i]
+        var next_state = interpolation_buffer[i + 1]
+        
+        if render_time >= current_state.timestamp and render_time <= next_state.timestamp:
+            from_state = current_state
+            to_state = next_state
+            break
+    
+    if from_state != null and to_state != null:
+        # Calcular fator de interpolação
+        var time_diff = to_state.timestamp - from_state.timestamp
+        var lerp_factor = 0.0
+        if time_diff > 0:
+            lerp_factor = (render_time - from_state.timestamp) / time_diff
+            lerp_factor = clamp(lerp_factor, 0.0, 1.0)
+        
+        # Interpolar posição suavemente
+        var target_pos = from_state.position.lerp(to_state.position, lerp_factor)
+        global_position = global_position.lerp(target_pos, delta * 10.0)  # Suavização
+        
+        # Interpolar velocidade
+        velocity = from_state.velocity.lerp(to_state.velocity, lerp_factor)
+    
+    # Limpar estados antigos
+    _cleanup_interpolation_buffer(render_time)
+
+func _cleanup_interpolation_buffer(render_time: float) -> void:
+    """Remove estados antigos do buffer de interpolação"""
+    while interpolation_buffer.size() > 0 and interpolation_buffer[0].timestamp < render_time - 0.5:
+        interpolation_buffer.pop_front()

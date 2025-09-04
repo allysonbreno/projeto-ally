@@ -4,6 +4,7 @@ import json
 import threading
 from datetime import datetime
 import uuid
+from enemy_server import EnemyManager
 
 class GameServer:
     def __init__(self):
@@ -17,6 +18,11 @@ class GameServer:
         import os
         self.log_file_path = os.path.join(os.path.dirname(__file__), "../../logs_servidor.txt")
         self._init_log_file()
+        
+        # Sistema de inimigos server-side
+        self.enemy_manager = EnemyManager()
+        self.enemy_manager.initialize_forest_enemies()
+        self.enemy_update_task = None
         
     def _init_log_file(self):
         """Inicializa o arquivo de log"""
@@ -107,6 +113,18 @@ class GameServer:
                 await self.handle_player_action(websocket, data)
             elif message_type == "client_log":
                 await self.handle_client_log(websocket, data)
+            elif message_type == "map_change":
+                await self.handle_map_change(websocket, data)
+            elif message_type == "enemy_death":
+                await self.handle_enemy_death(websocket, data)
+            elif message_type == "enemy_damage":
+                await self.handle_enemy_damage(websocket, data)
+            elif message_type == "enemy_position_sync":
+                await self.handle_enemy_position_sync(websocket, data)
+            elif message_type == "player_attack_enemy":
+                await self.handle_player_attack_enemy(websocket, data)
+            elif message_type == "request_enemies_state":
+                await self.handle_request_enemies_state(websocket, data)
             else:
                 self.log(f"Tipo de mensagem desconhecido: {message_type}")
                 
@@ -140,14 +158,23 @@ class GameServer:
         # Criar novo jogador
         player_id = str(uuid.uuid4())[:8]
         
+        # Posições de spawn por mapa
+        spawn_positions = {
+            "Cidade": {"x": 100, "y": 159},  # Acima do chão da cidade (Y=189)
+            "Floresta": {"x": -512, "y": 184}  # Acima do chão da floresta (Y=204)
+        }
+        initial_map = "Cidade"
+        spawn_pos = spawn_positions.get(initial_map, spawn_positions["Cidade"])
+        
         player_info = {
             "id": player_id,
             "name": player_name,
-            "position": {"x": 100, "y": 350},  # Posição inicial
+            "position": spawn_pos,
             "velocity": {"x": 0, "y": 0},
             "animation": "idle",
             "facing": 1,
             "hp": 100,
+            "current_map": initial_map,
             "connected_at": datetime.now().isoformat()
         }
         
@@ -192,7 +219,7 @@ class GameServer:
         self.log(f"Login realizado: {player_name} (ID: {player_id})")
     
     async def handle_player_update(self, websocket, data):
-        """Processa atualizações de posição/estado do jogador"""
+        """Processa atualizações de posição/estado do jogador com validação server-side"""
         client_data = self.clients.get(websocket)
         if not client_data or not client_data["player_id"]:
             return
@@ -204,8 +231,33 @@ class GameServer:
         # Atualizar dados do jogador
         player_info = self.players[player_id]
         
+        # Validação de movimento server-side (anti-cheat ajustado)
         if "position" in data:
-            player_info["position"] = data["position"]
+            old_pos = player_info.get("position", {"x": 0, "y": 0})
+            new_pos = data["position"]
+            
+            # Calcular distância horizontal (excluir gravidade do anti-cheat)
+            horizontal_distance = abs(new_pos["x"] - old_pos["x"])
+            vertical_distance = abs(new_pos["y"] - old_pos["y"])
+            
+            # Limites mais realistas
+            max_horizontal_speed = 500.0  # pixels por segundo
+            max_vertical_speed = 1000.0   # permitir queda rápida (gravidade)
+            time_delta = 0.25   # intervalo máximo entre updates
+            max_horizontal_distance = max_horizontal_speed * time_delta
+            max_vertical_distance = max_vertical_speed * time_delta
+            
+            # Validar apenas movimento horizontal suspeito
+            if horizontal_distance <= max_horizontal_distance:
+                player_info["position"] = data["position"]
+            else:
+                # Apenas movimento horizontal suspeito - manter Y
+                player_info["position"] = {
+                    "x": old_pos["x"] + (max_horizontal_distance if new_pos["x"] > old_pos["x"] else -max_horizontal_distance),
+                    "y": new_pos["y"]  # Permitir movimento vertical livre (gravidade)
+                }
+                self.log(f"⚠️ Movimento horizontal suspeito de {client_data['player_name']}: {horizontal_distance:.1f}px em {time_delta}s")
+        
         if "velocity" in data:
             player_info["velocity"] = data["velocity"]
         if "animation" in data:
@@ -215,12 +267,26 @@ class GameServer:
         if "hp" in data:
             player_info["hp"] = data["hp"]
         
-        # Broadcast para outros jogadores
+        # Adicionar timestamp e sequence para reconciliação
+        import time
+        player_info["server_timestamp"] = time.time()
+        player_info["sequence"] = data.get("sequence", 0)
+        
+        # Broadcast para outros jogadores (incluindo dados para reconciliação)
         await self.broadcast({
             "type": "player_sync",
             "player_id": player_id,
             "player_info": player_info
         }, exclude=websocket)
+        
+        # Resposta de confirmação para o cliente (para reconciliação)
+        await self.send_to_client(websocket, {
+            "type": "player_sync_ack",
+            "sequence": data.get("sequence", 0),
+            "position": player_info["position"],
+            "velocity": player_info["velocity"],
+            "server_timestamp": player_info["server_timestamp"]
+        })
     
     async def handle_player_action(self, websocket, data):
         """Processa ações dos jogadores (ataques, pulos, etc.)"""
@@ -254,6 +320,144 @@ class GameServer:
         # Formatear o log do cliente no servidor
         formatted_log = f"[{instance_type}:{player_name}] {log_message}"
         self.log(formatted_log)
+    
+    async def handle_map_change(self, websocket, data):
+        """Processa mudança de mapa do jogador"""
+        client_data = self.clients.get(websocket)
+        if not client_data or not client_data["player_id"]:
+            return
+        
+        player_id = client_data["player_id"]
+        current_map = data.get("current_map", "Cidade")
+        
+        # Posições de spawn por mapa
+        spawn_positions = {
+            "Cidade": {"x": 100, "y": 159},  # Acima do chão da cidade (Y=189)
+            "Floresta": {"x": -512, "y": 184}  # Acima do chão da floresta (Y=204)
+        }
+        
+        # Atualizar dados do jogador
+        if player_id in self.players:
+            self.players[player_id]["current_map"] = current_map
+            # Atualizar posição para o spawn do novo mapa
+            new_position = spawn_positions.get(current_map, spawn_positions["Cidade"])
+            self.players[player_id]["position"] = new_position
+            self.log(f"Player {client_data['player_name']} spawn em {current_map}: {new_position}")
+        
+        # Broadcast para outros jogadores
+        await self.broadcast({
+            "type": "map_change",
+            "player_id": player_id,
+            "current_map": current_map,
+            "spawn_position": new_position
+        }, exclude=websocket)
+        
+        self.log(f"Player {client_data['player_name']} mudou para mapa: {current_map}")
+    
+    async def handle_enemy_death(self, websocket, data):
+        """Processa morte de inimigo"""
+        client_data = self.clients.get(websocket)
+        if not client_data or not client_data["player_id"]:
+            return
+        
+        enemy_id = data.get("enemy_id", "")
+        enemy_position = data.get("position", {})
+        killer_id = data.get("killer_id", "")
+        
+        # Broadcast para outros jogadores
+        await self.broadcast({
+            "type": "enemy_death",
+            "enemy_id": enemy_id,
+            "position": enemy_position,
+            "killer_id": killer_id
+        }, exclude=websocket)
+        
+        self.log(f"Inimigo {enemy_id} morto por {client_data['player_name']}")
+    
+    async def handle_enemy_damage(self, websocket, data):
+        """Processa dano ao inimigo"""
+        client_data = self.clients.get(websocket)
+        if not client_data or not client_data["player_id"]:
+            return
+        
+        enemy_id = data.get("enemy_id", "")
+        damage = data.get("damage", 0)
+        new_hp = data.get("new_hp", 0)
+        attacker_id = data.get("attacker_id", "")
+        
+        # Broadcast para outros jogadores
+        await self.broadcast({
+            "type": "enemy_damage",
+            "enemy_id": enemy_id,
+            "damage": damage,
+            "new_hp": new_hp,
+            "attacker_id": attacker_id
+        }, exclude=websocket)
+        
+        self.log(f"Inimigo {enemy_id} recebeu {damage} dano de {client_data['player_name']} (HP: {new_hp})")
+    
+    async def handle_enemy_position_sync(self, websocket, data):
+        """Processa sincronização de posição de inimigo"""
+        client_data = self.clients.get(websocket)
+        if not client_data or not client_data["player_id"]:
+            return
+        
+        enemy_id = data.get("enemy_id", "")
+        position = data.get("position", {})
+        velocity = data.get("velocity", {})
+        flip_h = data.get("flip_h", False)
+        animation = data.get("animation", "idle")
+        owner_id = data.get("owner_id", "")
+        
+        # Broadcast para outros jogadores
+        await self.broadcast({
+            "type": "enemy_position_sync",
+            "enemy_id": enemy_id,
+            "position": position,
+            "velocity": velocity,
+            "flip_h": flip_h,
+            "animation": animation,
+            "owner_id": owner_id
+        }, exclude=websocket)
+        
+        # Log menos frequente para posição (opcional)
+        # self.log(f"Posição do inimigo {enemy_id} sincronizada por {client_data['player_name']}")
+    
+    async def handle_player_attack_enemy(self, websocket, data):
+        """Processa ataque de player a inimigo (server-side)"""
+        client_data = self.clients.get(websocket)
+        if not client_data or not client_data["player_id"]:
+            return
+        
+        enemy_id = data.get("enemy_id", "")
+        damage = data.get("damage", 0)
+        attacker_id = client_data["player_id"]
+        
+        # Processar dano no servidor
+        result = self.enemy_manager.damage_enemy(enemy_id, damage, attacker_id)
+        
+        if result:
+            # Broadcast resultado para todos os jogadores
+            await self.broadcast(result)
+        
+        self.log(f"Player {client_data['player_name']} atacou inimigo {enemy_id} por {damage} dano")
+    
+    async def handle_request_enemies_state(self, websocket, data):
+        """Envia estado atual dos inimigos para um cliente"""
+        client_data = self.clients.get(websocket)
+        if not client_data or not client_data["player_id"]:
+            return
+        
+        map_name = data.get("map_name", "Cidade")
+        enemies_state = self.enemy_manager.get_enemies_in_map(map_name)
+        
+        await self.send_to_client(websocket, {
+            "type": "enemies_state",
+            "map_name": map_name,
+            "enemies": enemies_state
+        })
+        
+        self.log(f"Enviado estado de {len(enemies_state)} inimigos para {client_data['player_name']}")
     
     async def send_to_client(self, websocket, data):
         """Envia mensagem para um cliente específico"""
@@ -299,6 +503,10 @@ class GameServer:
             )
             self.running = True
             self.log(f"Servidor iniciado em ws://{self.host}:{self.port}")
+            
+            # Iniciar loop de atualização de inimigos
+            self.enemy_update_task = asyncio.create_task(self._enemy_update_loop())
+            
             return True
         except Exception as e:
             self.log(f"Erro ao iniciar servidor: {e}")
@@ -326,6 +534,32 @@ class GameServer:
         self.players.clear()
         
         self.log("Servidor parado")
+        
+        # Parar loop de inimigos
+        if self.enemy_update_task:
+            self.enemy_update_task.cancel()
+    
+    async def _enemy_update_loop(self):
+        """Loop principal de atualização dos inimigos"""
+        while self.running:
+            try:
+                # Atualizar inimigos
+                updated_enemies = self.enemy_manager.update_enemies(self.players)
+                
+                # Broadcast atualizações se houver mudanças
+                if updated_enemies:
+                    await self.broadcast({
+                        "type": "enemies_update",
+                        "enemies": updated_enemies
+                    })
+                
+                # Aguardar próximo frame (60 FPS)
+                await asyncio.sleep(1/60)
+                
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                self.log(f"Erro no loop de inimigos: {e}")
     
     def get_status(self):
         """Retorna status do servidor"""
@@ -334,5 +568,6 @@ class GameServer:
             "clients_connected": len(self.clients),
             "players_online": len(self.players),
             "host": self.host,
-            "port": self.port
+            "port": self.port,
+            "enemies_count": len(self.enemy_manager.enemies)
         }

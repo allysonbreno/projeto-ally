@@ -4,9 +4,16 @@ class_name MultiplayerManager
 signal player_connected(player_info)
 signal player_disconnected(player_id)
 signal player_sync_received(player_id, player_data)
+# Novos sinais para sistema server-side
+signal enemies_update_received(enemies_data)
+signal enemies_state_received(enemies_data)
+signal enemy_death_received(enemy_data)
+signal enemy_position_sync_received(sync_data)
+signal map_change_received(player_id, current_map)
 signal login_response(success, message, player_info)
 signal connection_established()
 signal connection_lost()
+signal server_reconciliation(reconciliation_data)
 
 # Configuração do servidor
 var server_host = "127.0.0.1"
@@ -25,6 +32,9 @@ var is_logged_in = false
 var players_data = {}
 
 func _ready():
+    # Adicionar ao grupo para ser encontrado pelos inimigos
+    add_to_group("multiplayer_manager")
+    
     # Detectar se estamos rodando via Godot ou executável
     var is_debug = OS.is_debug_build()
     var log_file_path = ""
@@ -130,6 +140,23 @@ func send_player_update(position: Vector2, velocity: Vector2, animation: String,
     
     _send_message(update_data)
 
+func send_player_update_with_sequence(position: Vector2, velocity: Vector2, animation: String, facing: int, hp: int, sequence: int):
+    """Envia atualização do jogador com sequence para reconciliação"""
+    if not is_logged_in:
+        return
+    
+    var update_data = {
+        "type": "player_update",
+        "position": {"x": position.x, "y": position.y},
+        "velocity": {"x": velocity.x, "y": velocity.y},
+        "animation": animation,
+        "facing": facing,
+        "hp": hp,
+        "sequence": sequence
+    }
+    
+    _send_message(update_data)
+
 func send_player_action(action: String, action_data: Dictionary = {}):
     """Envia ação do jogador para o servidor"""
     if not is_logged_in:
@@ -142,6 +169,18 @@ func send_player_action(action: String, action_data: Dictionary = {}):
     }
     
     _send_message(action_message)
+
+func send_map_change(current_map: String):
+    """Notifica servidor sobre mudança de mapa"""
+    if not is_logged_in:
+        return
+    
+    var map_data = {
+        "type": "map_change",
+        "current_map": current_map
+    }
+    
+    _send_message(map_data)
 
 func _send_message(data: Dictionary):
     """Envia mensagem para o servidor"""
@@ -159,6 +198,63 @@ func send_log_to_server(message: String):
             "instance_type": instance_type
         }
         _send_message(log_data)
+
+func send_enemy_death(enemy_id: String, enemy_position: Vector2):
+    """Envia notificação de morte de inimigo"""
+    if connection_status == "connected":
+        var death_data = {
+            "type": "enemy_death",
+            "enemy_id": enemy_id,
+            "position": {"x": enemy_position.x, "y": enemy_position.y},
+            "killer_id": local_player_info.get("id", "")
+        }
+        _send_message(death_data)
+
+func send_enemy_damage(enemy_id: String, damage: int, new_hp: int):
+    """Envia notificação de dano ao inimigo"""
+    if connection_status == "connected":
+        var damage_data = {
+            "type": "enemy_damage",
+            "enemy_id": enemy_id,
+            "damage": damage,
+            "new_hp": new_hp,
+            "attacker_id": local_player_info.get("id", "")
+        }
+        _send_message(damage_data)
+
+func send_enemy_position_sync(enemy_id: String, position: Vector2, velocity: Vector2, flip_h: bool, animation: String):
+    """Envia sincronização de posição do inimigo"""
+    if connection_status == "connected":
+        var sync_data = {
+            "type": "enemy_position_sync",
+            "enemy_id": enemy_id,
+            "position": {"x": position.x, "y": position.y},
+            "velocity": {"x": velocity.x, "y": velocity.y},
+            "flip_h": flip_h,
+            "animation": animation,
+            "controller_id": local_player_info.get("id", "")
+        }
+        _send_message(sync_data)
+
+func send_player_attack_enemy(enemy_id: String, damage: int):
+    """Envia ataque do player ao inimigo (server-side)"""
+    if connection_status == "connected":
+        var attack_data = {
+            "type": "player_attack_enemy",
+            "enemy_id": enemy_id,
+            "damage": damage,
+            "attacker_id": local_player_info.get("id", "")
+        }
+        _send_message(attack_data)
+
+func request_enemies_state(map_name: String):
+    """Solicita estado atual dos inimigos de um mapa"""
+    if connection_status == "connected":
+        var request_data = {
+            "type": "request_enemies_state",
+            "map_name": map_name
+        }
+        _send_message(request_data)
 
 func _process_messages():
     """Processa mensagens recebidas do servidor"""
@@ -196,8 +292,29 @@ func _handle_server_message(data: Dictionary):
         "player_sync":
             _handle_player_sync(data)
         
+        "player_sync_ack":
+            _handle_player_sync_ack(data)
+        
         "player_action":
             _handle_player_action(data)
+        
+        "enemy_death":
+            _handle_enemy_death(data)
+            
+        "enemies_update":
+            _handle_enemies_update(data)
+            
+        "enemies_state":
+            _handle_enemies_state(data)
+            
+        "enemy_death":
+            _handle_enemy_death_server(data)
+            
+        "enemy_position_sync":
+            _handle_enemy_position_sync(data)
+        
+        "map_change":
+            _handle_map_change(data)
         
         "server_shutdown":
             _handle_server_shutdown(data)
@@ -327,6 +444,73 @@ func get_players_data() -> Dictionary:
 func get_player_info(player_id: String) -> Dictionary:
     return players_data.get(player_id, {})
 
+func _handle_enemy_death(data: Dictionary):
+    """Processa morte de inimigo recebida do servidor"""
+    var enemy_id = data.get("enemy_id", "")
+    var killer_id = data.get("killer_id", "")
+    
+    # Não processar morte de inimigo que o próprio player matou
+    var local_id = local_player_info.get("id", "")
+    if killer_id == local_id:
+        return
+    
+    _log_to_file("💀 Inimigo morto: " + enemy_id + " por " + killer_id)
+    enemy_death_received.emit(enemy_id, killer_id)
+
+# Função removida - não mais necessária no sistema server-side
+
+func _handle_enemies_update(data: Dictionary):
+    """Processa atualizações de inimigos do servidor"""
+    var enemies_data = data.get("enemies", [])
+    enemies_update_received.emit(enemies_data)
+
+func _handle_enemies_state(data: Dictionary):
+    """Processa estado inicial dos inimigos"""
+    var enemies_data = data.get("enemies", [])
+    var map_name = data.get("map_name", "")
+    _log_to_file("📋 Recebido estado de " + str(enemies_data.size()) + " inimigos do mapa " + map_name)
+    enemies_state_received.emit(enemies_data)
+
+func _handle_enemy_death_server(data: Dictionary):
+    """Processa morte de inimigo do servidor"""
+    if data.get("type") == "enemy_death":
+        var enemy_id = data.get("enemy_id", "")
+        var killer_id = data.get("killer_id", "")
+        _log_to_file("💀 Inimigo morto pelo servidor: " + enemy_id + " por " + killer_id)
+        enemy_death_received.emit(data)
+
+func _handle_enemy_position_sync(data: Dictionary):
+    """Processa sincronização de posição de inimigo"""
+    var enemy_id = data.get("enemy_id", "")
+    var controller_id = data.get("controller_id", "")
+    
+    # Não processar sync do próprio inimigo
+    var local_id = local_player_info.get("id", "")
+    if controller_id == local_id:
+        return
+    
+    # Emitir sinal para o mapa processar
+    enemy_position_sync_received.emit(data)
+
+func _handle_map_change(data: Dictionary):
+    """Processa mudança de mapa recebida do servidor"""
+    var player_id = data.get("player_id", "")
+    var current_map = data.get("current_map", "")
+    var spawn_position = data.get("spawn_position", {})
+    
+    # Não processar mudança do próprio player
+    var local_id = local_player_info.get("id", "")
+    if player_id == local_id:
+        return
+    
+    # Atualizar posição do player nos dados
+    if player_id in players_data and spawn_position.has("x") and spawn_position.has("y"):
+        players_data[player_id]["position"] = spawn_position
+        _log_to_file("🗺️ Player " + player_id + " spawn em " + current_map + ": " + str(spawn_position))
+    
+    _log_to_file("🗺️ Player " + player_id + " mudou para: " + current_map)
+    map_change_received.emit(player_id, current_map)
+
 # Variável global para controlar qual arquivo de log usar
 var current_log_file = ""
 
@@ -351,6 +535,32 @@ func _init_log_file(file_path: String, instance_name: String):
         _log_to_file("Arquivo de log inicializado com sucesso")
     else:
         print("ERRO: Não conseguiu criar arquivo de log em: " + current_log_file)
+
+func _handle_player_sync_ack(data: Dictionary):
+    """Processa confirmação de sincronização do servidor para reconciliação"""
+    var sequence = data.get("sequence", 0)
+    var server_position = data.get("position", {"x": 0, "y": 0})
+    var server_velocity = data.get("velocity", {"x": 0, "y": 0})
+    var server_timestamp = data.get("server_timestamp", 0.0)
+    
+    # Encontrar jogador local e aplicar reconciliação
+    var local_id = local_player_info.get("id", "")
+    if local_id.is_empty():
+        return
+        
+    # Enviar dados de reconciliação para o jogador local
+    var reconciliation_data = {
+        "position": server_position,
+        "velocity": server_velocity,
+        "sequence": sequence,
+        "server_timestamp": server_timestamp
+    }
+    
+    _log_to_file("🔄 Recebido ACK do servidor - seq: " + str(sequence))
+    
+    # Emitir sinal para o jogador aplicar reconciliação
+    if has_signal("server_reconciliation"):
+        emit_signal("server_reconciliation", reconciliation_data)
 
 func _log_to_file(message: String, file_path: String = ""):
     """Salva log no arquivo E envia para o servidor"""

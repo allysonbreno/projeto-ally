@@ -29,7 +29,7 @@ var defense_button: Button
 var intelligence_button: Button
 var vitality_button: Button
 
-var player_ref: Player
+var player_ref: CharacterBody2D  # Alterado para tipo genérico
 
 func _init() -> void:
     layer = 10
@@ -237,20 +237,29 @@ func _open_status_dialog() -> void:
         status_dialog.popup_centered()
 
 # ================== API pública ==================
-func set_player(p: Player) -> void:
+func set_player(p: CharacterBody2D) -> void:
     player_ref = p
 
 func update_health(current: int, maxv: int) -> void:
+    if hp_bar == null:
+        print("⚠️ hp_bar é null em update_health(), não atualizando")
+        return
     hp_bar.max_value = maxv
     hp_bar.value = current
     _update_hp_text(current, maxv)
 
 func update_xp(current: int, maxv: int) -> void:
+    if xp_bar == null:
+        print("⚠️ xp_bar é null em update_xp(), não atualizando")
+        return
     xp_bar.max_value = maxv
     xp_bar.value = current
     _update_xp_text(current, maxv)
 
 func set_map_title(t: String) -> void:
+    if title_label == null:
+        print("⚠️ title_label é null em set_map_title(), não atualizando")
+        return
     title_label.text = t
 
 # Mantido por compatibilidade; não faz nada agora.
