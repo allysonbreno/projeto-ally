@@ -21,3 +21,9 @@ Thumbs.db
 **/obj/
 **/bin/
 builds/
+
+# Node.js
+server/node_modules/
+server/package-lock.json
+server/*.log
+server/.env
