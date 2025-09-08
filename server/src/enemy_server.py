@@ -91,8 +91,8 @@ class ServerEnemy:
                 
                 # 🆕 APLICAR SEPARAÇÃO DE INIMIGOS
                 separation_force = self._calculate_separation(other_enemies)
-                direction[0] += separation_force[0] * 2.0  # Força da separação
-                direction[1] += separation_force[1] * 2.0
+                direction[0] += separation_force[0] * 4.0  # Força da separação (aumentado)
+                direction[1] += separation_force[1] * 4.0
                 
                 # Re-normalizar se necessário
                 force_magnitude = math.sqrt(direction[0]**2 + direction[1]**2)
@@ -157,7 +157,7 @@ class ServerEnemy:
     def _calculate_separation(self, other_enemies: List) -> List[float]:
         """Calcula força de separação de outros inimigos"""
         separation_force = [0.0, 0.0]
-        separation_radius = 40.0  # Distância mínima entre inimigos
+        separation_radius = 60.0  # Distância mínima entre inimigos (aumentado)
         
         for other_enemy in other_enemies:
             if other_enemy.enemy_id == self.enemy_id or not other_enemy.is_alive:

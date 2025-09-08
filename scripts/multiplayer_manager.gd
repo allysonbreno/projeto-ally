@@ -478,7 +478,7 @@ func _handle_enemy_death_server(data: Dictionary):
 
 func _handle_enemy_position_sync(data: Dictionary):
     """Processa sincronização de posição de inimigo"""
-    var enemy_id = data.get("enemy_id", "")
+    var _enemy_id = data.get("enemy_id", "")
     var controller_id = data.get("controller_id", "")
     
     # Não processar sync do próprio inimigo
@@ -511,7 +511,7 @@ func _handle_map_change(data: Dictionary):
 # Variável global para controlar qual arquivo de log usar
 var current_log_file = ""
 
-func _init_log_file(file_path: String, instance_name: String):
+func _init_log_file(_file_path: String, instance_name: String):
     """Não cria mais arquivo de log local"""
     # Apenas registra no console
     print("Sistema de logs iniciado para " + instance_name)
@@ -542,7 +542,7 @@ func _handle_player_sync_ack(data: Dictionary):
     if has_signal("server_reconciliation"):
         emit_signal("server_reconciliation", reconciliation_data)
 
-func _log_to_file(message: String, file_path: String = ""):
+func _log_to_file(message: String, _file_path: String = ""):
     """Apenas envia log para o servidor, sem criar arquivo local"""
     var timestamp = Time.get_datetime_string_from_system().split("T")[1].substr(0, 8)
     var log_message = "[%s] %s" % [timestamp, message]

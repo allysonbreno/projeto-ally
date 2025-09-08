@@ -59,7 +59,11 @@ func _ready() -> void:
 
     set_collision_layer_value(2, true)
     set_collision_mask_value(1, true)
+    set_collision_mask_value(2, true)  # Colisão entre inimigos
     set_collision_mask_value(3, true)
+    
+    # Adicionar ao grupo de inimigos para detecção
+    add_to_group("enemies")
 
     sprite = AnimatedSprite2D.new()
     add_child(sprite)
@@ -114,11 +118,9 @@ func _process_local_movement(delta: float) -> void:
         var to_player: Vector2 = target_player.global_position - global_position
         var horiz: float = float(sign(to_player.x))
         velocity.x = horiz * speed
-
+        
         if absf(velocity.x) > 1.0:
             sprite.flip_h = (velocity.x < 0)
-
-        if absf(velocity.x) > 1.0:
             _play_if_not("walk")
         else:
             _play_if_not("idle")
@@ -220,9 +222,19 @@ func apply_remote_sync(sync_position: Vector2, new_velocity: Vector2, flip_h: bo
     last_heartbeat_received = Time.get_unix_time_from_system()
     has_received_initial_sync = true
     
-    # Aplicar posição e dados remotos
-    global_position = sync_position
-    velocity = new_velocity
+    # Aplicar posição e dados remotos usando movimento com colisão
+    # Calcular direção para a posição sincronizada
+    var target_direction = (sync_position - global_position)
+    if target_direction.length() > 2.0:  # Se está muito longe, teletransportar
+        global_position = sync_position
+    else:
+        # Se está próximo, mover com colisão
+        velocity = target_direction.normalized() * min(target_direction.length() * 10, speed)
+        move_and_slide()
+    
+    # Aplicar velocidade sincronizada apenas se não colidiu
+    if get_slide_collision_count() == 0:
+        velocity = new_velocity
     sprite.flip_h = flip_h
     _play_if_not(animation)
 
@@ -315,6 +327,7 @@ func _get_multiplayer_manager():
             return nodes[0]
     
     return null
+
 
 # helpers
 func _add_preloaded_animation(anim_name: String, textures: Array, fps: int, loop: bool) -> void:

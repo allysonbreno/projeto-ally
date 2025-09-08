@@ -53,9 +53,9 @@ func _create_background(viewport_size: Vector2) -> void:
         var texture_size = bg_texture.get_size()
         var scale_x = viewport_size.x / float(texture_size.x)
         var scale_y = viewport_size.y / float(texture_size.y)
-        var scale = max(scale_x, scale_y)
+        var bg_scale = max(scale_x, scale_y)
         
-        background.scale = Vector2(scale, scale)
+        background.scale = Vector2(bg_scale, bg_scale)
         background.position = Vector2.ZERO
         add_child(background)
 
@@ -213,7 +213,7 @@ func _on_enemy_position_sync_received(sync_data: Dictionary) -> void:
     """Processa sincronização de posição de inimigo remoto"""
     var enemy_id = sync_data.get("enemy_id", "")
     var controller_id = sync_data.get("controller_id", "")
-    var position = sync_data.get("position", {})
+    var sync_position = sync_data.get("position", {})
     var velocity = sync_data.get("velocity", {})
     var flip_h = sync_data.get("flip_h", false)
     var animation = sync_data.get("animation", "idle")
@@ -230,11 +230,11 @@ func _on_enemy_position_sync_received(sync_data: Dictionary) -> void:
         var enemy = enemies[enemy_id]
         if is_instance_valid(enemy) and not enemy.is_controlled_locally:
             # Usar método de sincronização do inimigo para garantir consistência
-            if "x" in position and "y" in position and "x" in velocity and "y" in velocity:
-                var sync_position = Vector2(position.x, position.y)
+            if "x" in sync_position and "y" in sync_position and "x" in velocity and "y" in velocity:
+                var enemy_position = Vector2(sync_position.x, sync_position.y)
                 var sync_velocity = Vector2(velocity.x, velocity.y)
-                enemy.apply_remote_sync(sync_position, sync_velocity, flip_h, animation)
-                print("🔄 Sincronizando inimigo " + enemy_id + " de " + controller_id + " para posição " + str(sync_position))
+                enemy.apply_remote_sync(enemy_position, sync_velocity, flip_h, animation)
+                print("🔄 Sincronizando inimigo " + enemy_id + " de " + controller_id + " para posição " + str(enemy_position))
         else:
             if is_instance_valid(enemy) and enemy.is_controlled_locally:
                 print("⚠️ IGNORANDO sincronização para inimigo controlado localmente: " + enemy_id)
@@ -256,19 +256,19 @@ func _on_enemy_damage_received(enemy_data: Dictionary) -> void:
 
 # Função removida - sistema agora é server-side
 
-func _on_player_connected(player_info: Dictionary) -> void:
+func _on_player_connected(_player_info: Dictionary) -> void:
     """Quando novo player conecta, reassignar ownership dos inimigos"""
     # Player connected, reassigning ownership
     # Temporariamente desabilitado para evitar conflitos
     # _reassign_all_enemy_ownership()
 
-func _on_player_disconnected(player_id: String) -> void:
+func _on_player_disconnected(_player_id: String) -> void:
     """Quando player desconecta, reassignar ownership dos inimigos"""
     # Player disconnected, reassigning ownership
     # Temporariamente desabilitado para evitar conflitos
     # _reassign_all_enemy_ownership()
 
-func _on_player_map_changed(player_id: String, current_map: String) -> void:
+func _on_player_map_changed(_player_id: String, _current_map: String) -> void:
     """Quando player muda de mapa, reassignar ownership dos inimigos"""
     print("🗺️ Player mudou de mapa, reassignando ownership...")
     # Temporariamente desabilitado para evitar conflitos
@@ -304,7 +304,7 @@ func _reassign_all_enemy_ownership() -> void:
                 enemy.is_controlled_locally = (new_owner == my_player_id)
             
             if old_owner != new_owner:
-                var control_status = "CONTROLADO" if enemy.is_controlled_locally else "REMOTO"
+                var _control_status = "CONTROLADO" if enemy.is_controlled_locally else "REMOTO"
                 # Enemy ownership updated
             
             enemy_index += 1
