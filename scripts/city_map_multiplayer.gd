@@ -6,6 +6,11 @@ var main: Node
 var ground_body: StaticBody2D
 var walls: Array[StaticBody2D] = []
 var background: Sprite2D
+const SHOW_BACKGROUND := false
+const SHOW_PLATFORM_VISUAL := true
+const GROUND_VISUAL_OFFSET := 8.0  # ajuste fino de alinhamento visual com os pés
+const GROUND_COLOR := Color(0.20, 0.20, 0.24, 1.0)
+const WALL_COLOR := Color(0.15, 0.15, 0.18, 1.0)
 
 # Configurações
 const GROUND_HEIGHT: float = 30.0
@@ -30,18 +35,18 @@ func _get_viewport_size() -> Vector2:
     return Vector2(1024, 768)
 
 func _create_background(viewport_size: Vector2) -> void:
+    if not SHOW_BACKGROUND:
+        return
     var bg_texture = load("res://art/bg/city_bg.png") as Texture2D
     if bg_texture:
         background = Sprite2D.new()
         background.texture = bg_texture
         background.z_index = -1
-        
         # Calcular escala para cobrir a tela toda com margem
         var texture_size = bg_texture.get_size()
         var scale_x = viewport_size.x / float(texture_size.x)
         var scale_y = viewport_size.y / float(texture_size.y)
         var bg_scale = max(scale_x, scale_y)
-        
         background.scale = Vector2(bg_scale, bg_scale)
         background.position = Vector2.ZERO
         add_child(background)
@@ -56,7 +61,9 @@ func _create_ground(viewport_size: Vector2) -> void:
     collision.shape = shape
     ground_body.add_child(collision)
     
-    var ground_y = (viewport_size.y * 0.5) - BOTTOM_MARGIN + (GROUND_HEIGHT * 0.5)
+    # Alinhar com o servidor: ground_y server-side = 184.0 (y dos pés do player)
+    # Para que o TOPO da plataforma seja 184, o centro do retângulo deve ser 184 + half_height
+    var ground_y = 184.0 + (GROUND_HEIGHT * 0.5) + GROUND_VISUAL_OFFSET
     ground_body.position = Vector2(0, ground_y)
     # Ground created
     
@@ -68,6 +75,10 @@ func _create_ground(viewport_size: Vector2) -> void:
     
     add_child(ground_body)
     # Ground added to scene
+
+    # Visual helper for platforms
+    if SHOW_PLATFORM_VISUAL:
+        _add_visual_rect(ground_body, shape.size, GROUND_COLOR)
 
 func _create_walls(viewport_size: Vector2) -> void:
     # Parede esquerda
@@ -100,6 +111,10 @@ func _create_wall(size: Vector2) -> StaticBody2D:
     wall.set_collision_mask_value(3, true)
     
     add_child(wall)
+    
+    # Visual helper for walls
+    if SHOW_PLATFORM_VISUAL:
+        _add_visual_rect(wall, shape.size, WALL_COLOR)
     return wall
 
 func _create_camera() -> void:
@@ -108,7 +123,20 @@ func _create_camera() -> void:
     add_child(camera)
     camera.call_deferred("make_current")
 
+func _add_visual_rect(parent: Node2D, size: Vector2, color: Color) -> void:
+    var poly := Polygon2D.new()
+    var hw = size.x * 0.5
+    var hh = size.y * 0.5
+    poly.polygon = PackedVector2Array([
+        Vector2(-hw, -hh),
+        Vector2(hw, -hh),
+        Vector2(hw, hh),
+        Vector2(-hw, hh),
+    ])
+    poly.color = color
+    poly.z_index = -1
+    parent.add_child(poly)
+
 func get_player_spawn_position() -> Vector2:
-    var viewport_size = _get_viewport_size()
-    var spawn_y = (viewport_size.y * 0.5) - BOTTOM_MARGIN - 20.0
-    return Vector2(0.0, spawn_y)
+    # Spawn alinhado ao servidor (Cidade: y ≈ 159)
+    return Vector2(0.0, 159.0)

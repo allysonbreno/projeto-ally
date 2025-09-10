@@ -6,9 +6,14 @@ var main: Node
 var ground_body: StaticBody2D
 var walls: Array[StaticBody2D] = []
 var background: Sprite2D
+const SHOW_BACKGROUND := false
+const SHOW_PLATFORM_VISUAL := true
+const GROUND_VISUAL_OFFSET := 8.0
+const GROUND_COLOR := Color(0.18, 0.22, 0.18, 1.0)
+const WALL_COLOR := Color(0.12, 0.16, 0.12, 1.0)
 
 # Sistema de inimigos sincronizados
-var enemies: Dictionary = {}  # enemy_id -> EnemyMultiplayer
+var enemies: Dictionary = {}  # enemy_id -> MultiplayerEnemy (OrcEnemy, SlimeEnemy, etc.)
 
 # Configurações
 const GROUND_HEIGHT: float = 30.0
@@ -43,18 +48,18 @@ func _get_viewport_size() -> Vector2:
     return Vector2(1024, 768)
 
 func _create_background(viewport_size: Vector2) -> void:
+    if not SHOW_BACKGROUND:
+        return
     var bg_texture = load("res://art/bg/forest_bg.png") as Texture2D
     if bg_texture:
         background = Sprite2D.new()
         background.texture = bg_texture
         background.z_index = -1
-        
         # Calcular escala para cobrir a tela toda
         var texture_size = bg_texture.get_size()
         var scale_x = viewport_size.x / float(texture_size.x)
         var scale_y = viewport_size.y / float(texture_size.y)
         var bg_scale = max(scale_x, scale_y)
-        
         background.scale = Vector2(bg_scale, bg_scale)
         background.position = Vector2.ZERO
         add_child(background)
@@ -68,7 +73,8 @@ func _create_ground(viewport_size: Vector2) -> void:
     collision.shape = shape
     ground_body.add_child(collision)
     
-    var ground_y = (viewport_size.y * 0.5) - BOTTOM_MARGIN + (GROUND_HEIGHT * 0.5)
+    # Alinhar com o servidor: ground_y server-side = 184.0 (y dos pés do player)
+    var ground_y = 184.0 + (GROUND_HEIGHT * 0.5) + GROUND_VISUAL_OFFSET
     ground_body.position = Vector2(0, ground_y)
     
     # Configurar camadas de colisão
@@ -77,6 +83,10 @@ func _create_ground(viewport_size: Vector2) -> void:
     ground_body.set_collision_mask_value(3, true)
     
     add_child(ground_body)
+
+    # Visual helper for platforms
+    if SHOW_PLATFORM_VISUAL:
+        _add_visual_rect(ground_body, shape.size, GROUND_COLOR)
 
 func _create_walls(viewport_size: Vector2) -> void:
     # Parede esquerda
@@ -109,6 +119,10 @@ func _create_wall(size: Vector2) -> StaticBody2D:
     wall.set_collision_mask_value(3, true)
     
     add_child(wall)
+    
+    # Visual helper for walls
+    if SHOW_PLATFORM_VISUAL:
+        _add_visual_rect(wall, shape.size, WALL_COLOR)
     return wall
 
 func _create_camera() -> void:
@@ -117,15 +131,28 @@ func _create_camera() -> void:
     add_child(camera)
     camera.call_deferred("make_current")
 
+func _add_visual_rect(parent: Node2D, size: Vector2, color: Color) -> void:
+    var poly := Polygon2D.new()
+    var hw = size.x * 0.5
+    var hh = size.y * 0.5
+    poly.polygon = PackedVector2Array([
+        Vector2(-hw, -hh),
+        Vector2(hw, -hh),
+        Vector2(hw, hh),
+        Vector2(-hw, hh),
+    ])
+    poly.color = color
+    poly.z_index = -1
+    parent.add_child(poly)
+
 # FUNÇÃO REMOVIDA - Sistema agora é server-side authoritative
 # Os inimigos são criados e controlados pelo servidor Python
 # O cliente apenas recebe e exibe os estados via _create_enemy_from_server_data()
 
 func get_player_spawn_position() -> Vector2:
-    var viewport_size = _get_viewport_size()
-    var spawn_y = (viewport_size.y * 0.5) - BOTTOM_MARGIN - 20.0
-    var spawn_x = -viewport_size.x * 0.5 + 64.0
-    return Vector2(spawn_x, spawn_y)
+    # Spawn aproximado; servidor enviará posição autoritativa
+    # Mantemos Y compatível (~159) para evitar saltos visuais ao carregar
+    return Vector2(-200.0, 159.0)
 
 func _request_enemies_from_server() -> void:
     """Solicita o estado atual dos inimigos do servidor"""
@@ -184,7 +211,7 @@ func _determine_enemy_owner(enemy_index: int, my_player_id: String) -> String:
     print("🎯 Inimigo %d será controlado por player %s (de %s players na Floresta: %s)" % [enemy_index, owner_id, players_in_forest.size(), players_in_forest])
     return owner_id
 
-func _register_enemy(enemy: EnemyMultiplayer) -> void:
+func _register_enemy(enemy: MultiplayerEnemy) -> void:
     """Registra inimigo no sistema de sincronização"""
     if enemy and enemy.enemy_id != "":
         enemies[enemy.enemy_id] = enemy
@@ -370,39 +397,55 @@ func _on_enemies_state_received(enemies_data: Array) -> void:
     """Recebe estado inicial dos inimigos do servidor"""
     print("📡 Recebidos " + str(enemies_data.size()) + " inimigos do servidor")
     
-    for enemy_data in enemies_data:
+    for i in range(enemies_data.size()):
+        var enemy_data = enemies_data[i]
+        print("DEBUG - Processando inimigo " + str(i+1) + ": " + str(enemy_data.get("enemy_id", "unknown")))
         _create_enemy_from_server_data(enemy_data)
 
 func _on_enemies_update_received(enemies_data: Array) -> void:
     """Recebe atualizações dos inimigos do servidor"""
+    print("📡 Recebendo atualização de " + str(enemies_data.size()) + " inimigos do servidor")
     for enemy_data in enemies_data:
         _update_enemy_from_server_data(enemy_data)
 
 func _create_enemy_from_server_data(enemy_data: Dictionary) -> void:
     """Cria um inimigo baseado nos dados do servidor"""
     var enemy_id = enemy_data.get("enemy_id", "")
-    if enemy_id == "" or enemy_id in enemies:
-        return  # Inimigo já existe
+    print("DEBUG - _create_enemy_from_server_data() chamado para: " + enemy_id)
     
-    # Criar inimigo display-only
-    const EnemyScene = preload("res://scripts/enemy_multiplayer.gd")
-    var enemy = EnemyScene.new()
+    if enemy_id == "":
+        print("ERRO - enemy_id vazio: " + str(enemy_data))
+        return
+    
+    if enemy_id in enemies:
+        print("DEBUG - Inimigo " + enemy_id + " já existe, ignorando")
+        return
+    
+    # Criar inimigo para server authoritative (apenas visual)
+    const OrcEnemyScene = preload("res://scripts/enemies/orc_enemy.gd")
+    var enemy = OrcEnemyScene.new()
     enemy.enemy_id = enemy_id
-    enemy.is_controlled_locally = false  # Sempre display-only
+    enemy.is_controlled_locally = false  # Server authoritative - apenas display
     enemy.main = main
+    
+    # Desabilitar processamento local (servidor controla tudo)
+    enemy.set_physics_process(false)  # Desabilitar movimento local
     
     # 🔧 CONFIGURAR COMO DISPLAY-ONLY (sem colisão física)
     call_deferred("_setup_display_only_enemy", enemy)
     
     # Aplicar estado do servidor
-    var pos = enemy_data.get("position", {"x": 0, "y": 0})
-    enemy.position = Vector2(pos.x, pos.y)
+    # Dados do servidor usam chaves planas: 'x', 'y', 'velocity_x', 'velocity_y'
+    var ex = float(enemy_data.get("x", 0.0))
+    var ey = float(enemy_data.get("y", 0.0))
+    enemy.position = Vector2(ex, ey)
     enemy.hp = enemy_data.get("hp", 100)
     
     add_child(enemy)
     enemies[enemy_id] = enemy
     
-    print("🎭 Inimigo criado (DISPLAY-ONLY): " + enemy_id)
+    print("🎭 Inimigo criado (DISPLAY-ONLY): " + enemy_id + " na posição " + str(enemy.position))
+    print("DEBUG - Total de inimigos agora: " + str(enemies.size()))
 
 func _setup_display_only_enemy(enemy: Node) -> void:
     """Configura inimigo para ser display-only (sem colisão com player)"""
@@ -431,11 +474,21 @@ func _update_enemy_from_server_data(enemy_data: Dictionary) -> void:
         return
     
     # Atualizar estado do inimigo
-    var pos = enemy_data.get("position", {"x": enemy.position.x, "y": enemy.position.y})
-    var vel = enemy_data.get("velocity", {"x": 0, "y": 0})
+    # Campos planos do sync: x, y, velocity_x, velocity_y
+    var ex = float(enemy_data.get("x", enemy.position.x))
+    var ey = float(enemy_data.get("y", enemy.position.y))
+    var evx = float(enemy_data.get("velocity_x", 0.0))
+    var evy = float(enemy_data.get("velocity_y", 0.0))
     
-    enemy.global_position = Vector2(pos.x, pos.y)
-    enemy.velocity = Vector2(vel.x, vel.y)
+    # Evitar sobreposição visual com o player local (display-only):
+    if main and main.local_player:
+        var lp = main.local_player.global_position
+        var dx = ex - lp.x
+        var min_gap = 22.0  # distância mínima visual
+        if abs(dx) < min_gap:
+            ex = lp.x + (min_gap if dx >= 0.0 else -min_gap)
+    enemy.global_position = Vector2(ex, ey)
+    enemy.velocity = Vector2(evx, evy)
     enemy.hp = enemy_data.get("hp", enemy.hp)
     
     # Atualizar animação e sprite
@@ -445,4 +498,15 @@ func _update_enemy_from_server_data(enemy_data: Dictionary) -> void:
     if enemy.sprite:
         enemy.sprite.flip_h = facing_left
         if enemy.frames and enemy.frames.has_animation(animation):
+            # Garantir que o FPS está correto
+            if animation == "idle":
+                enemy.frames.set_animation_speed(animation, enemy.fps_idle)
+            elif animation == "walk":
+                enemy.frames.set_animation_speed(animation, enemy.fps_walk)
+            elif animation == "attack":
+                enemy.frames.set_animation_speed(animation, enemy.fps_attack)
+            
             enemy.sprite.play(animation)
+            # Apenas log mudanças de animação, não idle constante
+            if animation != "idle":
+                print("🎬 Animação aplicada: " + animation + " no inimigo " + enemy_id)
