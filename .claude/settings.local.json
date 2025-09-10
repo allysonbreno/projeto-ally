@@ -42,7 +42,12 @@
       "Bash(sed:*)",
       "Bash(grep:*)",
       "Bash(git log:*)",
-      "Bash(git grep:*)"
+      "Bash(git grep:*)",
+      "Bash(cmd /c:*)",
+      "Bash(pkill:*)",
+      "Bash(pip install:*)",
+      "Bash(del:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []
