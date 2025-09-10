@@ -1,390 +1,254 @@
 extends CharacterBody2D
 class_name EnemyMultiplayer
 
-var speed: float = 112.0
-var gravity: float = 900.0
-var hp: int = 100
-var enemy_id: String = ""  # ID único para sincronização
-var attack_timer: float = 0.0
-var attack_interval: float = 0.7
-var contact_range: float = 26.0
-var is_attacking: bool = false
+# ============================================================================
+# ENEMY MULTIPLAYER - VISUAL RENDERING ONLY (SERVER-AUTHORITATIVE)
+# ============================================================================
+# Este inimigo é APENAS para renderização visual.
+# TODA lógica de IA, movimento e combate está no SERVIDOR Python.
+# Este script apenas:
+# - Renderiza a posição/animação recebida do servidor
+# - Mostra o visual do inimigo baseado no estado do servidor
 
-# Sistema de ownership para sincronização
-var owner_player_id: String = ""
-var is_controlled_locally: bool = true
-var last_position_sync: float = 0.0
-var last_heartbeat_received: float = 0.0
-const POSITION_SYNC_RATE: float = 0.1  # Sincronizar posição a cada 100ms
-const HEARTBEAT_TIMEOUT: float = 3.0  # 3 segundos sem heartbeat = inimigo órfão
-var has_received_initial_sync: bool = false  # Se já recebeu alguma sincronização
+# Enemy info (apenas para renderização)
+var enemy_id: String = ""
+var enemy_type: String = "orc"
+var current_hp: int = 100
+var max_hp: int = 100
+var current_animation: String = "idle"
 
-var target_player: Node2D  # Pode ser qualquer player multiplayer
-var main: Node
+# Referência ao MultiplayerManager
+var multiplayer_manager: MultiplayerManager
 
+# Componentes visuais
 var sprite: AnimatedSprite2D
+var hp_bar: ProgressBar
 var frames: SpriteFrames
 
-const PATH_WALK: String = "res://art/enemy_forest/walk_east"
-const PATH_ATK: String  = "res://art/enemy_forest/attack_east"
-const SPRITE_SCALE: Vector2 = Vector2(1.8, 1.8)
-const COLLIDER_SIZE: Vector2 = Vector2(24, 40)
-const FPS_WALK: int = 8
-const FPS_ATK: int = 7
+# Configurações visuais
+const SPRITE_SCALE: Vector2 = Vector2(0.3, 0.3)
+const FPS_IDLE: int = 4
+const FPS_WALK: int = 6
+const FPS_ATTACK: int = 8
 
-func _ready() -> void:
-    # Gerar ID único apenas se não foi definido externamente
-    if enemy_id == "":
-        enemy_id = "enemy_" + str(randi()) + "_" + str(Time.get_unix_time_from_system())
-    
-    # Inicializar timestamps
-    last_position_sync = Time.get_unix_time_from_system()
-    
-    # Só inicializar heartbeat se for controlado remotamente
-    if not is_controlled_locally:
-        last_heartbeat_received = 0  # Aguardar primeira sincronização
-    else:
-        last_heartbeat_received = Time.get_unix_time_from_system()
-        has_received_initial_sync = true
-    
-    # Log apenas se controlado localmente
-    if is_controlled_locally:
-        print("👺 Inimigo " + enemy_id + " criado - CONTROLADO LOCALMENTE")
-    
-    var shape: RectangleShape2D = RectangleShape2D.new()
-    shape.size = COLLIDER_SIZE
-    var col: CollisionShape2D = CollisionShape2D.new()
-    col.shape = shape
-    add_child(col)
+# ============================================================================
+# INICIALIZAÇÃO
+# ============================================================================
 
-    set_collision_layer_value(2, true)
-    set_collision_mask_value(1, true)
-    set_collision_mask_value(2, true)  # Colisão entre inimigos
-    set_collision_mask_value(3, true)
-    
-    # Adicionar ao grupo de inimigos para detecção
-    add_to_group("enemies")
+func _ready():
+    _setup_visual_components()
+    _setup_multiplayer_manager()
 
+func _setup_visual_components():
+    """Configura componentes visuais"""
+    # Sprite animado
     sprite = AnimatedSprite2D.new()
     add_child(sprite)
-    frames = SpriteFrames.new()
-    sprite.frames = frames
-    sprite.centered = true
     sprite.scale = SPRITE_SCALE
+    
+    # HP Bar
+    _create_hp_bar()
+    
+    # Carregar frames baseado no tipo de inimigo
+    _load_enemy_sprites()
 
-    # Carregar sprites diretamente das pastas
+func _setup_multiplayer_manager():
+    """Encontra referência ao MultiplayerManager"""
+    multiplayer_manager = get_node("/root/MultiplayerManager")
+    if not multiplayer_manager:
+        print("❌ MultiplayerManager não encontrado!")
+
+func _create_hp_bar():
+    """Cria barra de HP visual"""
+    hp_bar = ProgressBar.new()
+    add_child(hp_bar)
+    hp_bar.position = Vector2(-25, -60)
+    hp_bar.size = Vector2(50, 8)
+    hp_bar.min_value = 0
+    hp_bar.max_value = 100
+    hp_bar.value = 100
+    hp_bar.show_percentage = false
+    
+    # Estilo da barra de HP
+    var style_bg = StyleBoxFlat.new()
+    style_bg.bg_color = Color.RED
+    style_bg.corner_radius_top_left = 2
+    style_bg.corner_radius_top_right = 2
+    style_bg.corner_radius_bottom_left = 2
+    style_bg.corner_radius_bottom_right = 2
+    hp_bar.add_theme_stylebox_override("background", style_bg)
+    
+    var style_fill = StyleBoxFlat.new()
+    style_fill.bg_color = Color.GREEN
+    style_fill.corner_radius_top_left = 2
+    style_fill.corner_radius_top_right = 2
+    style_fill.corner_radius_bottom_left = 2
+    style_fill.corner_radius_bottom_right = 2
+    hp_bar.add_theme_stylebox_override("fill", style_fill)
+
+func _load_enemy_sprites():
+    """Carrega sprites baseado no tipo de inimigo"""
+    frames = SpriteFrames.new()
+    var enemy_base_path = "res://art/enemies/" + enemy_type + "/"
+    
+    # Animação idle
+    frames.add_animation("idle")
+    frames.set_animation_speed("idle", FPS_IDLE)
+    for i in range(4):  # 4 frames idle
+        var texture_path = enemy_base_path + "idle/frame_%03d.png" % i
+        if ResourceLoader.exists(texture_path):
+            frames.add_frame("idle", load(texture_path))
+    
+    # Animação walk
+    frames.add_animation("walk")
+    frames.set_animation_speed("walk", FPS_WALK)
+    for i in range(6):  # 6 frames walk
+        var texture_path = enemy_base_path + "walk/frame_%03d.png" % i
+        if ResourceLoader.exists(texture_path):
+            frames.add_frame("walk", load(texture_path))
+    
+    # Animação attack
+    frames.add_animation("attack")
+    frames.set_animation_speed("attack", FPS_ATTACK)
+    for i in range(4):  # 4 frames attack
+        var texture_path = enemy_base_path + "attack/frame_%03d.png" % i
+        if ResourceLoader.exists(texture_path):
+            frames.add_frame("attack", load(texture_path))
+    
+    # Animação death
+    frames.add_animation("death")
+    frames.set_animation_speed("death", FPS_WALK)
+    for i in range(3):  # 3 frames death
+        var texture_path = enemy_base_path + "death/frame_%03d.png" % i
+        if ResourceLoader.exists(texture_path):
+            frames.add_frame("death", load(texture_path))
+    
+    sprite.sprite_frames = frames
+
+# ============================================================================
+# PROCESSO PRINCIPAL (SERVER-SIDE RENDERING)
+# ============================================================================
+
+func _process(_delta):
+    """Processamento principal - apenas renderização baseada em dados do servidor"""
+    _update_visual_from_server()
+
+func _update_visual_from_server():
+    """Atualiza visual baseado nos dados recebidos do servidor"""
+    if not multiplayer_manager or enemy_id == "":
+        return
+    
+    # TODO: Obter dados do inimigo do servidor
+    # Por enquanto vamos manter como está até o servidor enviar dados de inimigos
+    
+    # Atualizar HP bar
+    _update_hp_bar()
+
+func _update_hp_bar():
+    """Atualiza barra de HP"""
+    if hp_bar:
+        hp_bar.value = (float(current_hp) / float(max_hp)) * 100.0
+        
+        # Ocultar HP bar se estiver com HP cheio
+        if current_hp >= max_hp:
+            hp_bar.visible = false
+        else:
+            hp_bar.visible = true
+
+# ============================================================================
+# SISTEMA DE ANIMAÇÃO (BASEADO EM DADOS DO SERVIDOR)
+# ============================================================================
+
+func _update_animation(new_animation: String):
+    """Atualiza animação baseada no estado do servidor"""
+    if new_animation != current_animation:
+        current_animation = new_animation
+        
+        # Verificar se a animação existe
+        if sprite.sprite_frames and sprite.sprite_frames.has_animation(current_animation):
+            sprite.play(current_animation)
+        else:
+            sprite.play("idle")  # Fallback
+
+# ============================================================================
+# CONFIGURAÇÃO DO INIMIGO
+# ============================================================================
+
+func setup_enemy(id: String, type: String, initial_hp: int = 100):
+    """Configura os dados do inimigo"""
+    enemy_id = id
+    enemy_type = type
+    current_hp = initial_hp
+    max_hp = initial_hp
+    
+    # Recarregar sprites se mudou o tipo
     _load_enemy_sprites()
     
-    # Configurar idle como primeira animação
-    if frames.has_animation("walk") and frames.get_frame_count("walk") > 0:
-        frames.add_animation("idle")
-        frames.set_animation_speed("idle", 1)
-        frames.set_animation_loop("idle", true)
-        frames.add_frame("idle", frames.get_frame_texture("walk", 0))
+    print("👹 Inimigo configurado: " + enemy_id + " (" + enemy_type + ")")
 
-    sprite.play("idle")
+func set_server_position(pos: Vector2):
+    """Define posição diretamente do servidor"""
+    position = pos
 
-func _physics_process(delta: float) -> void:
-    if not is_on_floor():
-        velocity.y += gravity * delta
-
-    if is_attacking:
-        velocity.x = 0.0
-        move_and_slide()
-        return
-
-    # Se este inimigo é controlado por este player, processar movimento
-    if is_controlled_locally:
-        _process_local_movement(delta)
-        _sync_position_if_needed()
-    else:
-        # Apenas verificar órfãos se já teve ownership inicial definido
-        if has_received_initial_sync:
-            _check_orphan_status()
-        # Não assumir controle automaticamente - apenas quando reassignado
+func set_server_data(data: Dictionary):
+    """Define todos os dados do servidor de uma vez"""
+    # Posição
+    var server_pos = data.get("position", {})
+    if not server_pos.is_empty():
+        var target_pos = Vector2(server_pos.get("x", position.x), server_pos.get("y", position.y))
+        position = position.lerp(target_pos, 0.5)  # Interpolação suave
     
-    move_and_slide()
+    # HP
+    var server_hp = data.get("hp", current_hp)
+    if server_hp != current_hp:
+        current_hp = server_hp
+        _update_hp_bar()
+    
+    # Animação
+    var server_animation = data.get("animation", "idle")
+    _update_animation(server_animation)
+    
+    # Direção (flip sprite)
+    var facing = data.get("facing_left", false)
+    if sprite:
+        sprite.flip_h = facing
 
-func _process_local_movement(delta: float) -> void:
-    """Processa movimento apenas para inimigos controlados localmente"""
-    # Verificar se realmente devemos processar movimento
-    if not is_controlled_locally:
-        return
+func take_damage(damage: int):
+    """Aplica dano visual (apenas feedback visual - dano real é no servidor)"""
+    current_hp = max(0, current_hp - damage)
+    _update_hp_bar()
     
-    # Encontrar o jogador mais próximo (local ou remoto)
-    _find_closest_player()
-    
-    if target_player and target_player.is_inside_tree():
-        var to_player: Vector2 = target_player.global_position - global_position
-        var horiz: float = float(sign(to_player.x))
-        velocity.x = horiz * speed
-        
-        if absf(velocity.x) > 1.0:
-            sprite.flip_h = (velocity.x < 0)
-            _play_if_not("walk")
-        else:
-            _play_if_not("idle")
+    # Efeito visual de dano
+    var tween = create_tween()
+    tween.tween_method(_flash_red, 0.0, 1.0, 0.2)
 
-        attack_timer -= delta
-        if attack_timer <= 0.0 and to_player.length() <= contact_range + 6.0:
-            _do_attack()
-    else:
-        velocity.x = 0.0
-        _play_if_not("idle")
+func _flash_red(progress: float):
+    """Efeito visual de flash vermelho ao tomar dano"""
+    if sprite:
+        sprite.modulate = Color.WHITE.lerp(Color.RED, sin(progress * PI * 4) * 0.5)
 
-func _find_closest_player() -> void:
-    """Encontra o jogador mais próximo (local ou remoto)"""
-    if not main:
-        return
+func die():
+    """Morte visual do inimigo"""
+    _update_animation("death")
     
-    var closest_distance = INF
-    target_player = null
-    
-    # Verifica jogador local
-    if "local_player" in main and main.local_player and main.local_player.is_inside_tree():
-        var distance = global_position.distance_to(main.local_player.global_position)
-        if distance < closest_distance:
-            closest_distance = distance
-            target_player = main.local_player
-    
-    # Verifica jogadores remotos
-    if "remote_players" in main:
-        for player_id in main.remote_players.keys():
-            var remote_player = main.remote_players[player_id]
-            if remote_player and remote_player.is_inside_tree():
-                var distance = global_position.distance_to(remote_player.global_position)
-                if distance < closest_distance:
-                    closest_distance = distance
-                    target_player = remote_player
+    # Fade out após animação
+    var tween = create_tween()
+    tween.tween_delay(1.0)
+    tween.tween_property(self, "modulate:a", 0.0, 0.5)
+    tween.tween_callback(queue_free)
 
-func _do_attack() -> void:
-    if is_attacking:
-        return
-    is_attacking = true
+# ============================================================================
+# GETTERS
+# ============================================================================
 
-    _play_once_if_has("attack")
-    var anim_len: float = _anim_length("attack")
-    if anim_len <= 0.0:
-        anim_len = 0.5
+func get_enemy_id() -> String:
+    return enemy_id
 
-    var hit_time: float = clamp(anim_len * 0.4, 0.05, anim_len - 0.05)
-    await get_tree().create_timer(hit_time).timeout
-    
-    # Causar dano ao jogador mais próximo
-    if target_player:
-        # Se for o jogador local, causa dano através do main
-        if "local_player" in main and target_player == main.local_player:
-            if main.has_method("damage_player"):
-                main.damage_player(12, target_player.global_position)
-        # Para jogadores remotos, por enquanto só mostra dano visual
-        # TODO: Implementar sistema de dano sincronizado para multiplayer
+func get_enemy_type() -> String:
+    return enemy_type
 
-    await get_tree().create_timer(max(0.0, anim_len - hit_time)).timeout
-    is_attacking = false
-    attack_timer = max(attack_interval, anim_len * 0.9)
+func get_current_hp() -> int:
+    return current_hp
 
-func take_damage(amount: int) -> void:
-    hp -= amount
-    if main and main.has_method("show_damage_popup_at_world"):
-        main.show_damage_popup_at_world(global_position, "-" + str(amount), Color(1, 0.5, 0.1, 1))
-    
-    # Enviar notificação de dano para outros players
-    _notify_damage(amount, hp)
-    
-    if hp <= 0:
-        # Enviar notificação de morte antes de morrer
-        _notify_death()
-        _drop_item()
-        queue_free()
-        if main and main.has_method("on_enemy_killed"):
-            main.on_enemy_killed()
-
-func _sync_position_if_needed() -> void:
-    """Sincroniza posição se necessário (apenas para inimigos controlados localmente)"""
-    var current_time = Time.get_unix_time_from_system()
-    
-    if current_time - last_position_sync >= POSITION_SYNC_RATE:
-        last_position_sync = current_time
-        _send_position_sync()
-
-func _send_position_sync() -> void:
-    """Envia sincronização de posição para outros players"""
-    var multiplayer_manager = _get_multiplayer_manager()
-    if multiplayer_manager and multiplayer_manager.has_method("send_enemy_position_sync"):
-        multiplayer_manager.send_enemy_position_sync(enemy_id, global_position, velocity, sprite.flip_h, sprite.animation)
-
-func apply_remote_sync(sync_position: Vector2, new_velocity: Vector2, flip_h: bool, animation: String) -> void:
-    """Aplica sincronização recebida de outro player (apenas para inimigos remotos)"""
-    if is_controlled_locally:
-        return  # Ignorar se for controlado localmente
-    
-    # Atualizar timestamp do último heartbeat
-    last_heartbeat_received = Time.get_unix_time_from_system()
-    has_received_initial_sync = true
-    
-    # Aplicar posição e dados remotos usando movimento com colisão
-    # Calcular direção para a posição sincronizada
-    var target_direction = (sync_position - global_position)
-    if target_direction.length() > 2.0:  # Se está muito longe, teletransportar
-        global_position = sync_position
-    else:
-        # Se está próximo, mover com colisão
-        velocity = target_direction.normalized() * min(target_direction.length() * 10, speed)
-        move_and_slide()
-    
-    # Aplicar velocidade sincronizada apenas se não colidiu
-    if get_slide_collision_count() == 0:
-        velocity = new_velocity
-    sprite.flip_h = flip_h
-    _play_if_not(animation)
-
-func _check_orphan_status() -> void:
-    """Verifica se este inimigo está órfão (sem dono ativo)"""
-    if is_controlled_locally or not has_received_initial_sync:
-        return
-    
-    var current_time = Time.get_unix_time_from_system()
-    
-    # Apenas assumir controle se realmente não houver sincronização por muito tempo
-    if last_heartbeat_received > 0 and current_time - last_heartbeat_received > HEARTBEAT_TIMEOUT:
-        print("🔴 Inimigo " + enemy_id + " órfão detectado após " + str(HEARTBEAT_TIMEOUT) + "s! Assumindo controle...")
-        _assume_control_emergency()
-
-func assume_control(new_owner_id: String) -> void:
-    """Força assumir controle deste inimigo"""
-    owner_player_id = new_owner_id
-    var my_player_id = ""
-    if main and main.has_method("get_local_player_id"):
-        my_player_id = main.get_local_player_id()
-    elif main and "multiplayer_manager" in main:
-        my_player_id = main.multiplayer_manager.get_local_player_id()
-    
-    is_controlled_locally = (new_owner_id == my_player_id)
-    last_heartbeat_received = Time.get_unix_time_from_system()
-    has_received_initial_sync = true
-    
-    var control_status = "CONTROLADO" if is_controlled_locally else "REMOTO"
-    print("🔄 Inimigo " + enemy_id + " ownership mudou para " + new_owner_id + " (" + control_status + ")")
-
-func _assume_control_emergency() -> void:
-    """Assume controle de emergência para inimigos sem dono"""
-    is_controlled_locally = true
-    var my_player_id = ""
-    if main and main.has_method("get_local_player_id"):
-        my_player_id = main.get_local_player_id()
-    elif main and "multiplayer_manager" in main:
-        my_player_id = main.multiplayer_manager.get_local_player_id()
-    
-    owner_player_id = my_player_id
-    last_heartbeat_received = Time.get_unix_time_from_system()
-    print("🔴 EMERGÊNCIA: Inimigo " + enemy_id + " assumindo controle local!")
-
-func _drop_item() -> void:
-    # 100% chance de dropar espada
-    var sword_item = {
-        "name": "Espada de Ferro",
-        "type": "weapon",
-        "damage": 15,
-        "icon": "sword.png"
-    }
-    
-    # Criar item no chão
-    var ItemDropScene = load("res://scripts/item_drop.gd")
-    var item_drop = ItemDropScene.new()
-    
-    # Posicionar no local da morte
-    item_drop.position = global_position
-    
-    # Configurar item
-    item_drop.setup_item(sword_item)
-    
-    # Adicionar à cena
-    get_parent().add_child(item_drop)
-
-func _notify_damage(damage: int, new_hp: int) -> void:
-    """Notifica servidor sobre dano recebido"""
-    var multiplayer_manager = _get_multiplayer_manager()
-    if multiplayer_manager and multiplayer_manager.has_method("send_enemy_damage"):
-        multiplayer_manager.send_enemy_damage(enemy_id, damage, new_hp)
-
-func _notify_death() -> void:
-    """Notifica servidor sobre morte"""
-    var multiplayer_manager = _get_multiplayer_manager()
-    if multiplayer_manager and multiplayer_manager.has_method("send_enemy_death"):
-        multiplayer_manager.send_enemy_death(enemy_id, global_position)
-
-func _get_multiplayer_manager():
-    """Encontra o MultiplayerManager"""
-    # Tentar encontrar no main primeiro
-    if main and "multiplayer_manager" in main:
-        return main.multiplayer_manager
-    
-    # Buscar na árvore
-    var tree = get_tree()
-    if tree:
-        var nodes = tree.get_nodes_in_group("multiplayer_manager")
-        if nodes.size() > 0:
-            return nodes[0]
-    
-    return null
-
-
-# helpers
-func _add_preloaded_animation(anim_name: String, textures: Array, fps: int, loop: bool) -> void:
-    if textures.is_empty():
-        return
-    frames.add_animation(anim_name)
-    frames.set_animation_loop(anim_name, loop)
-    frames.set_animation_speed(anim_name, fps)
-    for texture in textures:
-        if texture is Texture2D:
-            frames.add_frame(anim_name, texture)
-
-func _play_if_not(anim: String) -> void:
-    if sprite.animation != anim and frames.has_animation(anim):
-        sprite.play(anim)
-
-func _play_once_if_has(anim: String) -> void:
-    if frames.has_animation(anim):
-        sprite.play(anim)
-
-func _anim_length(anim: String) -> float:
-    if not frames.has_animation(anim):
-        return 0.0
-    var fps: float = max(1.0, float(frames.get_animation_speed(anim)))
-    var count: float = float(frames.get_frame_count(anim))
-    return count / fps
-
-func _load_enemy_sprites() -> void:
-    """Carrega sprites do inimigo diretamente das pastas"""
-    # Carregar animação walk
-    var walk_frames = []
-    for i in range(10):  # 0-9 frames
-        var path = "res://art/enemy_forest/walk_east/frame_%03d.png" % i
-        if ResourceLoader.exists(path):
-            var texture = load(path)
-            if texture:
-                walk_frames.append(texture)
-    
-    if walk_frames.size() > 0:
-        frames.add_animation("walk")
-        frames.set_animation_speed("walk", FPS_WALK)
-        frames.set_animation_loop("walk", true)
-        for frame in walk_frames:
-            frames.add_frame("walk", frame)
-    
-    # Carregar animação attack
-    var attack_frames = []
-    for i in range(10):  # 0-9 frames  
-        var path = "res://art/enemy_forest/attack_east/frame_%03d.png" % i
-        if ResourceLoader.exists(path):
-            var texture = load(path)
-            if texture:
-                attack_frames.append(texture)
-    
-    if attack_frames.size() > 0:
-        frames.add_animation("attack")
-        frames.set_animation_speed("attack", FPS_ATK)
-        frames.set_animation_loop("attack", false)
-        for frame in attack_frames:
-            frames.add_frame("attack", frame)
+func is_alive() -> bool:
+    return current_hp > 0

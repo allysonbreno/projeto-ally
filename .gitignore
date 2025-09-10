@@ -27,3 +27,20 @@ server/node_modules/
 server/package-lock.json
 server/*.log
 server/.env
+.claude/
+# Python cache
+__pycache__/
+**/*.pyc
+
+# Logs e temporários locais
+logs_*.txt
+*.tmp
+TMP_*.txt
+TEMP_*.txt
+PART*.txt
+*.swp
+*.swo
+
+# Arquivos de build/import não necessários
+*.import~
+*.old

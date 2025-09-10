@@ -1,12 +1,14 @@
-[gd_scene load_steps=2 format=3 uid="uid://d8vh5gw6m4qcg"]
+[gd_scene load_steps=2 format=3 uid="uid://ehmke0w2wuko"]
 
-[ext_resource type="Script" path="res://login_multiplayer.gd" id="1_r3kgw"]
+[ext_resource type="Script" uid="uid://cxv7i3tvgdnop" path="res://login_multiplayer.gd" id="1_r3kgw"]
 
 [node name="LoginMultiplayer" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_r3kgw")
 
 [node name="ColorRect" type="ColorRect" parent="."]
@@ -14,6 +16,8 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.1, 0.1, 0.2, 1)
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
@@ -27,6 +31,8 @@ offset_left = -150.0
 offset_top = -100.0
 offset_right = 150.0
 offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="TitleLabel" type="Label" parent="VBoxContainer"]
 layout_mode = 2
