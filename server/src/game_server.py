@@ -7,6 +7,7 @@ from datetime import datetime
 import uuid
 # Sistema legado removido - usando apenas MapManager
 from maps.map_instance import MapManager
+from db.sqlite_store import SqliteStore
 
 class GameServer:
     def __init__(self):
@@ -20,6 +21,15 @@ class GameServer:
         import os
         self.log_file_path = os.path.join(os.path.dirname(__file__), "../../logs_servidor.txt")
         self._init_log_file()
+        
+        # Banco de dados (SQLite)
+        try:
+            db_path = os.path.join(os.path.dirname(__file__), "../../server_data/game.db")
+            self.store = SqliteStore(db_path)
+            self.store.create_tables()
+            self.log("[DB] SQLite inicializado")
+        except Exception as e:
+            print(f"[ERROR][DB] Falha ao iniciar SQLite: {e}")
         
         # Novo sistema de mapas server-side
         print("DEBUG: Tentando criar MapManager...")
@@ -137,6 +147,20 @@ class GameServer:
                         server_player = map_instance.players[player_id]
                         player_name = server_player.name
                         current_map = map_name
+                        # Persistir estado
+                        try:
+                            user = self.store.get_user_by_username(player_name)
+                            if user:
+                                char = self.store.get_character_by_user_id(user["id"])
+                                if char:
+                                    self.store.save_character_state(char["id"], {
+                                        "map": map_name,
+                                        "pos_x": server_player.position[0],
+                                        "pos_y": server_player.position[1],
+                                        "hp": server_player.hp,
+                                    })
+                        except Exception:
+                            pass
                         # Remover player do mapa server-side
                         map_instance.remove_player(player_id)
                         break
@@ -223,9 +247,23 @@ class GameServer:
                     })
                     return
         
-        # Criar novo jogador
+        # Persistência: obter/criar user + character e carregar estado
+        user = self.store.get_user_by_username(player_name)
+        if not user:
+            user_id = self.store.create_user(player_name, None, None)
+            defaults = {
+                "level": 1, "xp": 0, "xp_max": 100, "attr_points": 0,
+                "map": "Cidade", "pos_x": 0.0, "pos_y": 159.0,
+                "hp": 100, "hp_max": 100,
+                "strength": 5, "defense": 5, "intelligence": 5, "vitality": 5,
+            }
+            self.store.create_character(user_id, player_name, defaults)
+            user = self.store.get_user_by_username(player_name)
+        char, attrs = self.store.load_character_full(user["id"])
+
+        # Criar novo jogador (id de sessão) e usar mapa salvo
         player_id = str(uuid.uuid4())[:8]
-        initial_map = "Cidade"
+        initial_map = char.get("map", "Cidade")
         
         # Armazenar info básica do cliente (apenas para compatibilidade)
         self.clients[websocket]["player_id"] = player_id
@@ -234,11 +272,20 @@ class GameServer:
         # Adicionar jogador server-side ao mapa
         map_instance = self.map_manager.get_or_create_map(initial_map)
         actual_spawn_pos = map_instance.add_player(player_id, player_name)
+        # Aplicar posição/hp persistidos
+        try:
+            sp = map_instance.players[player_id]
+            sp.position = [float(char.get("pos_x", actual_spawn_pos.get("x", 0.0))), float(char.get("pos_y", actual_spawn_pos.get("y", 0.0)))]
+            sp.hp = int(char.get("hp", 100))
+        except Exception:
+            pass
         
         self.log(f"[PLAYER] Player {player_name} ({player_id}) adicionado ao mapa '{initial_map}'")
         
         # Obter dados do player server-side para resposta
         server_player_data = map_instance.get_player_data(player_id)
+        if server_player_data:
+            server_player_data["name"] = player_name
         
         # Responder ao login
         await self.send_to_client(websocket, {
