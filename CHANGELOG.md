@@ -51,3 +51,17 @@
 - When client B enters Forest, both see each other in Forest.
 - Orcs spawn on the platform, move toward players, and attack on contact.
 - Players remain inside the map “box” (cannot fall below/leave the map).
+## v2.6.2 (2025-09-12)
+
+### Fixed
+- Respawn: jogador volta à Cidade vivo (is_alive = true) e com HP 100%, sem travas de movimento.
+- HUD pós-morte: evita exibir HP 0 na Cidade (ajuste imediato no cliente), e sincroniza com stats do servidor.
+
+### Changed
+- Cliente envia map_change("Cidade") ao detectar HP <= 0 (reforço autoritativo de troca de mapa).
+- Snapshot de input após load_city(false) para evitar travas até a próxima mudança de tecla.
+- current_map_node é definido em City para consistência.
+
+### Notes
+- Servidor mantém proteção para ignorar map_change para o mesmo mapa, evitando respawn indevido.
+
