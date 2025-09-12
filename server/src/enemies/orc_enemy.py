@@ -11,11 +11,11 @@ class OrcEnemy(MultiplayerEnemy):
         
         # Configurações específicas do Orc
         self.enemy_type = "orc"
-        self.hp = 100
-        self.max_hp = 100
+        self.hp = 50
+        self.max_hp = 50
         self.speed = 112.0
-        self.attack_damage = 12
-        self.attack_range = 32.0
+        self.attack_damage = 10
+        self.attack_range = 24.0  # contato mais realista
         self.attack_interval = 0.7
         
         print(f"[ORC] Orc enemy criado: {self.enemy_id} na posição {position}")

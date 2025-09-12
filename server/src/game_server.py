@@ -209,6 +209,8 @@ class GameServer:
                 await self.handle_enemy_position_sync(websocket, data)
             elif message_type == "player_attack_enemy":
                 await self.handle_player_attack_enemy(websocket, data)
+            elif message_type == "spend_attribute_point":
+                await self.handle_spend_attribute_point(websocket, data)
             elif message_type == "request_enemies_state":
                 await self.handle_request_enemies_state(websocket, data)
             else:
@@ -568,8 +570,42 @@ class GameServer:
         result = self.map_manager.damage_enemy(attacker_map, enemy_id, damage, attacker_id)
         
         if result:
-            # Broadcast resultado apenas para jogadores do mesmo mapa
-            await self.broadcast_to_map(attacker_map, result)
+            # Broadcast resultado (suporta lista de eventos)
+            if isinstance(result, list):
+                for ev in result:
+                    # Persistir stats em eventos de update
+                    if isinstance(ev, dict) and ev.get("type") == "player_stats_update":
+                        try:
+                            player_id_ev = ev.get("player_id")
+                            map_instance = self.map_manager.maps.get(attacker_map)
+                            if map_instance and player_id_ev in map_instance.players:
+                                sp = map_instance.players[player_id_ev]
+                                user = self.store.get_user_by_username(sp.name)
+                                if user:
+                                    char = self.store.get_character_by_user_id(user["id"])
+                                    if char:
+                                        self.store.save_character_state(char["id"], {
+                                            "level": sp.level,
+                                            "xp": sp.xp,
+                                            "xp_max": sp.xp_max,
+                                            "attr_points": sp.attribute_points,
+                                            "map": attacker_map,
+                                            "pos_x": sp.position[0],
+                                            "pos_y": sp.position[1],
+                                            "hp": sp.hp,
+                                            "hp_max": sp.max_hp,
+                                        })
+                                        self.store.save_character_attributes(char["id"], {
+                                            "strength": sp.strength,
+                                            "defense": sp.defense_attr,
+                                            "intelligence": sp.intelligence,
+                                            "vitality": sp.vitality,
+                                        })
+                        except Exception as e:
+                            self.log(f"[DB][WARNING] Falha ao persistir stats: {e}")
+                    await self.broadcast_to_map(attacker_map, ev)
+            else:
+                await self.broadcast_to_map(attacker_map, result)
         
         self.log(f"Player {client_data['player_name']} atacou inimigo {enemy_id} por {damage} dano no mapa {attacker_map}")
     
@@ -597,6 +633,68 @@ class GameServer:
         })
         
         self.log(f"Enviado estado de {len(enemies_state)} inimigos do mapa '{map_name}' para {client_data['player_name']}")
+
+    async def handle_spend_attribute_point(self, websocket, data):
+        """Gasta 1 ponto de atributo do player (server-authoritative)"""
+        client_data = self.clients.get(websocket)
+        if not client_data or not client_data.get("player_id"):
+            return
+        attr = str(data.get("attr", "")).strip().lower()
+        if attr not in ("strength", "defense", "intelligence", "vitality"):
+            return
+        player_id = client_data["player_id"]
+
+        # Encontrar player e mapa
+        current_map = None
+        map_instance = None
+        for map_name, mi in self.map_manager.maps.items():
+            if mi.has_player(player_id):
+                current_map = map_name
+                map_instance = mi
+                break
+        if not map_instance:
+            return
+
+        sp = map_instance.players.get(player_id)
+        if not sp:
+            return
+
+        # Aplicar ponto de atributo
+        if sp.add_attribute_point(attr):
+            # Persistir no DB
+            try:
+                user = self.store.get_user_by_username(sp.name)
+                if user:
+                    char = self.store.get_character_by_user_id(user["id"])
+                    if char:
+                        self.store.save_character_state(char["id"], {
+                            "level": sp.level,
+                            "xp": sp.xp,
+                            "xp_max": sp.xp_max,
+                            "attr_points": sp.attribute_points,
+                            "map": current_map,
+                            "pos_x": sp.position[0],
+                            "pos_y": sp.position[1],
+                            "hp": sp.hp,
+                            "hp_max": sp.max_hp,
+                        })
+                        self.store.save_character_attributes(char["id"], {
+                            "strength": sp.strength,
+                            "defense": sp.defense_attr,
+                            "intelligence": sp.intelligence,
+                            "vitality": sp.vitality,
+                        })
+            except Exception as e:
+                self.log(f"[DB][WARNING] Falha ao persistir ponto de atributo: {e}")
+
+            # Notificar cliente (e demais do mapa) com stats atualizados
+            stats_ev = {
+                "type": "player_stats_update",
+                "player_id": sp.player_id,
+                "player_name": sp.name,
+                "stats": sp.to_stats_dict(),
+            }
+            await self.broadcast_to_map(current_map, stats_ev)
     
     async def send_to_client(self, websocket, data):
         """Envia mensagem para um cliente específico"""
@@ -800,6 +898,25 @@ class GameServer:
                             "type": "enemies_update",
                             "enemies": updated_enemies
                         })
+                # Sempre verificar eventos extras (ex.: dano em player), mesmo sem updates
+                for map_name, map_inst in self.map_manager.maps.items():
+                    try:
+                        extra_events = getattr(map_inst, "_last_enemy_events", [])
+                        if extra_events:
+                            for ev in extra_events:
+                                await self.broadcast_to_map(map_name, ev)
+                            map_inst._last_enemy_events = []
+                    except Exception as e:
+                        self.log(f"[ENEMY_LOOP] Falha ao enviar eventos extras: {e}")
+                    try:
+                        map_inst = self.map_manager.maps.get(map_name)
+                        extra_events = getattr(map_inst, "_last_enemy_events", []) if map_inst else []
+                        if extra_events:
+                            for ev in extra_events:
+                                await self.broadcast_to_map(map_name, ev)
+                            map_inst._last_enemy_events = []
+                    except Exception as e:
+                        self.log(f"[ENEMY_LOOP] Falha ao enviar eventos extras: {e}")
                 
                 # Cleanup mapas vazios ocasionalmente
                 if len(all_enemy_updates) % 3600 == 0:  # A cada 60 segundos (60fps * 60s)

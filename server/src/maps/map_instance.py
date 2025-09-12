@@ -149,6 +149,8 @@ class MapInstance:
         """
         Atualiza todos os inimigos do mapa.
         Retorna lista de inimigos que foram modificados.
+        OBS: Eventos adicionais (ex: dano em player) sero retornados via atributo
+        temporrio self._last_enemy_events, consumidos pelo MapManager/GameServer.
         """
         if not self.enemies:
             return []
@@ -165,9 +167,10 @@ class MapInstance:
             }
         
         updated_enemies = []
+        extra_events = []
         dead_enemies = []
         enemy_list = list(self.enemies.values())
-        
+
         for enemy_id, enemy in self.enemies.items():
             if enemy.update(delta_time, enemies_players_data, enemy_list):
                 updated_enemies.append(enemy.get_sync_data())
@@ -175,15 +178,48 @@ class MapInstance:
             # Verificar se morreu
             if not enemy.is_alive:
                 dead_enemies.append(enemy_id)
-        
+            # Verificar impacto de ataque contra player
+            pid = None
+            try:
+                pid = enemy.consume_pending_hit()
+            except Exception:
+                pid = None
+            if pid and pid in self.players:
+                sp = self.players.get(pid)
+                # Validar alcance
+                try:
+                    dx = sp.position[0] - enemy.position[0]
+                    dy = sp.position[1] - enemy.position[1]
+                    dist = (dx*dx + dy*dy) ** 0.5
+                except Exception:
+                    dist = 9999.0
+                if dist <= getattr(enemy, 'attack_range', 24.0):
+                    # Dano bruto do inimigo (será reduzido no take_damage)
+                    base = int(getattr(enemy, 'attack_damage', 10))
+                    died = sp.take_damage(base)
+                    # Para exibição no cliente: dano final após defesa
+                    try:
+                        final_damage = int(getattr(sp, 'last_damage_taken', max(0, base - sp.get_damage_reduction())))
+                    except Exception:
+                        final_damage = max(0, base)
+                    extra_events.append({
+                        "type": "player_damage",
+                        "player_id": sp.player_id,
+                        "enemy_id": enemy.enemy_id,
+                        "damage": final_damage,
+                        "hp": sp.hp,
+                        "hp_max": sp.max_hp,
+                    })
+
         # Remover inimigos mortos
         for enemy_id in dead_enemies:
             del self.enemies[enemy_id]
             print(f"[DEATH] [MAP:{self.map_name}] Inimigo {enemy_id} removido (morto)")
-        
+
         # Processar fila de respawn
         self._process_respawn_queue(updated_enemies)
-        
+        # Guardar eventos para consumo pelo MapManager/GameServer
+        self._last_enemy_events = extra_events
         return updated_enemies
     
     def _process_respawn_queue(self, updated_enemies: List[dict]):
@@ -249,34 +285,80 @@ class MapInstance:
         
         return updated_players
     
-    def damage_enemy(self, enemy_id: str, damage: int, attacker_id: str) -> Optional[dict]:
-        """Aplica dano a um inimigo. Retorna resultado ou None"""
+    def damage_enemy(self, enemy_id: str, damage: int, attacker_id: str) -> Optional[list]:
+        """Aplica dano a um inimigo. Retorna lista de eventos ou None"""
         if enemy_id not in self.enemies:
             return None
-        
+
         enemy = self.enemies[enemy_id]
         died = enemy.take_damage(damage)
-        
+
+        # Eventos a serem emitidos para os clientes
+        events = []
+
         if died:
             state = enemy.get_sync_data()
-            
+
             # Para inimigos na Floresta (orcs), agendar respawn
             if self.map_name == "Floresta" and enemy.enemy_type == "orc":
                 respawn_info = {
                     "enemy_type": "orc",
                     "position": enemy.position,
                     "respawn_time": time.time() + self.respawn_delay,
-                    "original_id": enemy_id
+                    "original_id": enemy_id,
                 }
                 self.respawn_queue.append(respawn_info)
                 print(f"[TIMER] [MAP:{self.map_name}] Orc {enemy_id} agendado para respawn em {self.respawn_delay}s")
-            
+
+            # Remover inimigo do mapa
             del self.enemies[enemy_id]
             print(f"[DEATH] [MAP:{self.map_name}] Inimigo {enemy_id} morreu por {attacker_id}")
-            return {"type": "enemy_death", **state, "killer_id": attacker_id}
+
+            # Evento de morte do inimigo
+            events.append({"type": "enemy_death", **state, "killer_id": attacker_id})
+
+            # Recompensa de XP ao atacante (server-authoritative)
+            xp_reward = 50
+            try:
+                if enemy.enemy_type == "orc":
+                    xp_reward = 50
+            except Exception:
+                xp_reward = 50
+
+            attacker = self.players.get(attacker_id)
+            if attacker:
+                leveled = attacker.gain_xp(xp_reward)
+
+                # Evento de ganho de XP
+                events.append({
+                    "type": "xp_gain",
+                    "player_id": attacker.player_id,
+                    "amount": xp_reward,
+                    "xp": attacker.xp,
+                    "xp_max": attacker.xp_max,
+                })
+
+                if leveled:
+                    events.append({
+                        "type": "level_up",
+                        "player_id": attacker.player_id,
+                        "new_level": attacker.level,
+                        "available_points": attacker.attribute_points,
+                        "xp_max": attacker.xp_max,
+                    })
+
+                # Evento de atualiza��o completa de stats do jogador
+                events.append({
+                    "type": "player_stats_update",
+                    "player_id": attacker.player_id,
+                    "player_name": attacker.name,
+                    "stats": attacker.to_stats_dict(),
+                })
+
+            return events
         else:
             print(f"[DAMAGE] [MAP:{self.map_name}] Inimigo {enemy_id} recebeu {damage} dano (HP: {enemy.hp})")
-            return {"type": "enemy_update", **enemy.get_sync_data(), "attacker_id": attacker_id}
+            return [{"type": "enemy_update", **enemy.get_sync_data(), "attacker_id": attacker_id}]
     
     def get_enemy(self, enemy_id: str) -> Optional[MultiplayerEnemy]:
         """Retorna uma instância de inimigo"""

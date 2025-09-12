@@ -23,6 +23,10 @@ signal enemy_death_received(enemy_id: String, killer_id: String)
 signal enemy_position_sync_received(sync_data: Dictionary)
 signal enemies_state_received(enemies: Array)
 signal enemies_update_received(enemies: Array)
+signal player_damage_received(player_id: String, damage: int, hp: int, hp_max: int, enemy_id: String)
+signal xp_gain_received(player_id: String, amount: int, xp: int, xp_max: int)
+signal level_up_received(player_id: String, new_level: int, available_points: int, xp_max: int)
+signal player_stats_update_received(player_id: String, stats: Dictionary)
 
 # WebSocket
 var socket: WebSocketPeer
@@ -191,6 +195,22 @@ func _process_server_message(message: String):
             enemies_state_received.emit(data.get("enemies", []))
         "enemies_update":
             enemies_update_received.emit(data.get("enemies", []))
+        "player_damage":
+            var _pid_d = str(data.get("player_id", ""))
+            var _dmg = int(data.get("damage", 0))
+            var _hp = int(data.get("hp", 0))
+            var _hpmax = int(data.get("hp_max", 0))
+            var _eid = str(data.get("enemy_id", ""))
+            player_damage_received.emit(_pid_d, _dmg, _hp, _hpmax, _eid)
+        "xp_gain":
+            var _pid = str(data.get("player_id", ""))
+            xp_gain_received.emit(_pid, int(data.get("amount", 0)), int(data.get("xp", 0)), int(data.get("xp_max", 0)))
+        "level_up":
+            var _pid2 = str(data.get("player_id", ""))
+            level_up_received.emit(_pid2, int(data.get("new_level", 0)), int(data.get("available_points", 0)), int(data.get("xp_max", 0)))
+        "player_stats_update":
+            var _pid3 = str(data.get("player_id", ""))
+            player_stats_update_received.emit(_pid3, data.get("stats", {}))
         "player_left_map":
             var _pid = str(data.get("player_id", ""))
             if _pid != "":
@@ -288,6 +308,8 @@ func _handle_map_change(data: Dictionary):
     """Processa mudança de mapa de um player"""
     var player_id = data.get("player_id", "")
     var player_map = data.get("player_map", "")
+    if player_map == "":
+        player_map = data.get("current_map", "")
     
     if player_id != "" and player_map != "":
         _log_to_file("🗺️ Player " + player_id + " mudou para mapa: " + player_map)

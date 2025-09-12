@@ -1,4 +1,4 @@
-extends CharacterBody2D
+﻿extends CharacterBody2D
 class_name MultiplayerPlayer
 
 # ============================================================================
@@ -169,9 +169,9 @@ func _handle_local_input():
     # Capturar input atual (usando actions corretas do projeto)
     var current_input = {
         "move_left": Input.is_action_pressed("ui_left"),
-        "move_right": Input.is_action_pressed("ui_right"), 
+        "move_right": Input.is_action_pressed("ui_right"),
         "jump": Input.is_action_just_pressed("ui_up"),
-        "attack": Input.is_action_just_pressed("ui_accept")  # Usando ação que existe (Space/Enter)
+        "attack": Input.is_action_just_pressed("attack")
     }
     
     # Debug: Log input quando há mudança

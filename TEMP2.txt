@@ -1,0 +1,369 @@
+        # Broadcast para outros jogadores
+        await self.broadcast({
+            "type": "enemy_damage",
+            "enemy_id": enemy_id,
+            "damage": damage,
+            "new_hp": new_hp,
+            "attacker_id": attacker_id
+        }, exclude=websocket)
+        
+        self.log(f"Inimigo {enemy_id} recebeu {damage} dano de {client_data['player_name']} (HP: {new_hp})")
+    
+    async def handle_enemy_position_sync(self, websocket, data):
+        """Processa sincronização de posição de inimigo"""
+        client_data = self.clients.get(websocket)
+        if not client_data or not client_data["player_id"]:
+            return
+        
+        enemy_id = data.get("enemy_id", "")
+        position = data.get("position", {})
+        velocity = data.get("velocity", {})
+        flip_h = data.get("flip_h", False)
+        animation = data.get("animation", "idle")
+        owner_id = data.get("owner_id", "")
+        
+        # Broadcast para outros jogadores
+        await self.broadcast({
+            "type": "enemy_position_sync",
+            "enemy_id": enemy_id,
+            "position": position,
+            "velocity": velocity,
+            "flip_h": flip_h,
+            "animation": animation,
+            "owner_id": owner_id
+        }, exclude=websocket)
+        
+        # Log menos frequente para posição (opcional)
+        # self.log(f"Posição do inimigo {enemy_id} sincronizada por {client_data['player_name']}")
+    
+    async def handle_player_attack_enemy(self, websocket, data):
+        """Processa ataque de player a inimigo (server-side)"""
+        client_data = self.clients.get(websocket)
+        if not client_data or not client_data["player_id"]:
+            return
+        
+        enemy_id = data.get("enemy_id", "")
+        damage = data.get("damage", 0)
+        attacker_id = client_data["player_id"]
+        
+        # Encontrar em qual mapa o atacante está (sistema server-side)
+        attacker_map = None
+        for map_name, map_instance in self.map_manager.maps.items():
+            if map_instance.has_player(attacker_id):
+                attacker_map = map_name
+                break
+        
+        if not attacker_map:
+            return
+        
+        # Processar dano no mapa específico usando MapManager
+        result = self.map_manager.damage_enemy(attacker_map, enemy_id, damage, attacker_id)
+        
+        if result:
+            # Broadcast resultado apenas para jogadores do mesmo mapa
+            await self.broadcast_to_map(attacker_map, result)
+        
+        self.log(f"Player {client_data['player_name']} atacou inimigo {enemy_id} por {damage} dano no mapa {attacker_map}")
+    
+    async def handle_request_enemies_state(self, websocket, data):
+        """Envia estado atual dos inimigos para um cliente"""
+        client_data = self.clients.get(websocket)
+        if not client_data or not client_data["player_id"]:
+            return
+        
+        map_name = data.get("map_name", "Cidade")
+        
+        # NOVO: Usar MapManager para obter inimigos do mapa (criar se necessário)
+        map_instance = self.map_manager.get_or_create_map(map_name)
+        enemies_state = map_instance.get_enemies_data()
+        
+        # DEBUG: Mostrar dados de cada inimigo
+        self.log(f"DEBUG - Preparando envio de {len(enemies_state)} inimigos para '{map_name}':")
+        for i, enemy_data in enumerate(enemies_state):
+            self.log(f"  Inimigo {i+1}: {enemy_data.get('enemy_id')} pos=({enemy_data.get('x')},{enemy_data.get('y')})")
+        
+        await self.send_to_client(websocket, {
+            "type": "enemies_state",
+            "map_name": map_name,
+            "enemies": enemies_state
+        })
+        
+        self.log(f"Enviado estado de {len(enemies_state)} inimigos do mapa '{map_name}' para {client_data['player_name']}")
+    
+    async def send_to_client(self, websocket, data):
+        """Envia mensagem para um cliente específico"""
+        try:
+            await websocket.send(json.dumps(data))
+        except websockets.exceptions.ConnectionClosed:
+            pass
+        except Exception as e:
+            self.log(f"Erro ao enviar mensagem: {e}")
+    
+    async def broadcast(self, data, exclude=None):
+        """Envia mensagem para todos os clientes conectados"""
+        if not self.clients:
+            return
+        
+        message = json.dumps(data)
+        disconnected = []
+        
+        for websocket in self.clients:
+            if websocket != exclude:
+                try:
+                    await websocket.send(message)
+                except websockets.exceptions.ConnectionClosed:
+                    disconnected.append(websocket)
+                except Exception as e:
+                    self.log(f"Erro no broadcast: {e}")
+                    disconnected.append(websocket)
+        
+        # Remove conexões mortas
+        for websocket in disconnected:
+            await self.unregister_client(websocket)
+    
+    def get_players_in_map(self, map_name: str) -> dict:
+        """Retorna apenas os players que estão no mapa especificado (server-side)"""
+        map_instance = self.map_manager.maps.get(map_name)
+        if map_instance:
+            return map_instance.get_players_data_dict()
+        return {}
+    
+    async def send_players_list_to_client(self, websocket):
+        """Envia lista de players filtrada por mapa para um cliente específico"""
+        client_data = self.clients.get(websocket)
+        if not client_data or not client_data.get("player_id"):
+            return
+            
+        player_id = client_data["player_id"]
+        
+        # Buscar player server-side em todos os mapas
+        current_map = None
+        server_player = None
+        for map_name, map_instance in self.map_manager.maps.items():
+            if player_id in map_instance.players:
+                current_map = map_name
+                server_player = map_instance.players[player_id]
+                break
+        
+        if not current_map:
+            return
+        
+        # Filtrar players apenas do mesmo mapa (formato Dictionary para cliente)
+        players_in_same_map = self.map_manager.get_players_in_map_dict(current_map)
+        
+        # Enviar apenas para este cliente
+        await self.send_to_client(websocket, {
+            "type": "players_list",
+            "players": players_in_same_map
+        })
+        
+        self.log(f"Enviada lista de {len(players_in_same_map)} players do mapa '{current_map}' para {client_data.get('player_name', 'Unknown')}")
+    
+    async def broadcast_players_list_update(self):
+        """Envia lista atualizada de players para todos os clientes (filtrada por mapa)"""
+        for websocket in list(self.clients.keys()):
+            await self.send_players_list_to_client(websocket)
+    
+    async def broadcast_to_map(self, map_name: str, data: dict, exclude=None):
+        """Envia mensagem apenas para players de um mapa específico"""
+        if map_name not in self.map_manager.maps:
+            return
+        
+        map_instance = self.map_manager.maps[map_name]
+        target_players = set(map_instance.players.keys())
+        
+        message = json.dumps(data)
+        for websocket in list(self.clients.keys()):
+            if websocket == exclude:
+                continue
+                
+            client_data = self.clients.get(websocket)
+            if not client_data or not client_data.get("player_id"):
+                continue
+                
+            if client_data["player_id"] in target_players:
+                try:
+                    await websocket.send(message)
+                except Exception as e:
+                    self.log(f"Erro ao enviar para player no mapa {map_name}: {e}")
+    
+    async def broadcast_all_maps_players_update(self):
+        """Atualiza lista de players para todos os mapas usando MapManager"""
+        try:
+            self.log("[BROADCAST] Iniciando broadcast_all_maps_players_update...")
+            for websocket in list(self.clients.keys()):
+                client_data = self.clients.get(websocket)
+                if not client_data or not client_data.get("player_id"):
+                    continue
+                    
+                player_id = client_data["player_id"]
+                self.log(f"[BROADCAST] Processando player {player_id}...")
+                
+                # Encontrar em qual mapa o player está
+                current_map = None
+                for map_name, map_instance in self.map_manager.maps.items():
+                    if map_instance.has_player(player_id):
+                        current_map = map_name
+                        break
+                
+                if current_map:
+                    self.log(f"[BROADCAST] Player {player_id} está no mapa {current_map}")
+                    players_in_map = self.map_manager.get_players_in_map_dict(current_map)
+                    self.log(f"[BROADCAST] Enviando lista com {len(players_in_map)} players...")
+                    await self.send_to_client(websocket, {
+                        "type": "players_list",
+                        "players": players_in_map
+                    })
+                    self.log(f"[BROADCAST] Lista enviada com sucesso para {player_id}")
+                else:
+                    self.log(f"[BROADCAST] WARNING: Player {player_id} não encontrado em nenhum mapa")
+            
+            self.log("[BROADCAST] broadcast_all_maps_players_update concluído")
+        except Exception as e:
+            self.log(f"[BROADCAST] EXCEPTION: {str(e)}")
+            import traceback
+            self.log(f"[BROADCAST] TRACEBACK: {traceback.format_exc()}")
+            raise e
+    
+    async def start_server(self):
+        """Inicia o servidor"""
+        if self.running:
+            return False
+        
+        try:
+            self.server = await websockets.serve(
+                self.register_client,
+                self.host,
+                self.port
+            )
+            self.running = True
+            self.log(f"Servidor iniciado em ws://{self.host}:{self.port}")
+            
+            # Iniciar loops de atualização
+            self.enemy_update_task = asyncio.create_task(self._enemy_update_loop())
+            self.player_update_task = asyncio.create_task(self._player_update_loop())
+            
+            return True
+        except Exception as e:
+            self.log(f"Erro ao iniciar servidor: {e}")
+            return False
+    
+    async def stop_server(self):
+        """Para o servidor"""
+        if not self.running or not self.server:
+            return
+        
+        self.running = False
+        
+        # Notificar todos os clientes
+        await self.broadcast({
+            "type": "server_shutdown",
+            "message": "Servidor será desligado"
+        })
+        
+        # Fechar servidor
+        self.server.close()
+        await self.server.wait_closed()
+        
+        # Limpar dados
+        self.clients.clear()
+        # self.players removido - agora usando sistema server-side
+        
+        self.log("Servidor parado")
+        
+        # Parar loops de atualização
+        if self.enemy_update_task:
+            self.enemy_update_task.cancel()
+        if hasattr(self, 'player_update_task') and self.player_update_task:
+            self.player_update_task.cancel()
+    
+    async def _enemy_update_loop(self):
+        """Loop principal de atualização dos inimigos usando MapManager"""
+        while self.running:
+            try:
+                # NOVO: Usar MapManager para atualizar inimigos por mapa
+                delta_time = 1/60  # 60 FPS
+                all_enemy_updates = self.map_manager.update_all_enemies(delta_time)
+                
+                # Broadcast atualizações para cada mapa específico
+                for map_name, updated_enemies in all_enemy_updates.items():
+                    if updated_enemies:
+                        await self.broadcast_to_map(map_name, {
+                            "type": "enemies_update",
+                            "enemies": updated_enemies
+                        })
+                
+                # Cleanup mapas vazios ocasionalmente
+                if len(all_enemy_updates) % 3600 == 0:  # A cada 60 segundos (60fps * 60s)
+                    self.map_manager.cleanup_empty_maps()
+                
+                # Aguardar próximo frame (60 FPS)
+                await asyncio.sleep(1/60)
+                
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                self.log(f"Erro no loop de inimigos: {e}")
+    
+    async def _player_update_loop(self):
+        """Loop principal de atualização dos players usando MapManager"""
+        while self.running:
+            try:
+                # Atualizar players em todos os mapas
+                delta_time = 1/60  # 60 FPS
+                all_player_updates = self.map_manager.update_all_players(delta_time)
+                
+                # Broadcast atualizações para cada mapa específico
+                for map_name, updated_players in all_player_updates.items():
+                    if updated_players:
+                        await self.broadcast_to_map(map_name, {
+                            "type": "players_update",
+                            "players": updated_players
+                        })
+                
+                # Aguardar próximo frame (60 FPS)
+                await asyncio.sleep(1/60)
+                
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                self.log(f"Erro no loop de players: {e}")
+    
+    def get_status(self):
+        """Retorna status do servidor"""
+        # Contar inimigos em todos os mapas
+        enemies_count = 0
+        for map_instance in self.map_manager.maps.values():
+            enemies_count += len(map_instance.enemies)
+            
+        return {
+            "running": self.running,
+            "clients_connected": len(self.clients),
+            "players_online": self.map_manager.get_total_players_count(),
+            "host": self.host,
+            "port": self.port,
+            "enemies_count": enemies_count,
+            "maps_active": len(self.map_manager.maps)
+        }
+
+
+if __name__ == "__main__":
+    """Executa servidor diretamente sem GUI"""
+    print("PROJETO ALLY - SERVIDOR MULTIPLAYER")
+    print("Iniciando servidor...")
+    
+    server = GameServer()
+    
+    try:
+        loop = asyncio.get_event_loop()
+        success = loop.run_until_complete(server.start_server())
+        if success:
+            print("Servidor rodando. Pressione Ctrl+C para parar.")
+            loop.run_forever()
+    except KeyboardInterrupt:
+        print("\nServidor interrompido pelo usuário")
+        loop.run_until_complete(server.stop_server())
+    except Exception as e:
+        print(f"Erro crítico: {e}")
+    finally:
+        print("Servidor encerrado")

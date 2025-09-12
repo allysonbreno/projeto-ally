@@ -123,6 +123,14 @@ func setup_multiplayer(manager: MultiplayerManager):
         multiplayer_manager.players_list_received.connect(_on_players_list_received)
     if multiplayer_manager.has_signal("player_left_map_received"):
         multiplayer_manager.player_left_map_received.connect(_on_player_left_map_received)
+    if multiplayer_manager.has_signal("xp_gain_received"):
+        multiplayer_manager.xp_gain_received.connect(_on_xp_gain_received)
+    if multiplayer_manager.has_signal("level_up_received"):
+        multiplayer_manager.level_up_received.connect(_on_level_up_received)
+    if multiplayer_manager.has_signal("player_stats_update_received"):
+        multiplayer_manager.player_stats_update_received.connect(_on_player_stats_update_received)
+    if multiplayer_manager.has_signal("player_damage_received"):
+        multiplayer_manager.player_damage_received.connect(_on_player_damage_received)
     multiplayer_manager.connection_lost.connect(_on_connection_lost)
     multiplayer_manager.server_reconciliation.connect(_on_server_reconciliation)
     _log("âœ… Todos os sinais conectados!")
@@ -516,6 +524,13 @@ func _setup_ui():
 
 func _process(_delta):
     # Atualizar UI
+    # Ataque local (delegado ao servidor)
+    if Input.is_action_just_pressed("attack"):
+        if local_player and current_map_node and current_map_node.has_method("handle_player_attack"):
+            var dir := -1.0 if (local_player.sprite and local_player.sprite.flip_h) else 1.0
+            var atk_pos := local_player.global_position + Vector2(14.0 * dir, 0.0)
+            var dmg := int(get_player_damage())
+            current_map_node.handle_player_attack(atk_pos, dmg)
     if ui_container:
         var players_label = ui_container.get_node_or_null("PlayersLabel")
         if players_label:
@@ -772,6 +787,55 @@ func level_up() -> void:
     # Mostra mensagem flutuante acima do player
     _show_level_up_message()
 
+# ---- Handlers de eventos do servidor (XP/Level/Stats) ----
+func _on_xp_gain_received(player_id: String, amount: int, xp: int, xp_max_s: int) -> void:
+    if not multiplayer_manager:
+        return
+    var my_id = multiplayer_manager.get_local_player_id()
+    if player_id != my_id:
+        return
+    player_xp = xp
+    player_xp_max = xp_max_s
+    if hud:
+        hud.update_xp(player_xp, player_xp_max)
+    if local_player:
+        show_damage_popup_at_world(local_player.global_position + Vector2(0, -60), "+" + str(amount) + " XP", Color(0.2, 0.8, 1.0, 1))
+
+func _on_level_up_received(player_id: String, new_level: int, available_pts: int, xp_max_s: int) -> void:
+    if not multiplayer_manager:
+        return
+    var my_id = multiplayer_manager.get_local_player_id()
+    if player_id != my_id:
+        return
+    player_level = new_level
+    available_points = available_pts
+    player_xp_max = xp_max_s
+    if hud:
+        hud.update_xp(player_xp, player_xp_max)
+    _show_level_up_message()
+
+func _on_player_stats_update_received(player_id: String, stats: Dictionary) -> void:
+    if not multiplayer_manager:
+        return
+    var my_id = multiplayer_manager.get_local_player_id()
+    if player_id != my_id:
+        return
+    player_level = int(stats.get("level", player_level))
+    player_xp = int(stats.get("xp", player_xp))
+    player_xp_max = int(stats.get("xp_max", player_xp_max))
+    available_points = int(stats.get("attr_points", available_points))
+    player_hp = int(stats.get("hp", player_hp))
+    player_hp_max = int(stats.get("hp_max", player_hp_max))
+    var attrs = stats.get("attributes", {})
+    if typeof(attrs) == TYPE_DICTIONARY:
+        player_strength = int(attrs.get("strength", player_strength))
+        player_defense = int(attrs.get("defense", player_defense))
+        player_intelligence = int(attrs.get("intelligence", player_intelligence))
+        player_vitality = int(attrs.get("vitality", player_vitality))
+    if hud:
+        hud.update_xp(player_xp, player_xp_max)
+        hud.update_health(player_hp, player_hp_max)
+
 func get_player_level() -> int:
     return player_level
 
@@ -808,26 +872,24 @@ func get_player_stats() -> Dictionary:
         "available_points": available_points
     }
 
-func add_attribute_point(attribute: String) -> void:
-    if available_points <= 0:
+func _on_player_damage_received(player_id: String, damage: int, hp: int, hp_max: int, _enemy_id: String) -> void:
+    if not multiplayer_manager:
         return
-        
-    match attribute:
-        "strength":
-            player_strength += 1
-        "defense":
-            player_defense += 1
-        "intelligence":
-            player_intelligence += 1
-        "vitality":
-            player_vitality += 1
-            _calculate_max_hp()  # Recalcula HP mÃ¡ximo
-            # Atualizar HP mÃ¡ximo do player local
-            if local_player and local_player.has_method("update_max_hp"):
-                local_player.update_max_hp()
-            hud.update_health(player_hp, player_hp_max)  # Atualiza barra de HP
-    
-    available_points -= 1
+    var my_id = multiplayer_manager.get_local_player_id()
+    if player_id != my_id:
+        return
+    player_hp = hp
+    player_hp_max = hp_max
+    if hud:
+        hud.update_health(player_hp, player_hp_max)
+    if local_player:
+        show_damage_popup_at_world(local_player.global_position, "-" + str(damage), Color(1, 0.3, 0.3, 1))
+
+func add_attribute_point(attribute: String) -> void:
+    if multiplayer_manager and multiplayer_manager.is_logged_in:
+        var msg := {"type": "spend_attribute_point", "attr": attribute}
+        multiplayer_manager._send_message(msg)
+    # HUD/valores virão do servidor via player_stats_update_received
 
 # ---- Sistema de InventÃ¡rio ----
 func _initialize_inventory() -> void:
@@ -926,6 +988,8 @@ func _on_players_list_received(players: Dictionary) -> void:
             continue
         if pid in remote_players:
             remote_players[pid].set_meta("current_map", current_map)
+        else:
+            _on_player_connected(players[pid])
     _update_remote_players_visibility()
 
 func _on_player_left_map_received(player_id: String) -> void:
