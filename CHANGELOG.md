@@ -1,5 +1,28 @@
 # Changelog
 
+## v2.6.1 (2025-09-12)
+
+### Fixed
+- Combate inimigo→player: defesa do jogador aplicada uma única vez (server-authoritative).
+- Ordem do ataque do inimigo (alvo definido antes da janela de impacto) para garantir acertos.
+- Criação de players remotos a partir de `players_list` (ambas as instâncias se veem ao entrar no mesmo mapa).
+
+### Changed
+- Orcs padronizados: `attack_damage = 10`, `attack_range = 24`.
+- Entrada: ataque usa a action `attack` (Ctrl/J); Space removido de `jump`.
+- `ServerPlayer` refatorado (update limpo, alias `position`).
+- Broadcast de eventos extras dos inimigos (ex.: `player_damage`) durante o loop, mesmo sem `enemies_update` no frame.
+
+### Added
+- Endpoint `spend_attribute_point` (servidor autoritativo) e persistência de nível/XP/atributos/HP/posição/mapa.
+- Eventos: `xp_gain`, `level_up`, `player_stats_update`, `player_damage` no pipeline cliente-servidor.
+
+### Verification Checklist
+- Dois clientes na Floresta enxergam um ao outro; “Jogadores: 2” no HUD.
+- Ctrl/J ataca; orcs levam dano; XP sobe; level up concede pontos.
+- HP do player cai ao ser atingido por orc; popup exibe o dano final (0 quando defesa cobre o dano).
+- Ponto em Vitalidade aumenta HP máximo e persiste após reconexão.
+
 ## v2.6 (2025-09-10)
 
 ### Added
@@ -28,4 +51,3 @@
 - When client B enters Forest, both see each other in Forest.
 - Orcs spawn on the platform, move toward players, and attack on contact.
 - Players remain inside the map “box” (cannot fall below/leave the map).
-
