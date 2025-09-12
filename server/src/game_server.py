@@ -438,6 +438,12 @@ class GameServer:
             
             self.log(f"[MAP_CHANGE] Mapa atual: {old_map} -> Novo mapa: {new_map}")
             
+            # Se o mapa for o mesmo, não mover/respawnar
+            if old_map == new_map:
+                self.log(f"[MAP_CHANGE] Ignorando: player já está em {new_map}")
+                await self.broadcast_all_maps_players_update()
+                return
+
             # USAR MapManager para mover player entre mapas (server-side)
             self.log("[MAP_CHANGE] Chamando map_manager.move_player()...")
             spawn_position, success = self.map_manager.move_player(player_id, old_map, new_map, client_data["player_name"])

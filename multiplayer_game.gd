@@ -1,4 +1,4 @@
-extends Node2D
+﻿extends Node2D
 
 var multiplayer_manager: MultiplayerManager
 var local_player: CharacterBody2D
@@ -603,7 +603,7 @@ func damage_player(amount: int, hit_world_pos: Vector2 = Vector2.ZERO) -> void:
             hud.show_popup("VocÃª morreu e voltou para a cidade.")
         # Removido play_sfx_id - nÃ£o implementado no multiplayer
 
-func load_city() -> void:
+func load_city(notify_server: bool = true) -> void:
     _clear_map()
     current_map = "Cidade"  # Atualizar mapa atual
     var City = load("res://scripts/city_map_multiplayer.gd")
@@ -618,9 +618,7 @@ func load_city() -> void:
         _log("âš ï¸ HUD null em load_city()")
     
     # Notificar servidor sobre mudanÃ§a de mapa (com delay para estabilizar conexÃ£o)
-    if multiplayer_manager:
-        _log("ðŸ“¡ Aguardando 1 segundo antes de enviar map_change...")
-        await get_tree().create_timer(1.0).timeout
+    if notify_server and multiplayer_manager:
         _log("ðŸ“¡ Verificando se ainda conectado antes de enviar...")
         if multiplayer_manager.socket_connected and multiplayer_manager.is_logged_in:
             multiplayer_manager.send_map_change("Cidade")
@@ -651,8 +649,6 @@ func load_forest() -> void:
     
     # Notificar servidor sobre mudanÃ§a de mapa (com delay para estabilizar conexÃ£o)
     if multiplayer_manager:
-        _log("ðŸ“¡ Aguardando 1 segundo antes de enviar map_change...")
-        await get_tree().create_timer(1.0).timeout
         _log("ðŸ“¡ Verificando se ainda conectado antes de enviar...")
         if multiplayer_manager.socket_connected and multiplayer_manager.is_logged_in:
             multiplayer_manager.send_map_change("Floresta")
@@ -975,7 +971,7 @@ func _finish_setup_multiplayer() -> void:
         hud.update_health(player_hp, player_hp_max)
     
     # Carregar mapa inicial
-    load_city()
+    load_city(false)
 
 # ============================================================================
 # MAP PRESENCE SIGNAL HANDLERS
