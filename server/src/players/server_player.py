@@ -42,7 +42,7 @@ class ServerPlayer:
         self.facing_left = False
 
         # Física
-        self.speed = 200.0
+        self.speed = 500.0
         self.jump_force = -400.0
         self.gravity = 980.0
         self.is_on_floor = False

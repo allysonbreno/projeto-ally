@@ -21,8 +21,12 @@ class Store:
     def get_character_by_user_id(self, user_id: str) -> Optional[Dict[str, Any]]:
         raise NotImplementedError
 
-    def create_character(self, user_id: str, name: str, defaults: Dict[str, Any]) -> str:
-        """Cria character + attributes. Retorna character_id."""
+    def get_character_by_name(self, character_name: str) -> Optional[Dict[str, Any]]:
+        """Verifica se nome do personagem já existe."""
+        raise NotImplementedError
+
+    def create_character(self, user_id: str, name: str, character_type: str, defaults: Dict[str, Any]) -> str:
+        """Cria character + attributes. character_type: 'warrior', 'mage', 'archer'. Retorna character_id."""
         raise NotImplementedError
 
     def load_character_full(self, user_id: str) -> Optional[Tuple[Dict[str, Any], Dict[str, Any]]]:

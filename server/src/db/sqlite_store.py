@@ -36,7 +36,8 @@ class SqliteStore(Store):
             CREATE TABLE IF NOT EXISTS characters (
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL,
-                name TEXT NOT NULL,
+                name TEXT UNIQUE NOT NULL,
+                character_type TEXT NOT NULL DEFAULT 'warrior',
                 level INTEGER NOT NULL,
                 xp INTEGER NOT NULL,
                 xp_max INTEGER NOT NULL,
@@ -61,8 +62,18 @@ class SqliteStore(Store):
 
             CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
             CREATE INDEX IF NOT EXISTS idx_chars_user ON characters(user_id);
+            CREATE INDEX IF NOT EXISTS idx_chars_name ON characters(name);
             """
         )
+        
+        # Migração: Adicionar coluna character_type se não existir
+        try:
+            cur.execute("ALTER TABLE characters ADD COLUMN character_type TEXT DEFAULT 'warrior'")
+            self.conn.commit()
+        except Exception:
+            # Coluna já existe, ignorar
+            pass
+        
         self.conn.commit()
 
     def get_user_by_username(self, username: str) -> Optional[Dict[str, Any]]:
@@ -82,20 +93,25 @@ class SqliteStore(Store):
         row = self.conn.execute("SELECT * FROM characters WHERE user_id=?", (user_id,)).fetchone()
         return dict(row) if row else None
 
-    def create_character(self, user_id: str, name: str, defaults: Dict[str, Any]) -> str:
+    def get_character_by_name(self, character_name: str) -> Optional[Dict[str, Any]]:
+        row = self.conn.execute("SELECT * FROM characters WHERE name=?", (character_name,)).fetchone()
+        return dict(row) if row else None
+
+    def create_character(self, user_id: str, name: str, character_type: str, defaults: Dict[str, Any]) -> str:
         char_id = _uuid()
         now = int(time.time())
         self.conn.execute(
             """
             INSERT INTO characters(
-                id, user_id, name, level, xp, xp_max, attr_points,
+                id, user_id, name, character_type, level, xp, xp_max, attr_points,
                 map, pos_x, pos_y, hp, hp_max, created_at
-            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """,
             (
                 char_id,
                 user_id,
                 name,
+                character_type,
                 defaults.get("level", 1),
                 defaults.get("xp", 0),
                 defaults.get("xp_max", 100),

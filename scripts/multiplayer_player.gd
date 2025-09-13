@@ -20,6 +20,7 @@ signal player_action(action: String, action_data: Dictionary)
 var player_id: String = ""
 var player_name: String = ""
 var is_local_player: bool = false
+var character_type: String = "warrior"  # Default to warrior
 
 # Referência ao MultiplayerManager
 var multiplayer_manager: MultiplayerManager
@@ -31,10 +32,11 @@ var current_animation: String = "idle"
 var last_flip_h: bool = false  # memorização da última direção visual
 
 # Configurações visuais
-const SPRITE_SCALE: Vector2 = Vector2(0.2, 0.2)
+const SPRITE_SCALE: Vector2 = Vector2(1.0, 1.0)
 const FPS_IDLE: int = 4
-const FPS_WALK: int = 8
-const FPS_ATTACK: int = 10
+const FPS_WALK: int = 15
+const FPS_ATTACK: int = 4
+const FPS_JUMP: int = 3
 
 # Input local (apenas para player local)
 var input_buffer: Dictionary = {
@@ -108,16 +110,20 @@ func _setup_multiplayer_manager():
         print("⚠️ MultiplayerManager não encontrado! Será definido depois.")
 
 func _load_sprite_frames():
-    """Carrega frames de animação do player"""
-    print("🖼️ [PLAYER] Carregando sprite frames...")
+    """Carrega frames de animação do player baseado no character_type"""
+    print("🖼️ [PLAYER] Carregando sprite frames para character_type: ", character_type)
     var frames = SpriteFrames.new()
+    
+    # Define o caminho base baseado no character_type
+    var base_path = "res://characters/" + character_type + "/"
+    print("🖼️ [PLAYER] Caminho base das animações: ", base_path)
     
     # Animação idle
     frames.add_animation("idle")
     frames.set_animation_speed("idle", FPS_IDLE)
     var idle_count = 0
     for i in range(8):  # 8 frames idle
-        var texture_path = "res://art/player/idle_east/frame_%03d.png" % i
+        var texture_path = base_path + "idle_east/frame_%03d.png" % i
         if ResourceLoader.exists(texture_path):
             frames.add_frame("idle", load(texture_path))
             idle_count += 1
@@ -126,26 +132,35 @@ func _load_sprite_frames():
     # Animação walk
     frames.add_animation("walk")
     frames.set_animation_speed("walk", FPS_WALK)
+    var walk_count = 0
     for i in range(8):  # 8 frames walk
-        var texture_path = "res://art/player/walk_east/frame_%03d.png" % i
+        var texture_path = base_path + "walk_east/frame_%03d.png" % i
         if ResourceLoader.exists(texture_path):
             frames.add_frame("walk", load(texture_path))
+            walk_count += 1
+    print("🖼️ [PLAYER] Frames walk carregados: ", walk_count)
     
     # Animação attack
     frames.add_animation("attack")
     frames.set_animation_speed("attack", FPS_ATTACK)
+    var attack_count = 0
     for i in range(8):  # 8 frames attack
-        var texture_path = "res://art/player/attack_east/frame_%03d.png" % i
+        var texture_path = base_path + "attack_east/frame_%03d.png" % i
         if ResourceLoader.exists(texture_path):
             frames.add_frame("attack", load(texture_path))
+            attack_count += 1
+    print("🖼️ [PLAYER] Frames attack carregados: ", attack_count)
     
     # Animação jump
     frames.add_animation("jump")
-    frames.set_animation_speed("jump", FPS_WALK)
+    frames.set_animation_speed("jump", FPS_JUMP)
+    var jump_count = 0
     for i in range(3):  # 3 frames jump
-        var texture_path = "res://art/player/jump_east/frame_%03d.png" % i
+        var texture_path = base_path + "jump_east/frame_%03d.png" % i
         if ResourceLoader.exists(texture_path):
             frames.add_frame("jump", load(texture_path))
+            jump_count += 1
+    print("🖼️ [PLAYER] Frames jump carregados: ", jump_count)
     
     sprite.sprite_frames = frames
     print("🖼️ [PLAYER] SpriteFrames definido no sprite. Animações disponíveis: ", frames.get_animation_names())
@@ -237,8 +252,8 @@ func _update_visual_from_server():
     var __vel_fix = server_data.get("velocity", {})
     var __vx = __vel_fix.get("x", 0.0)
     if abs(__vx) > 1.0:
-        # Inverte lógica: andando à direita -> flip true; à esquerda -> flip false
-        sprite.flip_h = __vx > 0.0
+        # Lógica correta: andando à direita -> flip false; à esquerda -> flip true
+        sprite.flip_h = __vx < 0.0
         last_flip_h = sprite.flip_h
     else:
         # Sem movimento horizontal: manter última direção
@@ -269,11 +284,16 @@ func _update_animation(new_animation: String):
 # CONFIGURAÇÃO DO PLAYER
 # ============================================================================
 
-func setup_player(p_id: String, p_name: String, player_is_local: bool):
+func setup_player(p_id: String, p_name: String, player_is_local: bool, p_character_type: String = "warrior"):
     """Configura os dados do player"""
     player_id = p_id
     player_name = p_name
     is_local_player = player_is_local
+    character_type = p_character_type
+    
+    # Recarregar frames de animação com o novo character_type
+    if sprite:
+        _load_sprite_frames()
     
     # Atualizar nametag
     if name_label:

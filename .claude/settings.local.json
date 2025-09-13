@@ -47,7 +47,10 @@
       "Bash(pkill:*)",
       "Bash(pip install:*)",
       "Bash(del:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(for i in {1..8})",
+      "Bash(done)",
+      "Bash(for i in {1..5})"
     ],
     "deny": [],
     "ask": []

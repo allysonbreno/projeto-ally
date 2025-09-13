@@ -11,6 +11,9 @@ class_name MultiplayerManager
 
 # Sinais para comunicação com a UI
 signal login_response(success: bool, message: String, player_info: Dictionary)
+signal register_response(success: bool, message: String)
+signal check_character_name_response(success: bool, message: String)
+signal create_character_response(success: bool, message: String)
 signal player_connected(player_info: Dictionary)
 signal player_disconnected(player_id: String)
 signal connection_lost()
@@ -173,6 +176,12 @@ func _process_server_message(message: String):
     match message_type:
         "login_response":
             _handle_login_response(data)
+        "register_response":
+            _handle_register_response(data)
+        "check_character_name_response":
+            _handle_check_character_name_response(data)
+        "create_character_response":
+            _handle_create_character_response(data)
         "player_sync":
             _handle_player_sync(data)
         "players_update":
@@ -226,15 +235,57 @@ func _handle_login_response(data: Dictionary):
     """Processa resposta de login"""
     var success = data.get("success", false)
     var message = data.get("message", "")
+    var player_info = data.get("player_info", {})
     
     if success:
-        local_player_info = data.get("player_info", {})
-        is_logged_in = true
-        _log_to_file("✅ Login realizado! ID: " + str(local_player_info.get("id", "")))
+        if not data.get("needs_character", false):
+            # Login completo no jogo
+            local_player_info = player_info
+            is_logged_in = true
+            _log_to_file("✅ Login realizado! ID: " + str(local_player_info.get("id", "")))
+        else:
+            # Login válido mas precisa criar personagem
+            _log_to_file("✅ Login válido, precisa criar personagem")
     else:
         _log_to_file("❌ Falha no login: " + message)
     
-    login_response.emit(success, message, local_player_info)
+    # Incluir needs_character no player_info para o cliente
+    if success and data.get("needs_character", false):
+        player_info["needs_character"] = true
+    
+    login_response.emit(success, message, player_info)
+
+func _handle_register_response(data: Dictionary):
+    """Processa resposta de registro"""
+    var success = data.get("success", false)
+    var message = data.get("message", "")
+    
+    if success:
+        _log_to_file("✅ Usuário registrado com sucesso")
+    else:
+        _log_to_file("❌ Falha no registro: " + message)
+    
+    register_response.emit(success, message)
+
+func _handle_check_character_name_response(data: Dictionary):
+    """Processa resposta de verificação de nome"""
+    var success = data.get("success", false)
+    var message = data.get("message", "")
+    
+    _log_to_file("🔍 Verificação de nome: " + message)
+    check_character_name_response.emit(success, message)
+
+func _handle_create_character_response(data: Dictionary):
+    """Processa resposta de criação de personagem"""
+    var success = data.get("success", false)
+    var message = data.get("message", "")
+    
+    if success:
+        _log_to_file("✅ Personagem criado com sucesso")
+    else:
+        _log_to_file("❌ Falha na criação: " + message)
+    
+    create_character_response.emit(success, message)
 
 func _handle_players_list(data: Dictionary):
     """Processa lista inicial de players após login"""
@@ -408,6 +459,10 @@ func send_map_change(new_map: String):
     }
     
     return _send_to_server(message)
+
+func send_message(data: Dictionary) -> bool:
+    """Envia mensagem genérica para o servidor"""
+    return _send_to_server(data)
 
 func _send_to_server(data: Dictionary) -> bool:
     """Envia dados para o servidor"""

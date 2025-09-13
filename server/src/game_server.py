@@ -5,9 +5,23 @@ import threading
 import time
 from datetime import datetime
 import uuid
+import hashlib
+import secrets
 # Sistema legado removido - usando apenas MapManager
 from maps.map_instance import MapManager
 from db.sqlite_store import SqliteStore
+
+def hash_password(password: str, salt: bytes = None) -> tuple:
+    """Gera hash da senha com salt. Retorna (hash, salt)."""
+    if salt is None:
+        salt = secrets.token_bytes(32)
+    pwd_hash = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, 100000)
+    return pwd_hash, salt
+
+def verify_password(password: str, pwd_hash: bytes, salt: bytes) -> bool:
+    """Verifica se senha confere com hash."""
+    computed_hash, _ = hash_password(password, salt)
+    return computed_hash == pwd_hash
 
 class GameServer:
     def __init__(self):
@@ -190,6 +204,12 @@ class GameServer:
             
             if message_type == "login":
                 await self.handle_login(websocket, data)
+            elif message_type == "register":
+                await self.handle_register(websocket, data)
+            elif message_type == "check_character_name":
+                await self.handle_check_character_name(websocket, data)
+            elif message_type == "create_character":
+                await self.handle_create_character(websocket, data)
             elif message_type == "player_input":
                 await self.handle_player_input(websocket, data)
             elif message_type == "player_update":
@@ -227,95 +247,281 @@ class GameServer:
             raise e  # Re-raise para fechar conexão
     
     async def handle_login(self, websocket, data):
-        """Processa login do jogador"""
-        player_name = data.get("player_name", "").strip()
+        """Processa login com usuário e senha"""
+        username = data.get("username", "").strip()
+        password = data.get("password", "").strip()
         
-        if not player_name:
+        if not username or not password:
             await self.send_to_client(websocket, {
                 "type": "login_response",
                 "success": False,
-                "message": "Nome do jogador é obrigatório"
+                "message": "Usuário e senha são obrigatórios"
             })
             return
         
-        # Verificar se nome já existe (buscar nos mapas server-side)
+        # Verificar se usuário existe
+        user = self.store.get_user_by_username(username)
+        if not user:
+            await self.send_to_client(websocket, {
+                "type": "login_response", 
+                "success": False,
+                "message": "Usuário não encontrado"
+            })
+            return
+        
+        # Verificar senha
+        if not user.get("pwd_hash") or not user.get("salt"):
+            await self.send_to_client(websocket, {
+                "type": "login_response",
+                "success": False, 
+                "message": "Conta sem senha configurada"
+            })
+            return
+            
+        if not verify_password(password, user["pwd_hash"], user["salt"]):
+            await self.send_to_client(websocket, {
+                "type": "login_response",
+                "success": False,
+                "message": "Senha incorreta"
+            })
+            return
+        
+        # Login válido - verificar se já tem personagem
+        char_data = self.store.load_character_full(user["id"])
+        
+        if char_data:
+            char, attrs = char_data
+            # Já tem personagem - fazer login direto no jogo
+            await self._login_with_character(websocket, user, char, attrs)
+        else:
+            # Não tem personagem - vai para seleção
+            self.clients[websocket]["user_id"] = user["id"]
+            self.clients[websocket]["username"] = username
+            await self.send_to_client(websocket, {
+                "type": "login_response",
+                "success": True,
+                "needs_character": True,
+                "message": "Login realizado. Selecione um personagem."
+            })
+        
+        self.log(f"Login realizado para usuário: {username}")
+    
+    async def handle_register(self, websocket, data):
+        """Processa registro de novo usuário"""
+        username = data.get("username", "").strip()
+        password = data.get("password", "").strip()
+        
+        if not username or not password:
+            await self.send_to_client(websocket, {
+                "type": "register_response",
+                "success": False,
+                "message": "Usuário e senha são obrigatórios"
+            })
+            return
+            
+        if len(username) < 3 or len(password) < 6:
+            await self.send_to_client(websocket, {
+                "type": "register_response",
+                "success": False,
+                "message": "Usuário min 3 caracteres, senha min 6"
+            })
+            return
+        
+        # Verificar se usuário já existe
+        user = self.store.get_user_by_username(username)
+        if user:
+            await self.send_to_client(websocket, {
+                "type": "register_response",
+                "success": False,
+                "message": "Usuário já existe"
+            })
+            return
+        
+        # Criar novo usuário com senha
+        pwd_hash, salt = hash_password(password)
+        user_id = self.store.create_user(username, pwd_hash, salt)
+        
+        await self.send_to_client(websocket, {
+            "type": "register_response", 
+            "success": True,
+            "message": "Usuário criado com sucesso! Faça login."
+        })
+        
+        self.log(f"Novo usuário registrado: {username}")
+    
+    async def handle_check_character_name(self, websocket, data):
+        """Verifica se nome do personagem está disponível"""
+        character_name = data.get("character_name", "").strip()
+        
+        if not character_name:
+            await self.send_to_client(websocket, {
+                "type": "check_character_name_response",
+                "success": False,
+                "message": "Nome é obrigatório"
+            })
+            return
+            
+        if len(character_name) < 3:
+            await self.send_to_client(websocket, {
+                "type": "check_character_name_response", 
+                "success": False,
+                "message": "Nome deve ter pelo menos 3 caracteres"
+            })
+            return
+        
+        # Verificar se nome já existe
+        char = self.store.get_character_by_name(character_name)
+        if char:
+            await self.send_to_client(websocket, {
+                "type": "check_character_name_response",
+                "success": False, 
+                "message": "Nome já está em uso"
+            })
+            return
+        
+        await self.send_to_client(websocket, {
+            "type": "check_character_name_response",
+            "success": True,
+            "message": "Nome disponível"
+        })
+    
+    async def handle_create_character(self, websocket, data):
+        """Cria novo personagem para o usuário"""
+        client_data = self.clients.get(websocket)
+        if not client_data or not client_data.get("user_id"):
+            await self.send_to_client(websocket, {
+                "type": "create_character_response",
+                "success": False,
+                "message": "Sessão inválida"
+            })
+            return
+        
+        character_name = data.get("character_name", "").strip()
+        character_type = data.get("character_type", "").strip().lower()
+        
+        if not character_name or character_type not in ["warrior", "mage", "archer"]:
+            await self.send_to_client(websocket, {
+                "type": "create_character_response",
+                "success": False,
+                "message": "Dados inválidos"
+            })
+            return
+        
+        # Verificar novamente se nome está disponível
+        char = self.store.get_character_by_name(character_name) 
+        if char:
+            await self.send_to_client(websocket, {
+                "type": "create_character_response",
+                "success": False,
+                "message": "Nome já está em uso"
+            })
+            return
+        
+        # Definir atributos base por classe
+        base_stats = {
+            "warrior": {"strength": 8, "defense": 7, "intelligence": 3, "vitality": 7},
+            "mage": {"strength": 3, "defense": 4, "intelligence": 8, "vitality": 5},  
+            "archer": {"strength": 6, "defense": 5, "intelligence": 6, "vitality": 6}
+        }
+        
+        defaults = {
+            "level": 1, "xp": 0, "xp_max": 100, "attr_points": 0,
+            "map": "Cidade", "pos_x": 0.0, "pos_y": 159.0,
+            "hp": 100, "hp_max": 100,
+            **base_stats[character_type]
+        }
+        
+        # Criar personagem
+        char_id = self.store.create_character(client_data["user_id"], character_name, character_type, defaults)
+        
+        # Fazer login no jogo
+        user_id = client_data["user_id"]
+        user = self.store.get_user_by_username(client_data["username"])
+        char, attrs = self.store.load_character_full(user_id)
+        
+        await self._login_with_character(websocket, user, char, attrs)
+        
+        self.log(f"Personagem criado: {character_name} ({character_type}) para usuário {client_data['username']}")
+    
+    async def _login_with_character(self, websocket, user, char, attrs):
+        """Faz login no jogo com personagem existente"""
+        character_name = char["name"]
+        
+        # Verificar se personagem já está online
         for map_instance in self.map_manager.maps.values():
             for player in map_instance.players.values():
-                if player.name.lower() == player_name.lower():
+                if player.name.lower() == character_name.lower():
                     await self.send_to_client(websocket, {
                         "type": "login_response",
                         "success": False,
-                        "message": "Nome já está em uso"
+                        "message": "Personagem já está online"
                     })
                     return
         
-        # Persistência: obter/criar user + character e carregar estado
-        user = self.store.get_user_by_username(player_name)
-        if not user:
-            user_id = self.store.create_user(player_name, None, None)
-            defaults = {
-                "level": 1, "xp": 0, "xp_max": 100, "attr_points": 0,
-                "map": "Cidade", "pos_x": 0.0, "pos_y": 159.0,
-                "hp": 100, "hp_max": 100,
-                "strength": 5, "defense": 5, "intelligence": 5, "vitality": 5,
-            }
-            self.store.create_character(user_id, player_name, defaults)
-            user = self.store.get_user_by_username(player_name)
-        char, attrs = self.store.load_character_full(user["id"])
-
-        # Criar novo jogador (id de sessão) e usar mapa salvo
+        # Criar ID de sessão
         player_id = str(uuid.uuid4())[:8]
         initial_map = char.get("map", "Cidade")
         
-        # Armazenar info básica do cliente (apenas para compatibilidade)
+        # Armazenar info do cliente
         self.clients[websocket]["player_id"] = player_id
-        self.clients[websocket]["player_name"] = player_name
+        self.clients[websocket]["player_name"] = character_name
+        self.clients[websocket]["user_id"] = user["id"] 
+        self.clients[websocket]["character_type"] = char.get("character_type", "warrior")
         
-        # Adicionar jogador server-side ao mapa
+        # Adicionar jogador ao mapa server-side  
         map_instance = self.map_manager.get_or_create_map(initial_map)
-        actual_spawn_pos = map_instance.add_player(player_id, player_name)
-        # Aplicar posição/hp persistidos
+        actual_spawn_pos = map_instance.add_player(player_id, character_name)
+        
+        # Aplicar estado persistido
         try:
             sp = map_instance.players[player_id]
-            sp.position = [float(char.get("pos_x", actual_spawn_pos.get("x", 0.0))), float(char.get("pos_y", actual_spawn_pos.get("y", 0.0)))]
+            sp.position = [float(char.get("pos_x", actual_spawn_pos.get("x", 0.0))), 
+                          float(char.get("pos_y", actual_spawn_pos.get("y", 0.0)))]
             sp.hp = int(char.get("hp", 100))
+            sp.level = int(char.get("level", 1))
+            sp.xp = int(char.get("xp", 0))
+            sp.xp_max = int(char.get("xp_max", 100))
+            sp.attribute_points = int(char.get("attr_points", 0))
+            sp.max_hp = int(char.get("hp_max", 100))
+            if attrs:
+                sp.strength = int(attrs.get("strength", 5))
+                sp.defense_attr = int(attrs.get("defense", 5))
+                sp.intelligence = int(attrs.get("intelligence", 5))
+                sp.vitality = int(attrs.get("vitality", 5))
         except Exception:
             pass
         
-        self.log(f"[PLAYER] Player {player_name} ({player_id}) adicionado ao mapa '{initial_map}'")
-        
-        # Obter dados do player server-side para resposta
+        # Obter dados para resposta
         server_player_data = map_instance.get_player_data(player_id)
         if server_player_data:
-            server_player_data["name"] = player_name
+            server_player_data["name"] = character_name
+            server_player_data["character_type"] = char.get("character_type", "warrior")
         
         # Responder ao login
         await self.send_to_client(websocket, {
-            "type": "login_response",
+            "type": "login_response", 
             "success": True,
             "player_id": player_id,
             "player_info": server_player_data
         })
         
-        # Enviar lista de players do mesmo mapa (formato Dictionary para compatibilidade cliente)
+        # Enviar lista de players do mapa
         players_in_same_map = map_instance.get_players_data_dict()
         await self.send_to_client(websocket, {
-            "type": "players_list", 
+            "type": "players_list",
             "players": players_in_same_map
         })
         
-        self.log(f"[SYNC] Enviada lista com {len(players_in_same_map)} players do mapa '{initial_map}' para {player_name}")
-        
-        # Notificar outros jogadores do mesmo mapa sobre novo jogador
+        # Notificar outros jogadores
         await self.broadcast_to_map(initial_map, {
-            "type": "player_connected",
+            "type": "player_connected", 
             "player_info": server_player_data
         }, exclude=websocket)
         
-        # Atualizar lista de players para todos os mapas
+        # Atualizar listas
         await self.broadcast_all_maps_players_update()
         
-        self.log(f"Login realizado: {player_name} (ID: {player_id})")
+        self.log(f"Player {character_name} ({player_id}) entrou no mapa '{initial_map}'")
     
     async def handle_player_input(self, websocket, data):
         """Processa input do jogador (server-side authoritative)"""

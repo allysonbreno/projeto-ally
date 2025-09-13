@@ -191,10 +191,15 @@ func _create_local_player():
     local_player.name = "LocalPlayer"
     
     # Configurar como jogador local
+    var player_character_type = "warrior"  # Default
+    if multiplayer_manager.local_player_info.has("character_type"):
+        player_character_type = multiplayer_manager.local_player_info.get("character_type", "warrior")
+    
     local_player.setup_player(
         multiplayer_manager.get_local_player_id(),
         multiplayer_manager.get_local_player_name(),
-        true  # is_local
+        true,  # is_local
+        player_character_type
     )
     
     # Definir refer├â┬¬ncia ao multiplayer_manager
@@ -262,7 +267,8 @@ func _on_player_connected(player_info: Dictionary):
     remote_player.name = "Player_" + player_id
     
     # Configurar como jogador remoto
-    remote_player.setup_player(player_id, player_name, false)
+    var remote_character_type = player_info.get("character_type", "warrior")  # Default to warrior
+    remote_player.setup_player(player_id, player_name, false, remote_character_type)
     
     # Definir refer├â┬¬ncia ao multiplayer_manager
     remote_player.multiplayer_manager = multiplayer_manager
