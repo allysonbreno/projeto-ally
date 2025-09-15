@@ -23,9 +23,11 @@ class MapInstance:
         self.created_at = time.time()
         self.last_activity = time.time()
         
-        # Sistema de respawn
+        # Sistema de respawn infinito - otimizado
         self.respawn_queue: List[dict] = []  # Lista de inimigos aguardando respawn
         self.respawn_delay = 3.0  # 3 segundos de delay para respawn
+        self.infinite_respawn = True  # Respawn infinito habilitado
+        self.last_revival_check = 0.0  # Cooldown para processamento de revival
         
         # Configurações específicas por mapa
         self.spawn_positions = self._get_spawn_positions()
@@ -143,8 +145,12 @@ class MapInstance:
         return player_id in self.players
     
     def get_enemies_data(self) -> List[dict]:
-        """Retorna dados de todos os inimigos do mapa"""
-        return [enemy.get_sync_data() for enemy in self.enemies.values() if enemy.is_alive]
+        """Retorna dados de todos os inimigos vivos do mapa - otimizado"""
+        alive_enemies = []
+        for enemy in self.enemies.values():
+            if enemy.is_alive:
+                alive_enemies.append(enemy.get_sync_data())
+        return alive_enemies
     
     def update_enemies(self, delta_time: float) -> List[dict]:
         """
@@ -212,10 +218,22 @@ class MapInstance:
                         "hp_max": sp.max_hp,
                     })
 
-        # Remover inimigos mortos
+        # Agendar revival para inimigos mortos (não remover do dicionário)
         for enemy_id in dead_enemies:
-            del self.enemies[enemy_id]
-            print(f"[DEATH] [MAP:{self.map_name}] Inimigo {enemy_id} removido (morto)")
+            enemy = self.enemies[enemy_id]
+            
+            # Agendar revival em vez de remoção
+            if self.infinite_respawn and enemy.enemy_type == "orc":
+                respawn_info = {
+                    "enemy_id": enemy_id,
+                    "enemy_ref": enemy,  # Referência direta ao objeto
+                    "respawn_time": time.time() + self.respawn_delay,
+                }
+                self.respawn_queue.append(respawn_info)
+            else:
+                # Se não for para fazer respawn infinito, remover normalmente
+                del self.enemies[enemy_id]
+                print(f"[DEATH] [MAP:{self.map_name}] Inimigo {enemy_id} removido permanentemente")
 
         # Processar fila de respawn
         self._process_respawn_queue(updated_enemies)
@@ -224,30 +242,44 @@ class MapInstance:
         return updated_enemies
     
     def _process_respawn_queue(self, updated_enemies: List[dict]):
-        """Processa a fila de respawn dos inimigos"""
+        """Processa a fila de revival dos inimigos - otimizado para performance"""
+        if not self.respawn_queue:
+            return
+            
         current_time = time.time()
-        respawned_enemies = []
         
-        # Verificar inimigos prontos para respawn
-        for respawn_info in self.respawn_queue[:]:  # Copiar lista para iterar
-            if current_time >= respawn_info["respawn_time"]:
-                # Criar novo inimigo
-                new_enemy_id = f"{respawn_info['enemy_type']}_{int(respawn_info['position'][0])}_{int(respawn_info['position'][1])}"
-                
-                try:
-                    if respawn_info["enemy_type"] == "orc":
-                        from enemies.orc_enemy import OrcEnemy
-                        new_orc = OrcEnemy(new_enemy_id, respawn_info["position"], self.map_name)
-                        self.enemies[new_enemy_id] = new_orc
-                        updated_enemies.append(new_orc.get_sync_data())
-                        print(f"[RESPAWN] [MAP:{self.map_name}] Orc {new_enemy_id} respawnou na posição {respawn_info['position']}")
-                        respawned_enemies.append(respawn_info)
-                except Exception as e:
-                    print(f"[ERROR][MAP:{self.map_name}] Erro ao respawnar {respawn_info['enemy_type']}: {e}")
+        # Cooldown para evitar processamento excessivo (0.1s)
+        if current_time - self.last_revival_check < 0.1:
+            return
+        self.last_revival_check = current_time
         
-        # Remover inimigos que já respawnaram da fila
-        for respawned in respawned_enemies:
-            self.respawn_queue.remove(respawned)
+        # Processar em lote - mais eficiente
+        ready_for_revival = [
+            revival_info for revival_info in self.respawn_queue 
+            if current_time >= revival_info["respawn_time"]
+        ]
+        
+        if not ready_for_revival:
+            return
+        
+        # Reviver todos em lote
+        revived_count = 0
+        for revival_info in ready_for_revival:
+            try:
+                enemy = revival_info["enemy_ref"]
+                enemy.revive()
+                updated_enemies.append(enemy.get_sync_data())
+                revived_count += 1
+            except Exception as e:
+                print(f"[ERROR] Erro ao reviver {revival_info['enemy_id']}: {e}")
+        
+        # Remover da fila em lote - mais eficiente
+        for revival_info in ready_for_revival:
+            self.respawn_queue.remove(revival_info)
+        
+        # Log apenas quando necessário
+        if revived_count > 0:
+            print(f"[REVIVAL] {revived_count} orcs reviveram")
     
     def update_players(self, delta_time: float) -> List[dict]:
         """
@@ -303,20 +335,8 @@ class MapInstance:
         if died:
             state = enemy.get_sync_data()
 
-            # Para inimigos na Floresta (orcs), agendar respawn
-            if self.map_name == "Floresta" and enemy.enemy_type == "orc":
-                respawn_info = {
-                    "enemy_type": "orc",
-                    "position": enemy.position,
-                    "respawn_time": time.time() + self.respawn_delay,
-                    "original_id": enemy_id,
-                }
-                self.respawn_queue.append(respawn_info)
-                print(f"[TIMER] [MAP:{self.map_name}] Orc {enemy_id} agendado para respawn em {self.respawn_delay}s")
-
-            # Remover inimigo do mapa
-            del self.enemies[enemy_id]
-            print(f"[DEATH] [MAP:{self.map_name}] Inimigo {enemy_id} morreu por {attacker_id}")
+            # Inimigo morreu mas não é removido (será revivido pelo sistema de revival)
+            print(f"[DEATH] [MAP:{self.map_name}] Inimigo {enemy_id} morreu por {attacker_id} (será revivido em {self.respawn_delay}s)")
 
             # Evento de morte do inimigo
             events.append({"type": "enemy_death", **state, "killer_id": attacker_id})

@@ -190,6 +190,22 @@ class MultiplayerEnemy:
 
     def _on_death(self) -> None:
         print(f"[ENEMY] {self.enemy_type} {self.enemy_id} morreu!")
+    
+    def revive(self) -> None:
+        """Revive o inimigo sem recriar o objeto - otimizado para performance"""
+        self.is_alive = True
+        self.hp = self.max_hp
+        self.animation = "idle"
+        self.is_attacking = False
+        self.attack_cooldown = 0.0
+        self.attack_timer = 0.0
+        self.attack_hit_timer = 0.0
+        self.has_dealt_damage = False
+        self._pending_hit_player_id = None
+        self.target_player_id = None
+        self.velocity[0] = 0.0  # Mais eficiente que criar nova lista
+        self.velocity[1] = 0.0
+        self.facing_left = False
 
     def consume_pending_hit(self) -> Optional[str]:
         pid = self._pending_hit_player_id
