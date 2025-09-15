@@ -101,6 +101,9 @@ func setup_multiplayer(manager: MultiplayerManager):
             multiplayer_manager.get_parent().remove_child(multiplayer_manager)
         add_child(multiplayer_manager)
     
+    # IMPORTANTE: Processar dados de stats do servidor recebidos no login
+    _process_login_stats()
+    
     # Conectar sinais
     _log("├░┼©ÔÇØÔÇö Conectando sinais do MultiplayerManager...")
     _log("├░┼©ÔÇØÔÇö DEBUG: Manager existe? " + str(multiplayer_manager != null))
@@ -998,6 +1001,9 @@ func _finish_setup_multiplayer() -> void:
     if hud:
         hud.on_select_map.connect(_on_select_map)
         hud.update_health(player_hp, player_hp_max)
+        # Atualizar XP no HUD com dados do servidor
+        hud.update_xp(player_xp, player_xp_max)
+        _log("├░┼©ÔÇÿ┬ñ HUD atualizado com stats do servidor: Level=" + str(player_level) + ", XP=" + str(player_xp) + "/" + str(player_xp_max) + ", HP=" + str(player_hp) + "/" + str(player_hp_max))
     
     # Carregar mapa inicial
     load_city()
@@ -1023,3 +1029,60 @@ func _on_player_left_map_received(player_id: String) -> void:
         remote_players[player_id].set_meta("current_map", "OUTRO")
         _update_remote_players_visibility()
     _send_input_snapshot()
+
+func _process_login_stats() -> void:
+    """Processa os dados de stats do personagem recebidos no login"""
+    if not multiplayer_manager or not multiplayer_manager.local_player_info:
+        _log("├ó┼í┬á├»┬©┬Å Dados de login não disponíveis para processar stats")
+        return
+    
+    var player_info = multiplayer_manager.local_player_info
+    _log("├░┼©ÔÇÿ┬ñ PROCESSANDO dados de login para atualizar stats do cliente...")
+    _log("├░┼©ÔÇÿ┬ñ Player info keys: " + str(player_info.keys()))
+    
+    # Extrair stats básicos
+    if player_info.has("level"):
+        player_level = int(player_info.get("level", 1))
+        _log("├░┼©ÔÇÿ┬ñ LEVEL carregado do servidor: " + str(player_level))
+    
+    if player_info.has("xp"):
+        player_xp = int(player_info.get("xp", 0))
+        _log("├░┼©ÔÇÿ┬ñ XP carregado do servidor: " + str(player_xp))
+    
+    if player_info.has("xp_max"):
+        player_xp_max = int(player_info.get("xp_max", 100))
+        _log("├░┼©ÔÇÿ┬ñ XP_MAX carregado do servidor: " + str(player_xp_max))
+    
+    if player_info.has("attr_points"):
+        available_points = int(player_info.get("attr_points", 0))
+        _log("├░┼©ÔÇÿ┬ñ ATTR_POINTS carregado do servidor: " + str(available_points))
+    
+    if player_info.has("hp"):
+        player_hp = int(player_info.get("hp", 100))
+        _log("├░┼©ÔÇÿ┬ñ HP carregado do servidor: " + str(player_hp))
+    
+    if player_info.has("hp_max"):
+        player_hp_max = int(player_info.get("hp_max", 100))
+        _log("├░┼©ÔÇÿ┬ñ HP_MAX carregado do servidor: " + str(player_hp_max))
+    
+    # Extrair atributos
+    if player_info.has("attributes"):
+        var attrs = player_info.get("attributes", {})
+        if typeof(attrs) == TYPE_DICTIONARY:
+            if attrs.has("strength"):
+                player_strength = int(attrs.get("strength", 5))
+                _log("├░┼©ÔÇÿ┬ñ STRENGTH carregado do servidor: " + str(player_strength))
+            
+            if attrs.has("defense"):
+                player_defense = int(attrs.get("defense", 5))
+                _log("├░┼©ÔÇÿ┬ñ DEFENSE carregado do servidor: " + str(player_defense))
+            
+            if attrs.has("intelligence"):
+                player_intelligence = int(attrs.get("intelligence", 5))
+                _log("├░┼©ÔÇÿ┬ñ INTELLIGENCE carregado do servidor: " + str(player_intelligence))
+            
+            if attrs.has("vitality"):
+                player_vitality = int(attrs.get("vitality", 5))
+                _log("├░┼©ÔÇÿ┬ñ VITALITY carregado do servidor: " + str(player_vitality))
+    
+    _log("├░┼©ÔÇÿ┬ñ STATS FINAIS: Level=" + str(player_level) + ", XP=" + str(player_xp) + "/" + str(player_xp_max) + ", STR=" + str(player_strength) + ", DEF=" + str(player_defense) + ", INT=" + str(player_intelligence) + ", VIT=" + str(player_vitality) + ", AttrPts=" + str(available_points))

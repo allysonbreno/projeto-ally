@@ -178,9 +178,12 @@ class MultiplayerEnemy:
             self.animation = "idle"
 
     def take_damage(self, amount: int) -> bool:
+        old_hp = self.hp
         self.hp = max(0, self.hp - amount)
+        print(f"[DAMAGE_DEBUG] {self.enemy_type} {self.enemy_id}: HP {old_hp} -> {self.hp} (dano: {amount})")
         if self.hp <= 0:
             self.is_alive = False
+            print(f"[DAMAGE_DEBUG] {self.enemy_type} {self.enemy_id}: MORREU! Chamando _on_death()")
             self._on_death()
             return True
         return False

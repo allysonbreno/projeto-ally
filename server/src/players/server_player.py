@@ -8,9 +8,11 @@ class ServerPlayer:
     Processa input, física e lógica no servidor (server-authoritative).
     """
 
-    def __init__(self, player_id: str, player_name: str, spawn_pos: dict):
+    def __init__(self, player_id: str, player_name: str, spawn_pos: dict, store=None, character_id=None):
         self.player_id = player_id
         self.name = player_name
+        self.store = store
+        self.character_id = character_id
         # Posição interna (mantém compatibilidade com código existente)
         self.posicaon = [float(spawn_pos.get("x", 0.0)), float(spawn_pos.get("y", 0.0))]
         self.velocity = [0.0, 0.0]
@@ -23,13 +25,13 @@ class ServerPlayer:
             "attack": False,
         }
 
-        # Stats
+        # Stats padrão (serão sobrescritos se carregar do banco)
         self.level = 1
         self.xp = 0
         self.xp_max = 100
         self.attribute_points = 0
 
-        # Atributos
+        # Atributos padrão (serão sobrescritos se carregar do banco)
         self.strength = 5
         self.defense_attr = 5
         self.intelligence = 5
@@ -37,6 +39,9 @@ class ServerPlayer:
 
         self.max_hp = self.vitality * 20
         self.hp = self.max_hp
+        
+        # Carregar dados salvos do banco de dados se disponível
+        self._load_from_database()
         self.is_alive = True
         self.animation = "idle"
         self.facing_left = False
@@ -91,6 +96,7 @@ class ServerPlayer:
         self.hp = min(self.hp, self.max_hp)
 
     def gain_xp(self, amount: int) -> bool:
+        print(f"[XP_GAIN] {self.name} ganhou {amount} XP! (Atual: {self.xp} -> {self.xp + amount})")
         leveled = False
         self.xp += int(amount)
         while self.xp >= self.xp_max:
@@ -103,7 +109,107 @@ class ServerPlayer:
                 self.xp_max = self.xp_max + 20
             self.attribute_points += 5
             leveled = True
+        
+        # Auto-save no banco de dados
+        self.auto_save()
         return leveled
+
+    def auto_save(self):
+        """Salva automaticamente o estado do personagem no banco de dados"""
+        print(f"[AUTO_SAVE] Tentando salvar {self.name} - store: {self.store is not None}, character_id: {self.character_id}")
+        if self.store and self.character_id:
+            try:
+                print(f"[AUTO_SAVE] Salvando estado: Level={self.level}, XP={self.xp}, HP={self.hp}")
+                # Salvar estado básico
+                self.store.save_character_state(self.character_id, {
+                    "level": self.level,
+                    "xp": self.xp,
+                    "xp_max": self.xp_max,
+                    "attr_points": self.attribute_points,
+                    "hp": self.hp,
+                    "hp_max": self.max_hp,
+                    "pos_x": self.position[0],
+                    "pos_y": self.position[1]
+                })
+                print(f"[AUTO_SAVE] Estado salvo com sucesso!")
+                
+                # Salvar atributos
+                self.store.save_character_attributes(self.character_id, {
+                    "strength": self.strength,
+                    "defense": self.defense_attr,
+                    "intelligence": self.intelligence,
+                    "vitality": self.vitality
+                })
+                print(f"[AUTO_SAVE] Atributos salvos com sucesso!")
+                print(f"[AUTO_SAVE] Personagem {self.name} salvo completamente! Level: {self.level}, XP: {self.xp}")
+            except Exception as e:
+                import traceback
+                print(f"[ERROR] Falha ao salvar personagem {self.name}: {e}")
+                print(f"[ERROR] Traceback: {traceback.format_exc()}")
+        else:
+            print(f"[AUTO_SAVE] ERRO: Não salvou {self.name} - store: {self.store is not None}, character_id: {self.character_id}")
+
+    def _load_from_database(self):
+        """Carrega dados salvos do banco de dados se disponível"""
+        if not self.store or not self.character_id:
+            print(f"[LOAD] {self.name}: Usando valores padrão (sem banco ou character_id)")
+            return
+            
+        try:
+            print(f"[LOAD] Carregando dados salvos para {self.name} (character_id: {self.character_id})")
+            
+            # Carregar dados do personagem diretamente pelo character_id
+            char = self.store.get_character_by_id(self.character_id)
+            
+            # Carregar atributos do personagem
+            attrs_row = self.store.conn.execute(
+                "SELECT * FROM character_attributes WHERE character_id=?",
+                (self.character_id,),
+            ).fetchone()
+            attrs = dict(attrs_row) if attrs_row else None
+            
+            if char:
+                # Carregar stats do personagem
+                self.level = char.get("level", 1)
+                self.xp = char.get("xp", 0) 
+                self.xp_max = char.get("xp_max", 100)
+                self.attribute_points = char.get("attr_points", 0)
+                self.hp = char.get("hp", 100)
+                self.max_hp = char.get("hp_max", 100)
+                
+                print(f"[LOAD] Stats carregados: Level={self.level}, XP={self.xp}, HP={self.hp}, AttrPts={self.attribute_points}")
+                
+            if attrs:
+                # Carregar atributos do personagem  
+                self.strength = attrs.get("strength", 5)
+                self.defense_attr = attrs.get("defense", 5)
+                self.intelligence = attrs.get("intelligence", 5)
+                self.vitality = attrs.get("vitality", 5)
+                
+                print(f"[LOAD] Atributos carregados: STR={self.strength}, DEF={self.defense_attr}, INT={self.intelligence}, VIT={self.vitality}")
+                
+                # Recalcular HP máximo baseado na vitalidade carregada
+                if not char:  # Se não carregou HP do char, calcular baseado na vitalidade
+                    self.max_hp = self.vitality * 20
+                    self.hp = self.max_hp
+                else:
+                    # Se carregou HP do char, garantir que HP máximo bate com vitalidade
+                    calculated_max_hp = self.vitality * 20
+                    if self.max_hp != calculated_max_hp:
+                        print(f"[LOAD] Ajustando HP máximo: {self.max_hp} -> {calculated_max_hp} (baseado em VIT={self.vitality})")
+                        self.max_hp = calculated_max_hp
+                        # Não deixar HP atual maior que o máximo
+                        if self.hp > self.max_hp:
+                            self.hp = self.max_hp
+                    
+            print(f"[LOAD] {self.name} carregado com sucesso do banco de dados!")
+            print(f"[LOAD] Estado final: Level={self.level}, XP={self.xp}/{self.xp_max}, HP={self.hp}/{self.max_hp}, AttrPts={self.attribute_points}")
+            
+        except Exception as e:
+            import traceback
+            print(f"[LOAD] ERRO ao carregar {self.name}: {e}")
+            print(f"[LOAD] Traceback: {traceback.format_exc()}")
+            print(f"[LOAD] Usando valores padrão para {self.name}")
 
     def add_attribute_point(self, attr: str) -> bool:
         if self.attribute_points <= 0:
@@ -120,6 +226,9 @@ class ServerPlayer:
         else:
             return False
         self.attribute_points -= 1
+        
+        # Auto-save após gastar ponto de atributo
+        self.auto_save()
         return True
 
     def to_stats_dict(self) -> dict:

@@ -7,9 +7,58 @@ from datetime import datetime
 import uuid
 import hashlib
 import secrets
+import importlib
+import sys
+
+# TESTE IMEDIATO DE CARREGAMENTO DOS MÓDULOS
+print("=" * 60)
+print("*** INICIANDO SERVIDOR - TESTE DE CARREGAMENTO ***")
+print("*** VERSAO DO CODIGO: 2025-01-14 23:00 ***")
+print("*** SE VOCE NAO VE ESTA MENSAGEM, O CACHE NAO FOI LIMPO ***")
+print("=" * 60)
+
+# Forçar reload dos módulos modificados para debug
+print("*** FORÇANDO RELOAD DOS MÓDULOS MODIFICADOS ***")
+if 'enemies.multiplayer_enemy' in sys.modules:
+    importlib.reload(sys.modules['enemies.multiplayer_enemy'])
+    print("*** MÓDULO enemies.multiplayer_enemy RECARREGADO ***")
+if 'maps.map_instance' in sys.modules:
+    importlib.reload(sys.modules['maps.map_instance'])
+    print("*** MÓDULO maps.map_instance RECARREGADO ***")
+if 'players.server_player' in sys.modules:
+    importlib.reload(sys.modules['players.server_player'])
+    print("*** MÓDULO players.server_player RECARREGADO ***")
+
 # Sistema legado removido - usando apenas MapManager
 from maps.map_instance import MapManager
 from db.sqlite_store import SqliteStore
+
+# TESTE: Verificar se as modificações foram carregadas
+try:
+    from players.server_player import ServerPlayer
+    print("OK ServerPlayer importado com sucesso")
+    
+    # Verificar se auto_save existe
+    if hasattr(ServerPlayer, 'auto_save'):
+        print("OK Método auto_save ENCONTRADO em ServerPlayer")
+    else:
+        print("ERRO Método auto_save NÃO ENCONTRADO em ServerPlayer")
+    
+    # Verificar assinatura do construtor
+    import inspect
+    sig = inspect.signature(ServerPlayer.__init__)
+    params = list(sig.parameters.keys())
+    print(f"OK Parâmetros do construtor: {params}")
+    
+    if 'store' in params and 'character_id' in params:
+        print("OK Parâmetros store e character_id ENCONTRADOS")
+    else:
+        print("ERRO Parâmetros store e character_id NÃO ENCONTRADOS")
+        
+except Exception as e:
+    print(f"ERRO ao importar ServerPlayer: {e}")
+
+print("=" * 60)
 
 def hash_password(password: str, salt: bytes = None) -> tuple:
     """Gera hash da senha com salt. Retorna (hash, salt)."""
@@ -470,40 +519,42 @@ class GameServer:
         
         # Adicionar jogador ao mapa server-side  
         map_instance = self.map_manager.get_or_create_map(initial_map)
-        actual_spawn_pos = map_instance.add_player(player_id, character_name)
+        print(f"[DEBUG_GAME_SERVER] Chamando add_player para {character_name}: store={self.store is not None}, char_id={char['id']}")
+        actual_spawn_pos = map_instance.add_player(player_id, character_name, self.store, char["id"])
         
-        # Aplicar estado persistido
+        # Ajustar apenas a posição salva (não sobrescrever dados carregados do banco)
         try:
             sp = map_instance.players[player_id]
-            sp.position = [float(char.get("pos_x", actual_spawn_pos.get("x", 0.0))), 
-                          float(char.get("pos_y", actual_spawn_pos.get("y", 0.0)))]
-            sp.hp = int(char.get("hp", 100))
-            sp.level = int(char.get("level", 1))
-            sp.xp = int(char.get("xp", 0))
-            sp.xp_max = int(char.get("xp_max", 100))
-            sp.attribute_points = int(char.get("attr_points", 0))
-            sp.max_hp = int(char.get("hp_max", 100))
-            if attrs:
-                sp.strength = int(attrs.get("strength", 5))
-                sp.defense_attr = int(attrs.get("defense", 5))
-                sp.intelligence = int(attrs.get("intelligence", 5))
-                sp.vitality = int(attrs.get("vitality", 5))
-        except Exception:
-            pass
+            # Só ajustar posição se foi salva (preservar dados carregados do _load_from_database)
+            saved_x = char.get("pos_x")
+            saved_y = char.get("pos_y") 
+            if saved_x is not None and saved_y is not None:
+                sp.position = [float(saved_x), float(saved_y)]
+                print(f"[LOGIN] Posição restaurada para {character_name}: {sp.position}")
+        except Exception as e:
+            print(f"[LOGIN] Erro ao restaurar posição: {e}")
         
-        # Obter dados para resposta
+        # Obter dados completos para resposta (incluindo stats do personagem)
         server_player_data = map_instance.get_player_data(player_id)
         if server_player_data:
             server_player_data["name"] = character_name
             server_player_data["character_type"] = char.get("character_type", "warrior")
+            # Adicionar dados completos do personagem (stats, atributos)
+            sp = map_instance.players[player_id]
+            stats_data = sp.to_stats_dict()
+            server_player_data.update(stats_data)
+            print(f"[LOGIN_DATA] Enviando dados completos para {character_name}: Level={sp.level}, XP={sp.xp}, STR={sp.strength}")
+            print(f"[LOGIN_DATA] Dados completos enviados: {stats_data}")
         
         # Responder ao login
-        await self.send_to_client(websocket, {
+        login_response = {
             "type": "login_response", 
             "success": True,
             "player_id": player_id,
             "player_info": server_player_data
-        })
+        }
+        print(f"[LOGIN_JSON] Enviando resposta completa: {login_response}")
+        await self.send_to_client(websocket, login_response)
         
         # Enviar lista de players do mapa
         players_in_same_map = map_instance.get_players_data_dict()
@@ -652,7 +703,32 @@ class GameServer:
 
             # USAR MapManager para mover player entre mapas (server-side)
             self.log("[MAP_CHANGE] Chamando map_manager.move_player()...")
-            spawn_position, success = self.map_manager.move_player(player_id, old_map, new_map, client_data["player_name"])
+            
+            # Buscar character_id do usuário
+            character_id = None
+            try:
+                print(f"[DEBUG_MOVE] client_data keys: {list(client_data.keys())}")
+                
+                # PRIORIDADE 1: Se temos user_id, usar diretamente (mais confiável)
+                if "user_id" in client_data:
+                    print(f"[DEBUG_MOVE] Usando user_id: {client_data['user_id']}")
+                    char = self.store.get_character_by_user_id(client_data["user_id"])
+                    if char:
+                        character_id = char["id"]
+                        print(f"[DEBUG_MOVE] character_id encontrado via user_id: {character_id}")
+                    else:
+                        print(f"[DEBUG_MOVE] ERRO: Nenhum personagem encontrado para user_id: {client_data['user_id']}")
+                
+                # Se não conseguiu com user_id, não há mais o que fazer
+                else:
+                    print(f"[DEBUG_MOVE] ERRO: Nem user_id nem username/player_name disponível em client_data")
+                
+            except Exception as e:
+                print(f"[DEBUG_MOVE] Erro ao buscar character_id: {e}")
+                
+            print(f"[DEBUG_MOVE] Final character_id: {character_id}")
+            
+            spawn_position, success = self.map_manager.move_player(player_id, old_map, new_map, client_data["player_name"], self.store, character_id)
             
             if success:
                 # Player ja foi movido pelo MapManager (sistema server-side)

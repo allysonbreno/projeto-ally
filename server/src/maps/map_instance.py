@@ -90,11 +90,12 @@ class MapInstance:
         # Defaults seguros
         return {"min_x": -1000.0, "max_x": 1000.0, "min_y": -300.0, "ground_y": 184.0}
     
-    def add_player(self, player_id: str, player_name: str) -> dict:
+    def add_player(self, player_id: str, player_name: str, store=None, character_id=None) -> dict:
         """
         Adiciona um player server-side ao mapa e retorna posição de spawn
         """
-        server_player = ServerPlayer(player_id, player_name, self.spawn_positions)
+        print(f"[DEBUG_ADD_PLAYER] {player_name}: store={store is not None}, character_id={character_id}")
+        server_player = ServerPlayer(player_id, player_name, self.spawn_positions, store, character_id)
         self.players[player_id] = server_player
         self.last_activity = time.time()
         
@@ -288,10 +289,13 @@ class MapInstance:
     def damage_enemy(self, enemy_id: str, damage: int, attacker_id: str) -> Optional[list]:
         """Aplica dano a um inimigo. Retorna lista de eventos ou None"""
         if enemy_id not in self.enemies:
+            print(f"[DAMAGE_DEBUG] [MAP:{self.map_name}] Inimigo {enemy_id} não encontrado!")
             return None
 
         enemy = self.enemies[enemy_id]
+        print(f"[DAMAGE_DEBUG] [MAP:{self.map_name}] Aplicando {damage} dano no {enemy.enemy_type} {enemy_id}")
         died = enemy.take_damage(damage)
+        print(f"[DAMAGE_DEBUG] [MAP:{self.map_name}] Resultado: died={died}")
 
         # Eventos a serem emitidos para os clientes
         events = []
@@ -422,7 +426,7 @@ class MapManager:
         """Retorna instância do mapa sem criar"""
         return self.maps.get(map_name)
     
-    def move_player(self, player_id: str, from_map: str, to_map: str, player_name: str) -> Tuple[Optional[dict], bool]:
+    def move_player(self, player_id: str, from_map: str, to_map: str, player_name: str, store=None, character_id=None) -> Tuple[Optional[dict], bool]:
         """
         Move um player entre mapas.
         Retorna (spawn_position, success)
@@ -435,7 +439,7 @@ class MapManager:
         
         # Adicionar ao mapa destino
         target_map = self.get_or_create_map(to_map)
-        spawn_position = target_map.add_player(player_id, player_name)
+        spawn_position = target_map.add_player(player_id, player_name, store, character_id)
         
         print(f"[LAUNCH] [MAP_MANAGER] Player {player_name} movido: {from_map} -> {to_map}")
         

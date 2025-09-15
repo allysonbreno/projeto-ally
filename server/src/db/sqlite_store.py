@@ -161,8 +161,10 @@ class SqliteStore(Store):
             ("hp", int(state.get("hp"))) if "hp" in state else None,
             ("hp_max", int(state.get("hp_max"))) if "hp_max" in state else None,
         ]
-        sets = ", ".join([f"{k}=?" for k, v in fields if v is not None])
-        params = [v for k, v in fields if v is not None]
+        # Filtrar campos None antes de tentar descompactar
+        valid_fields = [field for field in fields if field is not None]
+        sets = ", ".join([f"{k}=?" for k, v in valid_fields])
+        params = [v for k, v in valid_fields]
         if not sets:
             return
         params.append(character_id)
@@ -176,13 +178,25 @@ class SqliteStore(Store):
             ("intelligence", int(attrs.get("intelligence"))) if "intelligence" in attrs else None,
             ("vitality", int(attrs.get("vitality"))) if "vitality" in attrs else None,
         ]
-        sets = ", ".join([f"{k}=?" for k, v in fields if v is not None])
-        params = [v for k, v in fields if v is not None]
+        # Filtrar campos None antes de tentar descompactar
+        valid_fields = [field for field in fields if field is not None]
+        sets = ", ".join([f"{k}=?" for k, v in valid_fields])
+        params = [v for k, v in valid_fields]
         if not sets:
             return
         params.append(character_id)
         self.conn.execute(f"UPDATE character_attributes SET {sets} WHERE character_id=?", params)
         self.conn.commit()
+
+    def get_user_id_by_character_id(self, character_id: str) -> Optional[str]:
+        """Obtém o user_id a partir do character_id"""
+        row = self.conn.execute("SELECT user_id FROM characters WHERE id=?", (character_id,)).fetchone()
+        return row[0] if row else None
+
+    def get_character_by_id(self, character_id: str) -> Optional[Dict[str, Any]]:
+        """Obtém um personagem pelo ID"""
+        row = self.conn.execute("SELECT * FROM characters WHERE id=?", (character_id,)).fetchone()
+        return dict(row) if row else None
 
     def update_position(self, character_id: str, map_name: str, x: float, y: float) -> None:
         self.conn.execute(
