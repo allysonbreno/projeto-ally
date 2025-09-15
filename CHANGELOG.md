@@ -1,5 +1,35 @@
 # Changelog
 
+## v2.8.0 (2025-09-14)
+
+### Added
+- **Sistema de persistência automática de personagem**: Progressão de personagem (level, XP, atributos) agora salva automaticamente no banco de dados
+- Auto-save disparado por ganho de XP e gasto de pontos de atributo
+- Carregamento automático de dados de personagem no login com exibição correta na interface do cliente
+- Métodos de banco de dados `get_user_id_by_character_id()` e `get_character_by_id()` para melhor lookup de dados
+- Sistema robusto de logs para debug de auto-save e carregamento de dados
+- Ferramentas de limpeza de cache Python (`restart_clean.bat`, `start_clean.py`)
+
+### Fixed
+- **Bug crítico**: Stats de personagem não persistiam entre sessões - agora salvos automaticamente
+- Interface do cliente mostra dados incorretos no login - agora processa dados do servidor corretamente  
+- Bugs no SQLite store com manipulação de valores None em operações de save
+- Problemas de lookup de character_id durante transições de mapa
+- Cache Python causando carregamento de código antigo no servidor
+
+### Changed
+- Construtor `ServerPlayer` modificado para aceitar parâmetros `store` e `character_id`
+- Resposta de login inclui stats completos do personagem usando `sp.to_stats_dict()`
+- `multiplayer_game.gd` implementa `_process_login_stats()` para processar dados de login e atualizar UI
+- Sistema de gerenciamento de estado de personagem server-authoritative aprimorado
+- Limpeza de arquivos temporários e contextos deprecados
+
+### Technical Details
+- Método `auto_save()` chamado de `gain_xp()` e `add_attribute_point()`
+- Implementado `_load_from_database()` para restauração de dados de personagem
+- Correção de lookup de `character_id` usando `user_id` diretamente dos `client_data`
+- Sistema de logs extensivo para debug de operações de save/load
+
 ## v2.6.1 (2025-09-12)
 
 ### Fixed
