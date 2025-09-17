@@ -466,30 +466,7 @@ func _open_map_menu() -> void:
     popup_menu.popup()
 
 func _open_status_dialog() -> void:
-    var main_node = get_parent()
-    if main_node and main_node.has_method("get_player_stats"):
-        var stats = main_node.get_player_stats()
-        
-        # Se tem pontos disponíveis, abre a interface de distribuição
-        if stats.available_points > 0:
-            _open_points_distribution_window()
-        else:
-            # Senão, mostra apenas o status
-            var status_text = "=== STATUS DO PERSONAGEM ===\n\n"
-            status_text += "Nível: %d\n" % stats.level
-            status_text += "HP: %d/%d\n" % [stats.hp, stats.hp_max]
-            status_text += "XP: %d/%d\n\n" % [stats.xp, stats.xp_max]
-            status_text += "=== ATRIBUTOS ===\n"
-            status_text += "Força: %d (+%d dano)\n" % [stats.strength, stats.strength]
-            status_text += "Defesa: %d (-%d dano recebido)\n" % [stats.defense, stats.defense]
-            status_text += "Inteligência: %d\n" % stats.intelligence
-            status_text += "Vitalidade: %d (+%d HP máximo)" % [stats.vitality, stats.vitality * 20]
-            
-            status_dialog.dialog_text = status_text
-            status_dialog.popup_centered()
-    else:
-        status_dialog.dialog_text = "Erro ao carregar status"
-        status_dialog.popup_centered()
+    _open_points_distribution_window()
 
 # ================== API pública ==================
 func set_player(p: CharacterBody2D) -> void:
@@ -548,87 +525,410 @@ func show_damage_popup_at_world(world_pos: Vector2, txt: String, color: Color) -
 # ================== Interface de Pontos ==================
 func _create_points_distribution_window() -> void:
     points_window = Window.new()
-    points_window.title = "Distribuir Pontos de Atributo"
-    points_window.size = Vector2i(400, 350)
+    points_window.title = ""  # Sem título padrão, vamos criar customizado
+    points_window.size = Vector2i(480, 550)
     points_window.visible = false
+    points_window.borderless = true  # Remove borda padrão
     points_window.close_requested.connect(func(): points_window.visible = false)
     add_child(points_window)
     
-    var vbox := VBoxContainer.new()
-    points_window.add_child(vbox)
-    vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-    vbox.add_theme_constant_override("separation", 10)
+    # === PAINEL PRINCIPAL COM MOLDURA FANTASIA ===
+    var main_panel := Panel.new()
+    main_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     
-    # Título
+    # Estilo de moldura de madeira escura pixel art
+    var frame_style := StyleBoxFlat.new()
+    frame_style.bg_color = Color("#2D1B0E")  # Madeira escura
+    frame_style.corner_radius_top_left = 0
+    frame_style.corner_radius_top_right = 0
+    frame_style.corner_radius_bottom_left = 0
+    frame_style.corner_radius_bottom_right = 0
+    frame_style.border_width_left = 4
+    frame_style.border_width_right = 4
+    frame_style.border_width_top = 4
+    frame_style.border_width_bottom = 4
+    frame_style.border_color = Color("#1A0F08")  # Borda mais escura
+    main_panel.add_theme_stylebox_override("panel", frame_style)
+    points_window.add_child(main_panel)
+    
+    # === BARRA DE TÍTULO PERSONALIZADA ===
+    var title_bar := Panel.new()
+    title_bar.anchor_right = 1
+    title_bar.anchor_bottom = 0
+    title_bar.offset_left = 8
+    title_bar.offset_top = 8
+    title_bar.offset_right = -8
+    title_bar.offset_bottom = 45
+    
+    # Estilo da barra de título (metal dourado)
+    var title_style := StyleBoxFlat.new()
+    title_style.bg_color = Color("#8B6914")  # Dourado escuro
+    title_style.corner_radius_top_left = 0
+    title_style.corner_radius_top_right = 0
+    title_style.corner_radius_bottom_left = 0
+    title_style.corner_radius_bottom_right = 0
+    title_style.border_width_left = 2
+    title_style.border_width_right = 2
+    title_style.border_width_top = 2
+    title_style.border_width_bottom = 2
+    title_style.border_color = Color("#B8860B")  # Dourado claro
+    title_bar.add_theme_stylebox_override("panel", title_style)
+    main_panel.add_child(title_bar)
+    
+    # Título decorativo
     var title := Label.new()
-    title.text = "Distribuir Pontos de Atributo"
+    title.text = "⚔ STATUS DO PERSONAGEM ⚔"
     title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    title.add_theme_font_size_override("font_size", 18)
-    vbox.add_child(title)
+    title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    title.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    title.add_theme_font_size_override("font_size", 14)
+    title.add_theme_color_override("font_color", Color("#FFF8DC"))  # Branco cremoso
+    title.add_theme_color_override("font_shadow_color", Color("#000000"))
+    title.add_theme_constant_override("shadow_offset_x", 1)
+    title.add_theme_constant_override("shadow_offset_y", 1)
+    title_bar.add_child(title)
     
-    # Pontos disponíveis
+    # Botão fechar decorativo
+    var close_button := Button.new()
+    close_button.text = "✕"
+    close_button.anchor_left = 0.9
+    close_button.anchor_right = 1
+    close_button.anchor_top = 0.1
+    close_button.anchor_bottom = 0.9
+    close_button.offset_left = -5
+    close_button.offset_right = -5
+    close_button.offset_top = 2
+    close_button.offset_bottom = -2
+    close_button.pressed.connect(func(): points_window.visible = false)
+    
+    # Estilo do botão fechar
+    var close_style := StyleBoxFlat.new()
+    close_style.bg_color = Color("#8B0000")  # Vermelho escuro
+    close_style.corner_radius_top_left = 0
+    close_style.corner_radius_top_right = 0
+    close_style.corner_radius_bottom_left = 0
+    close_style.corner_radius_bottom_right = 0
+    close_style.border_width_left = 1
+    close_style.border_width_right = 1
+    close_style.border_width_top = 1
+    close_style.border_width_bottom = 1
+    close_style.border_color = Color("#FF0000")
+    close_button.add_theme_stylebox_override("normal", close_style)
+    close_button.add_theme_color_override("font_color", Color.WHITE)
+    close_button.add_theme_font_size_override("font_size", 12)
+    title_bar.add_child(close_button)
+    
+    # === CONTAINER PRINCIPAL DO CONTEÚDO ===
+    var content_container := VBoxContainer.new()
+    content_container.name = "content_container"
+    content_container.anchor_right = 1
+    content_container.anchor_bottom = 1
+    content_container.offset_left = 20
+    content_container.offset_top = 60
+    content_container.offset_right = -20
+    content_container.offset_bottom = -20
+    content_container.add_theme_constant_override("separation", 15)
+    main_panel.add_child(content_container)
+    
+    # === INFORMAÇÕES BÁSICAS COM VISUAL RPG ===
+    var basic_section := VBoxContainer.new()
+    basic_section.add_theme_constant_override("separation", 8)
+    
+    # Nível com decoração
+    var level_container := HBoxContainer.new()
+    level_container.alignment = BoxContainer.ALIGNMENT_CENTER
+    var level_icon := Label.new()
+    level_icon.text = "⭐"
+    level_icon.add_theme_font_size_override("font_size", 16)
+    level_container.add_child(level_icon)
+    var level_label := Label.new()
+    level_label.name = "level_label"
+    level_label.add_theme_font_size_override("font_size", 16)
+    level_label.add_theme_color_override("font_color", Color("#FFD700"))  # Dourado
+    level_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+    level_label.add_theme_constant_override("shadow_offset_x", 1)
+    level_label.add_theme_constant_override("shadow_offset_y", 1)
+    level_container.add_child(level_label)
+    basic_section.add_child(level_container)
+    
+    # Barra de HP decorativa
+    var hp_container := VBoxContainer.new()
+    var hp_title := Label.new()
+    hp_title.text = "💖 VIDA"
+    hp_title.add_theme_font_size_override("font_size", 12)
+    hp_title.add_theme_color_override("font_color", Color("#FF6B6B"))
+    hp_title.add_theme_color_override("font_shadow_color", Color.BLACK)
+    hp_title.add_theme_constant_override("shadow_offset_x", 1)
+    hp_title.add_theme_constant_override("shadow_offset_y", 1)
+    hp_container.add_child(hp_title)
+    
+    var hp_bar := ProgressBar.new()
+    hp_bar.name = "hp_bar"
+    hp_bar.custom_minimum_size.y = 20
+    hp_bar.show_percentage = false
+    # Estilo da barra HP
+    var hp_bg_style := StyleBoxFlat.new()
+    hp_bg_style.bg_color = Color("#4A0000")  # Vermelho muito escuro
+    hp_bg_style.corner_radius_top_left = 0
+    hp_bg_style.corner_radius_top_right = 0
+    hp_bg_style.corner_radius_bottom_left = 0
+    hp_bg_style.corner_radius_bottom_right = 0
+    hp_bg_style.border_width_left = 2
+    hp_bg_style.border_width_right = 2
+    hp_bg_style.border_width_top = 2
+    hp_bg_style.border_width_bottom = 2
+    hp_bg_style.border_color = Color.BLACK
+    var hp_fill_style := StyleBoxFlat.new()
+    hp_fill_style.bg_color = Color("#DC143C")  # Vermelho vibrante
+    hp_fill_style.corner_radius_top_left = 0
+    hp_fill_style.corner_radius_top_right = 0
+    hp_fill_style.corner_radius_bottom_left = 0
+    hp_fill_style.corner_radius_bottom_right = 0
+    hp_bar.add_theme_stylebox_override("background", hp_bg_style)
+    hp_bar.add_theme_stylebox_override("fill", hp_fill_style)
+    
+    # Label dentro da barra HP
+    var hp_label := Label.new()
+    hp_label.name = "hp_label"
+    hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    hp_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    hp_label.add_theme_font_size_override("font_size", 11)
+    hp_label.add_theme_color_override("font_color", Color.WHITE)
+    hp_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+    hp_label.add_theme_constant_override("shadow_offset_x", 1)
+    hp_label.add_theme_constant_override("shadow_offset_y", 1)
+    hp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    hp_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    hp_bar.add_child(hp_label)
+    hp_container.add_child(hp_bar)
+    basic_section.add_child(hp_container)
+    
+    # Barra de XP decorativa
+    var xp_container := VBoxContainer.new()
+    var xp_title := Label.new()
+    xp_title.text = "✨ EXPERIÊNCIA"
+    xp_title.add_theme_font_size_override("font_size", 12)
+    xp_title.add_theme_color_override("font_color", Color("#4169E1"))
+    xp_title.add_theme_color_override("font_shadow_color", Color.BLACK)
+    xp_title.add_theme_constant_override("shadow_offset_x", 1)
+    xp_title.add_theme_constant_override("shadow_offset_y", 1)
+    xp_container.add_child(xp_title)
+    
+    var status_xp_bar := ProgressBar.new()
+    status_xp_bar.name = "xp_bar"
+    status_xp_bar.custom_minimum_size.y = 20
+    status_xp_bar.show_percentage = false
+    # Estilo da barra XP
+    var xp_bg_style := StyleBoxFlat.new()
+    xp_bg_style.bg_color = Color("#000080")  # Azul muito escuro
+    xp_bg_style.corner_radius_top_left = 0
+    xp_bg_style.corner_radius_top_right = 0
+    xp_bg_style.corner_radius_bottom_left = 0
+    xp_bg_style.corner_radius_bottom_right = 0
+    xp_bg_style.border_width_left = 2
+    xp_bg_style.border_width_right = 2
+    xp_bg_style.border_width_top = 2
+    xp_bg_style.border_width_bottom = 2
+    xp_bg_style.border_color = Color.BLACK
+    var xp_fill_style := StyleBoxFlat.new()
+    xp_fill_style.bg_color = Color("#1E90FF")  # Azul vibrante
+    xp_fill_style.corner_radius_top_left = 0
+    xp_fill_style.corner_radius_top_right = 0
+    xp_fill_style.corner_radius_bottom_left = 0
+    xp_fill_style.corner_radius_bottom_right = 0
+    status_xp_bar.add_theme_stylebox_override("background", xp_bg_style)
+    status_xp_bar.add_theme_stylebox_override("fill", xp_fill_style)
+    
+    # Label dentro da barra XP
+    var status_xp_label := Label.new()
+    status_xp_label.name = "xp_label"
+    status_xp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    status_xp_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    status_xp_label.add_theme_font_size_override("font_size", 11)
+    status_xp_label.add_theme_color_override("font_color", Color.WHITE)
+    status_xp_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+    status_xp_label.add_theme_constant_override("shadow_offset_x", 1)
+    status_xp_label.add_theme_constant_override("shadow_offset_y", 1)
+    status_xp_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    status_xp_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    status_xp_bar.add_child(status_xp_label)
+    xp_container.add_child(status_xp_bar)
+    basic_section.add_child(xp_container)
+    
+    content_container.add_child(basic_section)
+    
+    # === DIVISOR DECORATIVO ===
+    var divider := Panel.new()
+    divider.custom_minimum_size.y = 3
+    var divider_style := StyleBoxFlat.new()
+    divider_style.bg_color = Color("#8B6914")  # Dourado
+    divider_style.corner_radius_top_left = 0
+    divider_style.corner_radius_top_right = 0
+    divider_style.corner_radius_bottom_left = 0
+    divider_style.corner_radius_bottom_right = 0
+    divider.add_theme_stylebox_override("panel", divider_style)
+    content_container.add_child(divider)
+    
+    # === SEÇÃO DE ATRIBUTOS ===
+    var attributes_section := VBoxContainer.new()
+    attributes_section.add_theme_constant_override("separation", 10)
+    
+    # Título dos atributos
+    var attr_title := Label.new()
+    attr_title.text = "⚔ ATRIBUTOS ⚔"
+    attr_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    attr_title.add_theme_font_size_override("font_size", 16)
+    attr_title.add_theme_color_override("font_color", Color("#DAA520"))  # Dourado
+    attr_title.add_theme_color_override("font_shadow_color", Color.BLACK)
+    attr_title.add_theme_constant_override("shadow_offset_x", 1)
+    attr_title.add_theme_constant_override("shadow_offset_y", 1)
+    attributes_section.add_child(attr_title)
+    
+    # Pontos disponíveis com selo decorativo
+    var points_container := Panel.new()
+    points_container.custom_minimum_size.y = 35
+    var points_style := StyleBoxFlat.new()
+    points_style.bg_color = Color("#4B0082")  # Roxo escuro
+    points_style.corner_radius_top_left = 0
+    points_style.corner_radius_top_right = 0
+    points_style.corner_radius_bottom_left = 0
+    points_style.corner_radius_bottom_right = 0
+    points_style.border_width_left = 2
+    points_style.border_width_right = 2
+    points_style.border_width_top = 2
+    points_style.border_width_bottom = 2
+    points_style.border_color = Color("#9932CC")  # Roxo claro
+    points_container.add_theme_stylebox_override("panel", points_style)
+    
     available_points_label = Label.new()
     available_points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    available_points_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    available_points_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
     available_points_label.add_theme_font_size_override("font_size", 14)
-    vbox.add_child(available_points_label)
+    available_points_label.add_theme_color_override("font_color", Color("#FFD700"))  # Dourado
+    available_points_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+    available_points_label.add_theme_constant_override("shadow_offset_x", 1)
+    available_points_label.add_theme_constant_override("shadow_offset_y", 1)
+    points_container.add_child(available_points_label)
+    attributes_section.add_child(points_container)
     
-    # Separador
-    var separator := HSeparator.new()
-    vbox.add_child(separator)
+    content_container.add_child(attributes_section)
     
-    # Força
-    var strength_container := HBoxContainer.new()
-    vbox.add_child(strength_container)
-    strength_label = Label.new()
-    strength_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    strength_container.add_child(strength_label)
-    strength_button = Button.new()
-    strength_button.text = "+"
-    strength_button.custom_minimum_size = Vector2(30, 30)
+    # === GRID DE ATRIBUTOS DECORATIVOS ===
+    var attr_grid := VBoxContainer.new()
+    attr_grid.add_theme_constant_override("separation", 8)
+    
+    # Função helper para criar linha de atributo
+    var create_attr_row = func(attr_name: String, icon: String, color: Color) -> HBoxContainer:
+        var row := HBoxContainer.new()
+        row.add_theme_constant_override("separation", 10)
+        
+        # Ícone do atributo
+        var attr_icon := Label.new()
+        attr_icon.text = icon
+        attr_icon.add_theme_font_size_override("font_size", 16)
+        attr_icon.custom_minimum_size.x = 25
+        row.add_child(attr_icon)
+        
+        # Nome do atributo
+        var name_label := Label.new()
+        name_label.text = attr_name
+        name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        name_label.add_theme_font_size_override("font_size", 12)
+        name_label.add_theme_color_override("font_color", color)
+        name_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+        name_label.add_theme_constant_override("shadow_offset_x", 1)
+        name_label.add_theme_constant_override("shadow_offset_y", 1)
+        row.add_child(name_label)
+        
+        # Valor do atributo
+        var value_label := Label.new()
+        value_label.custom_minimum_size.x = 150
+        value_label.add_theme_font_size_override("font_size", 11)
+        value_label.add_theme_color_override("font_color", Color.WHITE)
+        value_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+        value_label.add_theme_constant_override("shadow_offset_x", 1)
+        value_label.add_theme_constant_override("shadow_offset_y", 1)
+        row.add_child(value_label)
+        
+        # Botão de + decorativo
+        var plus_button := Button.new()
+        plus_button.text = "+"
+        plus_button.custom_minimum_size = Vector2(25, 25)
+        plus_button.add_theme_font_size_override("font_size", 14)
+        
+        # Estilo do botão +
+        var plus_normal := StyleBoxFlat.new()
+        plus_normal.bg_color = Color("#228B22")  # Verde floresta
+        plus_normal.corner_radius_top_left = 0
+        plus_normal.corner_radius_top_right = 0
+        plus_normal.corner_radius_bottom_left = 0
+        plus_normal.corner_radius_bottom_right = 0
+        plus_normal.border_width_left = 2
+        plus_normal.border_width_right = 2
+        plus_normal.border_width_top = 2
+        plus_normal.border_width_bottom = 2
+        plus_normal.border_color = Color("#32CD32")  # Verde lime
+        
+        var plus_pressed := StyleBoxFlat.new()
+        plus_pressed.bg_color = Color("#006400")  # Verde escuro
+        plus_pressed.corner_radius_top_left = 0
+        plus_pressed.corner_radius_top_right = 0
+        plus_pressed.corner_radius_bottom_left = 0
+        plus_pressed.corner_radius_bottom_right = 0
+        plus_pressed.border_width_left = 2
+        plus_pressed.border_width_right = 2
+        plus_pressed.border_width_top = 2
+        plus_pressed.border_width_bottom = 2
+        plus_pressed.border_color = Color("#32CD32")
+        
+        var plus_disabled := StyleBoxFlat.new()
+        plus_disabled.bg_color = Color("#696969")  # Cinza escuro
+        plus_disabled.corner_radius_top_left = 0
+        plus_disabled.corner_radius_top_right = 0
+        plus_disabled.corner_radius_bottom_left = 0
+        plus_disabled.corner_radius_bottom_right = 0
+        plus_disabled.border_width_left = 2
+        plus_disabled.border_width_right = 2
+        plus_disabled.border_width_top = 2
+        plus_disabled.border_width_bottom = 2
+        plus_disabled.border_color = Color("#A9A9A9")  # Cinza claro
+        
+        plus_button.add_theme_stylebox_override("normal", plus_normal)
+        plus_button.add_theme_stylebox_override("pressed", plus_pressed)
+        plus_button.add_theme_stylebox_override("disabled", plus_disabled)
+        plus_button.add_theme_color_override("font_color", Color.WHITE)
+        plus_button.add_theme_color_override("font_color_disabled", Color("#DCDCDC"))
+        
+        row.add_child(plus_button)
+        return row
+    
+    # Criar linhas de atributos
+    var strength_row = create_attr_row.call("Força", "💪", Color("#FF4500"))  # Laranja vermelho
+    strength_label = strength_row.get_child(2)  # Label do valor
+    strength_button = strength_row.get_child(3)  # Botão +
     strength_button.pressed.connect(_add_strength_point)
-    strength_container.add_child(strength_button)
+    attr_grid.add_child(strength_row)
     
-    # Defesa
-    var defense_container := HBoxContainer.new()
-    vbox.add_child(defense_container)
-    defense_label = Label.new()
-    defense_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    defense_container.add_child(defense_label)
-    defense_button = Button.new()
-    defense_button.text = "+"
-    defense_button.custom_minimum_size = Vector2(30, 30)
+    var defense_row = create_attr_row.call("Defesa", "🛡️", Color("#4682B4"))  # Azul aço
+    defense_label = defense_row.get_child(2)
+    defense_button = defense_row.get_child(3)
     defense_button.pressed.connect(_add_defense_point)
-    defense_container.add_child(defense_button)
+    attr_grid.add_child(defense_row)
     
-    # Inteligência
-    var intelligence_container := HBoxContainer.new()
-    vbox.add_child(intelligence_container)
-    intelligence_label = Label.new()
-    intelligence_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    intelligence_container.add_child(intelligence_label)
-    intelligence_button = Button.new()
-    intelligence_button.text = "+"
-    intelligence_button.custom_minimum_size = Vector2(30, 30)
+    var intelligence_row = create_attr_row.call("Inteligência", "🧠", Color("#9370DB"))  # Roxo médio
+    intelligence_label = intelligence_row.get_child(2)
+    intelligence_button = intelligence_row.get_child(3)
     intelligence_button.pressed.connect(_add_intelligence_point)
-    intelligence_container.add_child(intelligence_button)
+    attr_grid.add_child(intelligence_row)
     
-    # Vitalidade
-    var vitality_container := HBoxContainer.new()
-    vbox.add_child(vitality_container)
-    vitality_label = Label.new()
-    vitality_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    vitality_container.add_child(vitality_label)
-    vitality_button = Button.new()
-    vitality_button.text = "+"
-    vitality_button.custom_minimum_size = Vector2(30, 30)
+    var vitality_row = create_attr_row.call("Vitalidade", "❤️", Color("#DC143C"))  # Vermelho carmesim
+    vitality_label = vitality_row.get_child(2)
+    vitality_button = vitality_row.get_child(3)
     vitality_button.pressed.connect(_add_vitality_point)
-    vitality_container.add_child(vitality_button)
+    attr_grid.add_child(vitality_row)
     
-    # Botão Fechar
-    var close_button := Button.new()
-    close_button.text = "Fechar"
-    close_button.pressed.connect(func(): points_window.visible = false)
-    vbox.add_child(close_button)
+    attributes_section.add_child(attr_grid)
 
 func _open_points_distribution_window() -> void:
     _update_points_display()
@@ -639,7 +939,39 @@ func _update_points_display() -> void:
     if main_node and main_node.has_method("get_player_stats"):
         var stats = main_node.get_player_stats()
         
-        available_points_label.text = "Pontos Disponíveis: %d" % stats.available_points
+        # Navegar pela nova estrutura da janela usando busca por nome
+        var main_panel = points_window.get_child(0)  # Panel principal
+        var content_container = main_panel.get_node("content_container")  # Buscar por nome
+        var basic_section = content_container.get_child(0)  # Seção básica
+        
+        # Atualizar nível
+        var level_container = basic_section.get_child(0)  # HBoxContainer do nível
+        var level_label = level_container.get_child(1)  # Label do nível (segundo child)
+        level_label.text = "Nível %d" % stats.level
+        
+        # Atualizar HP
+        var hp_container = basic_section.get_child(1)  # VBoxContainer do HP
+        var status_hp_bar = hp_container.get_child(1)  # ProgressBar do HP
+        var hp_label = status_hp_bar.get_child(0)  # Label interno do HP
+        status_hp_bar.value = stats.hp
+        status_hp_bar.max_value = stats.hp_max
+        hp_label.text = "%d/%d" % [stats.hp, stats.hp_max]
+        
+        # Atualizar XP
+        var xp_container = basic_section.get_child(2)  # VBoxContainer do XP
+        var status_xp_bar = xp_container.get_child(1)  # ProgressBar do XP
+        var xp_label = status_xp_bar.get_child(0)  # Label interno do XP
+        status_xp_bar.value = stats.xp
+        status_xp_bar.max_value = stats.xp_max
+        xp_label.text = "%d/%d" % [stats.xp, stats.xp_max]
+        
+        # Atualizar pontos disponíveis
+        if stats.available_points > 0:
+            available_points_label.text = "💎 Pontos Disponíveis: %d 💎" % stats.available_points
+        else:
+            available_points_label.text = "⭕ Nenhum ponto disponível"
+        
+        # Atualizar atributos
         strength_label.text = "Força: %d (+%d dano)" % [stats.strength, stats.strength]
         defense_label.text = "Defesa: %d (-%d dano recebido)" % [stats.defense, stats.defense]
         intelligence_label.text = "Inteligência: %d" % stats.intelligence
