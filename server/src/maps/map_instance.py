@@ -40,8 +40,8 @@ class MapInstance:
     def _get_spawn_positions(self) -> dict:
         """Retorna posições de spawn por mapa"""
         spawn_configs = {
-            "Cidade": {"x": 100, "y": 159},
-            "Floresta": {"x": -512, "y": 184}
+            "Cidade": {"x": 0, "y": 240},
+            "Floresta": {"x": -200, "y": 265}
         }
         return spawn_configs.get(self.map_name, {"x": 0, "y": 0})
     
@@ -50,8 +50,8 @@ class MapInstance:
         print(f"[MAP:{self.map_name}] Inicializando inimigos...")
         
         if self.map_name == "Floresta":
-            # Criar orcs na floresta
-            spawn_positions = [(-200, 184), (-100, 184), (0, 184), (100, 184), (200, 184)]
+            # Criar orcs na floresta (altura alinhada com cidade)
+            spawn_positions = [(-200, 265), (-100, 265), (0, 265), (100, 265), (200, 265)]
             print(f"[MAP:{self.map_name}] Criando {len(spawn_positions)} orcs...")
             
             for i, (x, y) in enumerate(spawn_positions):
@@ -77,20 +77,20 @@ class MapInstance:
         """
         if self.map_name == "Cidade":
             return {
-                "min_x": -512.0,
-                "max_x": 512.0,
+                "min_x": -542.0,
+                "max_x": 200.0,
                 "min_y": -200.0,   # teto
-                "ground_y": 184.0  # chão
+                "ground_y": 265.0  # chão ajustado para o caminho de terra
             }
         elif self.map_name == "Floresta":
             return {
-                "min_x": -768.0,
-                "max_x": 768.0,
-                "min_y": -220.0,
-                "ground_y": 184.0
+                "min_x": -542.0,  # Expandido para dar mais espaço (padrão da cidade)
+                "max_x": 200.0,   # Fechado para reservar espaço HUD (padrão da cidade)
+                "min_y": -200.0,   # Mesmo teto da cidade
+                "ground_y": 265.0  # Mesmo chão da cidade
             }
         # Defaults seguros
-        return {"min_x": -1000.0, "max_x": 1000.0, "min_y": -300.0, "ground_y": 184.0}
+        return {"min_x": -542.0, "max_x": 200.0, "min_y": -300.0, "ground_y": 265.0}
     
     def add_player(self, player_id: str, player_name: str, store=None, character_id=None) -> dict:
         """
@@ -293,7 +293,7 @@ class MapInstance:
         
         # Definir limites do mapa (server-side authoritative)
         map_bounds = self._get_map_bounds()
-        ground_y = map_bounds.get("ground_y", 184.0)
+        ground_y = map_bounds.get("ground_y", 265.0)
         min_y = map_bounds.get("min_y", -1000.0)
         
         for player_id, player in self.players.items():

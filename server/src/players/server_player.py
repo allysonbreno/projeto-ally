@@ -309,8 +309,8 @@ class ServerPlayer:
         self.posicaon[0] += self.velocity[0] * delta_time
         self.posicaon[1] += self.velocity[1] * delta_time
 
-        # Chão
-        ground_y = 184.0
+        # Chão - usar ground_y do mapa
+        ground_y = map_bounds.get("ground_y", 265.0) if map_bounds else 265.0
         if self.posicaon[1] >= ground_y:
             self.posicaon[1] = ground_y
             self.velocity[1] = 0.0

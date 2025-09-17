@@ -6,7 +6,7 @@ var main: Node
 var ground_body: StaticBody2D
 var walls: Array[StaticBody2D] = []
 var background: Sprite2D
-const SHOW_BACKGROUND := false
+const SHOW_BACKGROUND := true
 const SHOW_PLATFORM_VISUAL := true
 const GROUND_VISUAL_OFFSET := 8.0  # ajuste fino de alinhamento visual com os pés
 const GROUND_COLOR := Color(0.20, 0.20, 0.24, 1.0)
@@ -42,13 +42,18 @@ func _create_background(viewport_size: Vector2) -> void:
         background = Sprite2D.new()
         background.texture = bg_texture
         background.z_index = -1
-        # Calcular escala para cobrir a tela toda com margem
+        # Calcular escala para manter proporção adequada
         var texture_size = bg_texture.get_size()
-        var scale_x = viewport_size.x / float(texture_size.x)
-        var scale_y = viewport_size.y / float(texture_size.y)
-        var bg_scale = max(scale_x, scale_y)
+        var scale_x = viewport_size.x / float(texture_size.x)  # 1152/1024 = 1.125
+        var scale_y = viewport_size.y / float(texture_size.y)  # 648/1024 = 0.633
+        
+        # Usar a menor escala para evitar background gigante
+        var bg_scale = min(scale_x, scale_y) * 1.2  # 0.633 * 1.2 = 0.76 (menor que original)
         background.scale = Vector2(bg_scale, bg_scale)
-        background.position = Vector2.ZERO
+        
+        # Posicionar background na esquerda para deixar espaço para HUD à direita
+        var bg_width = texture_size.x * bg_scale
+        background.position = Vector2(-viewport_size.x * 0.5 + bg_width * 0.5, 0)
         add_child(background)
 
 func _create_ground(viewport_size: Vector2) -> void:
@@ -61,9 +66,9 @@ func _create_ground(viewport_size: Vector2) -> void:
     collision.shape = shape
     ground_body.add_child(collision)
     
-    # Alinhar com o servidor: ground_y server-side = 184.0 (y dos pés do player)
-    # Para que o TOPO da plataforma seja 184, o centro do retângulo deve ser 184 + half_height
-    var ground_y = 184.0 + (GROUND_HEIGHT * 0.5) + GROUND_VISUAL_OFFSET
+    # Alinhar com o servidor: ground_y server-side = 265.0 (y dos pés do player no caminho de terra)
+    # Para que o TOPO da plataforma seja 265, o centro do retângulo deve ser 265 + half_height
+    var ground_y = 265.0 + (GROUND_HEIGHT * 0.5) + GROUND_VISUAL_OFFSET
     ground_body.position = Vector2(0, ground_y)
     # Ground created
     
@@ -86,9 +91,9 @@ func _create_walls(viewport_size: Vector2) -> void:
     left_wall.position = Vector2(-viewport_size.x * 0.5 + WALL_THICKNESS * 0.5, 0)
     walls.append(left_wall)
     
-    # Parede direita  
+    # Parede direita - movida para mais próximo do background 
     var right_wall = _create_wall(Vector2(WALL_THICKNESS, viewport_size.y + 200))
-    right_wall.position = Vector2(viewport_size.x * 0.5 - WALL_THICKNESS * 0.5, 0)
+    right_wall.position = Vector2(200, 0)  # Posição fixa mais próxima do centro
     walls.append(right_wall)
     
     # Teto
@@ -134,9 +139,9 @@ func _add_visual_rect(parent: Node2D, size: Vector2, color: Color) -> void:
         Vector2(-hw, hh),
     ])
     poly.color = color
-    poly.z_index = -1
+    poly.z_index = -2  # Atrás do background (que está em -1)
     parent.add_child(poly)
 
 func get_player_spawn_position() -> Vector2:
-    # Spawn alinhado ao servidor (Cidade: y ≈ 159)
-    return Vector2(0.0, 159.0)
+    # Spawn alinhado ao servidor (Cidade: y = 240 - caminho de terra)
+    return Vector2(0.0, 240.0)

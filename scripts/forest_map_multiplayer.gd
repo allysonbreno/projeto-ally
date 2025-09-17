@@ -6,7 +6,7 @@ var main: Node
 var ground_body: StaticBody2D
 var walls: Array[StaticBody2D] = []
 var background: Sprite2D
-const SHOW_BACKGROUND := false
+const SHOW_BACKGROUND := true
 const SHOW_PLATFORM_VISUAL := true
 const GROUND_VISUAL_OFFSET := 8.0
 const GROUND_COLOR := Color(0.18, 0.22, 0.18, 1.0)
@@ -55,13 +55,18 @@ func _create_background(viewport_size: Vector2) -> void:
         background = Sprite2D.new()
         background.texture = bg_texture
         background.z_index = -1
-        # Calcular escala para cobrir a tela toda
+        # Calcular escala para manter proporção adequada
         var texture_size = bg_texture.get_size()
-        var scale_x = viewport_size.x / float(texture_size.x)
-        var scale_y = viewport_size.y / float(texture_size.y)
-        var bg_scale = max(scale_x, scale_y)
+        var scale_x = viewport_size.x / float(texture_size.x)  # 1152/1024 = 1.125
+        var scale_y = viewport_size.y / float(texture_size.y)  # 648/1024 = 0.633
+        
+        # Usar a menor escala para evitar background gigante
+        var bg_scale = min(scale_x, scale_y) * 1.2  # 0.633 * 1.2 = 0.76 (menor que original)
         background.scale = Vector2(bg_scale, bg_scale)
-        background.position = Vector2.ZERO
+        
+        # Posicionar background na esquerda para deixar espaço para HUD à direita
+        var bg_width = texture_size.x * bg_scale
+        background.position = Vector2(-viewport_size.x * 0.5 + bg_width * 0.5, 0)
         add_child(background)
 
 func _create_ground(viewport_size: Vector2) -> void:
@@ -73,8 +78,8 @@ func _create_ground(viewport_size: Vector2) -> void:
     collision.shape = shape
     ground_body.add_child(collision)
     
-    # Alinhar com o servidor: ground_y server-side = 184.0 (y dos pés do player)
-    var ground_y = 184.0 + (GROUND_HEIGHT * 0.5) + GROUND_VISUAL_OFFSET
+    # Alinhar com o servidor: ground_y alinhado com cidade = 265.0 (y dos pés do player)
+    var ground_y = 265.0 + (GROUND_HEIGHT * 0.5) + GROUND_VISUAL_OFFSET
     ground_body.position = Vector2(0, ground_y)
     
     # Configurar camadas de colisão
@@ -89,14 +94,14 @@ func _create_ground(viewport_size: Vector2) -> void:
         _add_visual_rect(ground_body, shape.size, GROUND_COLOR)
 
 func _create_walls(viewport_size: Vector2) -> void:
-    # Parede esquerda
+    # Parede esquerda - expandida para dar mais espaço de movimento (padrão da cidade)
     var left_wall = _create_wall(Vector2(WALL_THICKNESS, viewport_size.y + 200))
-    left_wall.position = Vector2(-viewport_size.x * 0.5 + WALL_THICKNESS * 0.5, 0)
+    left_wall.position = Vector2(-542.0 + WALL_THICKNESS * 0.5, 0)  # Expandido 30px (padrão da cidade)
     walls.append(left_wall)
     
-    # Parede direita  
+    # Parede direita - movida para mais próximo do background para reservar espaço HUD (padrão da cidade)
     var right_wall = _create_wall(Vector2(WALL_THICKNESS, viewport_size.y + 200))
-    right_wall.position = Vector2(viewport_size.x * 0.5 - WALL_THICKNESS * 0.5, 0)
+    right_wall.position = Vector2(200, 0)  # Posição fixa mais próxima do centro (padrão da cidade)
     walls.append(right_wall)
     
     # Teto
@@ -142,7 +147,7 @@ func _add_visual_rect(parent: Node2D, size: Vector2, color: Color) -> void:
         Vector2(-hw, hh),
     ])
     poly.color = color
-    poly.z_index = -1
+    poly.z_index = -2  # Atrás do background (que está em -1) - padrão da cidade
     parent.add_child(poly)
 
 # FUNÇÃO REMOVIDA - Sistema agora é server-side authoritative
@@ -150,9 +155,8 @@ func _add_visual_rect(parent: Node2D, size: Vector2, color: Color) -> void:
 # O cliente apenas recebe e exibe os estados via _create_enemy_from_server_data()
 
 func get_player_spawn_position() -> Vector2:
-    # Spawn aproximado; servidor enviará posição autoritativa
-    # Mantemos Y compatível (~159) para evitar saltos visuais ao carregar
-    return Vector2(-200.0, 159.0)
+    # Spawn alinhado com altura da cidade (265.0) para consistência entre mapas
+    return Vector2(-200.0, 265.0)
 
 func _request_enemies_from_server() -> void:
     """Solicita o estado atual dos inimigos do servidor"""
@@ -480,13 +484,7 @@ func _update_enemy_from_server_data(enemy_data: Dictionary) -> void:
     var evx = float(enemy_data.get("velocity_x", 0.0))
     var evy = float(enemy_data.get("velocity_y", 0.0))
     
-    # Evitar sobreposição visual com o player local (display-only):
-    if main and main.local_player:
-        var lp = main.local_player.global_position
-        var dx = ex - lp.x
-        var min_gap = 22.0  # distância mínima visual
-        if abs(dx) < min_gap:
-            ex = lp.x + (min_gap if dx >= 0.0 else -min_gap)
+    # Usar posição exata do servidor (remover lógica de sobreposição que causava bug de altura)
     enemy.global_position = Vector2(ex, ey)
     enemy.velocity = Vector2(evx, evy)
     enemy.hp = enemy_data.get("hp", enemy.hp)
