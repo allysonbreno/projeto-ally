@@ -475,7 +475,7 @@ class GameServer:
         
         defaults = {
             "level": 1, "xp": 0, "xp_max": 100, "attr_points": 0,
-            "map": "Cidade", "pos_x": 0.0, "pos_y": 159.0,
+            "map": "Cidade", "pos_x": 0.0, "pos_y": 240.0,
             "hp": 100, "hp_max": 100,
             **base_stats[character_type]
         }

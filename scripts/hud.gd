@@ -2,16 +2,12 @@ extends CanvasLayer
 signal on_select_map(map_name: String)
 
 var title_label: Label
-
-var hp_bar: ProgressBar
-var hp_value_label: Label
+var vida_bar: ProgressBar
 var xp_bar: ProgressBar
-var xp_value_label: Label
-
-var map_button: Button
 var status_button: Button
 var inventory_button: Button
-var auto_attack_checkbox: CheckBox
+var maps_button: Button
+var auto_attack_button: Button
 var popup_menu: PopupMenu
 var status_dialog: AcceptDialog
 var inventory_window: Window
@@ -29,159 +25,356 @@ var defense_button: Button
 var intelligence_button: Button
 var vitality_button: Button
 
-var player_ref: CharacterBody2D  # Alterado para tipo genérico
+var player_ref: CharacterBody2D
 
 func _init() -> void:
     layer = 10
 
 func _ready() -> void:
-    # ===== Barra do topo =====
-    var top: HBoxContainer = HBoxContainer.new()
-    top.anchor_left = 0; top.anchor_top = 0
-    top.anchor_right = 1; top.anchor_bottom = 0
-    top.offset_left = 16; top.offset_top = 16; top.offset_right = -16
-    top.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    add_child(top)
+    _create_hud()
 
-    # sem título à esquerda
-    var left_spacer := Control.new()
-    left_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    top.add_child(left_spacer)
-
-    # Título central (maior)
+func _create_hud() -> void:
+    # Criar container principal corretamente posicionado na área cinza
+    var margin := MarginContainer.new()
+    margin.anchor_left = 0.8  # Começa em 80% da tela (área cinza direita)
+    margin.anchor_top = 0
+    margin.anchor_right = 1
+    margin.anchor_bottom = 1
+    margin.add_theme_constant_override("margin_left", 5)
+    margin.add_theme_constant_override("margin_right", 5)
+    margin.add_theme_constant_override("margin_top", 5)
+    margin.add_theme_constant_override("margin_bottom", 5)
+    
+    # Criar painel principal
+    var right_panel := VBoxContainer.new()
+    right_panel.add_theme_constant_override("separation", 3)
+    margin.add_child(right_panel)
+    
+    # === SEÇÃO 1: TÍTULO ===
     title_label = Label.new()
-    title_label.text = "Cidade"
+    title_label.text = "Cidade - Multiplayer"
+    title_label.add_theme_font_size_override("font_size", 12)
     title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    title_label.add_theme_font_size_override("font_size", 28)
-    top.add_child(title_label)
-
-    # Lado direito: barras + botão Mapas
-    var right_box := HBoxContainer.new()
-    right_box.alignment = BoxContainer.ALIGNMENT_END
-    top.add_child(right_box)
-
-    var bars := VBoxContainer.new()
-    right_box.add_child(bars)
-
-    # ---- Linha HP ----
-    var hp_row := HBoxContainer.new()
-    hp_row.custom_minimum_size = Vector2(300, 24)
-    bars.add_child(hp_row)
-
-    var hp_text := Label.new()
-    hp_text.text = "HP"
-    hp_text.add_theme_font_size_override("font_size", 16)
-    hp_text.custom_minimum_size = Vector2(32, 0)
-    hp_row.add_child(hp_text)
-
-    hp_bar = ProgressBar.new()
-    hp_bar.min_value = 0
-    hp_bar.max_value = 100
-    hp_bar.value = 100
-    hp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    hp_bar.custom_minimum_size = Vector2(240, 20)
-    # estilo HP (vermelho)
+    right_panel.add_child(title_label)
+    
+    # === SEÇÃO 2: STATUS BARS (ocupando mais espaço) ===
+    var status_section := VBoxContainer.new()
+    status_section.add_theme_constant_override("separation", 3)
+    status_section.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    
+    # Vida
+    var vida_container := VBoxContainer.new()
+    var vida_label := Label.new()
+    vida_label.text = "Vida:"
+    vida_label.add_theme_font_size_override("font_size", 10)
+    vida_container.add_child(vida_label)
+    
+    vida_bar = ProgressBar.new()
+    vida_bar.value = 95
+    vida_bar.max_value = 100
+    vida_bar.show_percentage = false
+    vida_bar.custom_minimum_size.y = 20  # Barras maiores
+    # Estilo HP (vermelho)
     var hp_bg := StyleBoxFlat.new()
     hp_bg.bg_color = Color(0.12, 0.12, 0.12)
-    hp_bg.corner_radius_top_left = 6
-    hp_bg.corner_radius_top_right = 6
-    hp_bg.corner_radius_bottom_left = 6
-    hp_bg.corner_radius_bottom_right = 6
+    hp_bg.corner_radius_top_left = 4
+    hp_bg.corner_radius_top_right = 4
+    hp_bg.corner_radius_bottom_left = 4
+    hp_bg.corner_radius_bottom_right = 4
     var hp_fill := StyleBoxFlat.new()
     hp_fill.bg_color = Color(0.85, 0.18, 0.18)
-    hp_fill.corner_radius_top_left = 6
-    hp_fill.corner_radius_top_right = 6
-    hp_fill.corner_radius_bottom_left = 6
-    hp_fill.corner_radius_bottom_right = 6
-    hp_bar.add_theme_stylebox_override("background", hp_bg)
-    hp_bar.add_theme_stylebox_override("fill", hp_fill)
-    hp_row.add_child(hp_bar)
-
-    # valor "100/100"
-    hp_value_label = Label.new()
-    hp_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    hp_value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-    hp_value_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    hp_value_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    hp_row.add_child(hp_value_label)
-    _update_hp_text(100, 100)
-
-    # ---- Linha XP ----
-    var xp_row := HBoxContainer.new()
-    xp_row.custom_minimum_size = Vector2(300, 20)
-    bars.add_child(xp_row)
-
-    var xp_text := Label.new()
-    xp_text.text = "XP"
-    xp_text.add_theme_font_size_override("font_size", 16)
-    xp_text.custom_minimum_size = Vector2(32, 0)
-    xp_row.add_child(xp_text)
-
+    hp_fill.corner_radius_top_left = 4
+    hp_fill.corner_radius_top_right = 4
+    hp_fill.corner_radius_bottom_left = 4
+    hp_fill.corner_radius_bottom_right = 4
+    vida_bar.add_theme_stylebox_override("background", hp_bg)
+    vida_bar.add_theme_stylebox_override("fill", hp_fill)
+    vida_container.add_child(vida_bar)
+    
+    var vida_text := Label.new()
+    vida_text.text = "95/100"
+    vida_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    vida_text.add_theme_font_size_override("font_size", 9)
+    vida_container.add_child(vida_text)
+    
+    status_section.add_child(vida_container)
+    
+    # Experiência
+    var xp_container := VBoxContainer.new()
+    var xp_label := Label.new()
+    xp_label.text = "Experiência:"
+    xp_label.add_theme_font_size_override("font_size", 10)
+    xp_container.add_child(xp_label)
+    
     xp_bar = ProgressBar.new()
-    xp_bar.min_value = 0
+    xp_bar.value = 90
     xp_bar.max_value = 100
-    xp_bar.value = 0
-    xp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    xp_bar.custom_minimum_size = Vector2(240, 16)
-    # estilo XP (azul)
+    xp_bar.show_percentage = false
+    xp_bar.custom_minimum_size.y = 20  # Barras maiores
+    # Estilo XP (azul)
     var xp_bg := StyleBoxFlat.new()
     xp_bg.bg_color = Color(0.12, 0.12, 0.12)
-    xp_bg.corner_radius_top_left = 6
-    xp_bg.corner_radius_top_right = 6
-    xp_bg.corner_radius_bottom_left = 6
-    xp_bg.corner_radius_bottom_right = 6
+    xp_bg.corner_radius_top_left = 4
+    xp_bg.corner_radius_top_right = 4
+    xp_bg.corner_radius_bottom_left = 4
+    xp_bg.corner_radius_bottom_right = 4
     var xp_fill := StyleBoxFlat.new()
     xp_fill.bg_color = Color(0.2, 0.5, 1.0)
-    xp_fill.corner_radius_top_left = 6
-    xp_fill.corner_radius_top_right = 6
-    xp_fill.corner_radius_bottom_left = 6
-    xp_fill.corner_radius_bottom_right = 6
+    xp_fill.corner_radius_top_left = 4
+    xp_fill.corner_radius_top_right = 4
+    xp_fill.corner_radius_bottom_left = 4
+    xp_fill.corner_radius_bottom_right = 4
     xp_bar.add_theme_stylebox_override("background", xp_bg)
     xp_bar.add_theme_stylebox_override("fill", xp_fill)
-    xp_row.add_child(xp_bar)
-
-    xp_value_label = Label.new()
-    xp_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    xp_value_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-    xp_value_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    xp_value_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    xp_row.add_child(xp_value_label)
-    _update_xp_text(0, 100)
-
-    # Auto Attack checkbox
-    auto_attack_checkbox = CheckBox.new()
-    auto_attack_checkbox.text = "Auto Attack"
-    auto_attack_checkbox.focus_mode = Control.FOCUS_NONE
-    auto_attack_checkbox.toggled.connect(_on_auto_attack_toggled)
-    bars.add_child(auto_attack_checkbox)
-
-    # Botões container
-    var buttons_container := HBoxContainer.new()
-    right_box.add_child(buttons_container)
+    xp_container.add_child(xp_bar)
     
-    # Botão Status
+    var xp_text := Label.new()
+    xp_text.text = "1644/1826"
+    xp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    xp_text.add_theme_font_size_override("font_size", 9)
+    xp_container.add_child(xp_text)
+    
+    status_section.add_child(xp_container)
+    right_panel.add_child(status_section)
+    
+    # === SEÇÃO 3: CONFIGURAÇÕES ===
+    var config_section := VBoxContainer.new()
+    config_section.add_theme_constant_override("separation", 3)
+    
+    var config_label := Label.new()
+    config_label.text = "Configurações:"
+    config_label.add_theme_font_size_override("font_size", 10)
+    config_section.add_child(config_label)
+    
+    auto_attack_button = Button.new()
+    auto_attack_button.text = "Auto Attack"
+    auto_attack_button.custom_minimum_size.y = 28  # Botões maiores
+    auto_attack_button.toggle_mode = true
+    auto_attack_button.pressed.connect(_on_auto_attack_pressed)
+    config_section.add_child(auto_attack_button)
+    
+    right_panel.add_child(config_section)
+    
+    # === SEÇÃO 4: MENUS COM ÍCONES ===
+    var menu_section := VBoxContainer.new()
+    menu_section.add_theme_constant_override("separation", 5)
+    menu_section.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    
+    var menu_label := Label.new()
+    menu_label.text = "Menus:"
+    menu_label.add_theme_font_size_override("font_size", 10)
+    menu_section.add_child(menu_label)
+    
+    # Grid horizontal para os botões com ícones (3 colunas para ocupar toda largura)
+    var buttons_grid := GridContainer.new()
+    buttons_grid.columns = 3
+    buttons_grid.add_theme_constant_override("h_separation", 3)
+    buttons_grid.add_theme_constant_override("v_separation", 3)
+    
+    # Status button com ícone
+    var status_container := VBoxContainer.new()
+    status_container.alignment = BoxContainer.ALIGNMENT_CENTER
+    
     status_button = Button.new()
-    status_button.text = "Status"
-    status_button.focus_mode = Control.FOCUS_NONE
-    status_button.pressed.connect(_open_status_dialog)
-    buttons_container.add_child(status_button)
+    status_button.custom_minimum_size = Vector2(50, 50)
+    status_button.icon = _create_status_icon()
+    status_button.pressed.connect(_on_status_pressed)
+    status_container.add_child(status_button)
     
-    # Botão Inventário
+    var status_label := Label.new()
+    status_label.text = "Status"
+    status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    status_label.add_theme_font_size_override("font_size", 8)
+    status_container.add_child(status_label)
+    
+    buttons_grid.add_child(status_container)
+    
+    # Inventory button com ícone
+    var inventory_container := VBoxContainer.new()
+    inventory_container.alignment = BoxContainer.ALIGNMENT_CENTER
+    
     inventory_button = Button.new()
-    inventory_button.text = "Inventário"
-    inventory_button.focus_mode = Control.FOCUS_NONE
-    inventory_button.pressed.connect(_open_inventory_window)
-    buttons_container.add_child(inventory_button)
+    inventory_button.custom_minimum_size = Vector2(50, 50)
+    inventory_button.icon = _create_inventory_icon()
+    inventory_button.pressed.connect(_on_inventory_pressed)
+    inventory_container.add_child(inventory_button)
     
-    # Botão Mapas
-    map_button = Button.new()
-    map_button.text = "Mapas"
-    map_button.focus_mode = Control.FOCUS_NONE
-    map_button.pressed.connect(_open_map_menu)
-    buttons_container.add_child(map_button)
+    var inventory_label := Label.new()
+    inventory_label.text = "Inventário"
+    inventory_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    inventory_label.add_theme_font_size_override("font_size", 8)
+    inventory_container.add_child(inventory_label)
+    
+    buttons_grid.add_child(inventory_container)
+    
+    # Maps button com ícone
+    var maps_container := VBoxContainer.new()
+    maps_container.alignment = BoxContainer.ALIGNMENT_CENTER
+    
+    maps_button = Button.new()
+    maps_button.custom_minimum_size = Vector2(50, 50)
+    maps_button.icon = _create_maps_icon()
+    maps_button.pressed.connect(_on_maps_pressed)
+    maps_container.add_child(maps_button)
+    
+    var maps_label := Label.new()
+    maps_label.text = "Mapas"
+    maps_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    maps_label.add_theme_font_size_override("font_size", 8)
+    maps_container.add_child(maps_label)
+    
+    buttons_grid.add_child(maps_container)
+    
+    menu_section.add_child(buttons_grid)
+    right_panel.add_child(menu_section)
+    
+    add_child(margin)
+    
+    # Criar elementos complementares
+    _create_popup_menu()
+    _create_dialogs()
+    _create_points_distribution_window()
+    _create_inventory_window()
 
-    # Popup do menu
+# ================== CRIAÇÃO DE ÍCONES ==================
+func _create_status_icon() -> ImageTexture:
+    # Ícone de braço forte (flexão)
+    var img := Image.create(32, 32, false, Image.FORMAT_RGBA8)
+    img.fill(Color.TRANSPARENT)
+    
+    # Braço superior (horizontal)
+    for x in range(8, 24):
+        for y in range(10, 14):
+            img.set_pixel(x, y, Color.SADDLE_BROWN)
+    
+    # Antebraço (vertical)
+    for x in range(18, 22):
+        for y in range(14, 26):
+            img.set_pixel(x, y, Color.SADDLE_BROWN)
+    
+    # Músculo (círculo)
+    for x in range(12, 20):
+        for y in range(8, 16):
+            var dx = x - 16
+            var dy = y - 12
+            if dx*dx + dy*dy <= 20:
+                img.set_pixel(x, y, Color.PERU)
+    
+    # Punho
+    for x in range(17, 23):
+        for y in range(24, 28):
+            img.set_pixel(x, y, Color.SADDLE_BROWN)
+    
+    var texture := ImageTexture.new()
+    texture.set_image(img)
+    return texture
+
+func _create_inventory_icon() -> ImageTexture:
+    # Ícone de bolsa/mochila
+    var img := Image.create(32, 32, false, Image.FORMAT_RGBA8)
+    img.fill(Color.TRANSPARENT)
+    
+    # Corpo da bolsa
+    for x in range(6, 26):
+        for y in range(8, 26):
+            img.set_pixel(x, y, Color.SADDLE_BROWN)
+    
+    # Alça
+    for x in range(10, 22):
+        for y in range(4, 8):
+            img.set_pixel(x, y, Color.DIM_GRAY)
+    
+    # Alça lateral esquerda
+    for x in range(8, 10):
+        for y in range(6, 18):
+            img.set_pixel(x, y, Color.DIM_GRAY)
+    
+    # Alça lateral direita
+    for x in range(22, 24):
+        for y in range(6, 18):
+            img.set_pixel(x, y, Color.DIM_GRAY)
+    
+    # Fecho
+    for x in range(14, 18):
+        for y in range(12, 16):
+            img.set_pixel(x, y, Color.GOLD)
+    
+    # Bolsos laterais
+    for x in range(4, 8):
+        for y in range(14, 22):
+            img.set_pixel(x, y, Color.BROWN)
+    
+    for x in range(24, 28):
+        for y in range(14, 22):
+            img.set_pixel(x, y, Color.BROWN)
+    
+    var texture := ImageTexture.new()
+    texture.set_image(img)
+    return texture
+
+func _create_maps_icon() -> ImageTexture:
+    # Ícone de mapa
+    var img := Image.create(32, 32, false, Image.FORMAT_RGBA8)
+    img.fill(Color.TRANSPARENT)
+    
+    # Papel do mapa
+    for x in range(4, 28):
+        for y in range(6, 26):
+            img.set_pixel(x, y, Color.BEIGE)
+    
+    # Borda do mapa
+    for x in range(4, 28):
+        img.set_pixel(x, 6, Color.SADDLE_BROWN)
+        img.set_pixel(x, 25, Color.SADDLE_BROWN)
+    for y in range(6, 26):
+        img.set_pixel(4, y, Color.SADDLE_BROWN)
+        img.set_pixel(27, y, Color.SADDLE_BROWN)
+    
+    # Linhas do mapa (rios/estradas)
+    for x in range(8, 24):
+        img.set_pixel(x, 12, Color.BLUE)
+        img.set_pixel(x, 18, Color.BROWN)
+    
+    for y in range(10, 22):
+        img.set_pixel(16, y, Color.FOREST_GREEN)
+    
+    # Montanhas (triângulos)
+    img.set_pixel(10, 16, Color.GRAY)
+    img.set_pixel(9, 17, Color.GRAY)
+    img.set_pixel(10, 17, Color.GRAY)
+    img.set_pixel(11, 17, Color.GRAY)
+    
+    img.set_pixel(22, 14, Color.GRAY)
+    img.set_pixel(21, 15, Color.GRAY)
+    img.set_pixel(22, 15, Color.GRAY)
+    img.set_pixel(23, 15, Color.GRAY)
+    
+    # X marcando local
+    for i in range(5):
+        img.set_pixel(14 + i, 20 + i, Color.RED)
+        img.set_pixel(18 - i, 20 + i, Color.RED)
+    
+    var texture := ImageTexture.new()
+    texture.set_image(img)
+    return texture
+
+# ================== EVENTOS DOS BOTÕES ==================
+func _on_auto_attack_pressed() -> void:
+    var main_node = get_parent()
+    if main_node and main_node.has_method("set_auto_attack"):
+        main_node.set_auto_attack(auto_attack_button.button_pressed)
+
+func _on_status_pressed() -> void:
+    _open_status_dialog()
+
+func _on_inventory_pressed() -> void:
+    _open_inventory_window()
+
+func _on_maps_pressed() -> void:
+    _open_map_menu()
+
+# ================== CRIAÇÃO DE ELEMENTOS COMPLEMENTARES ==================
+func _create_popup_menu() -> void:
     popup_menu = PopupMenu.new()
     add_child(popup_menu)
     popup_menu.add_item("Floresta")
@@ -190,24 +383,17 @@ func _ready() -> void:
         on_select_map.emit(selected_map)
     )
 
-    # Dialog
+func _create_dialogs() -> void:
     dialog = AcceptDialog.new()
     dialog.title = "Aviso"
     add_child(dialog)
     
-    # Status Dialog
     status_dialog = AcceptDialog.new()
     status_dialog.title = "Status do Personagem"
     add_child(status_dialog)
-    
-    # Interface de distribuição de pontos
-    _create_points_distribution_window()
-    
-    # Interface de inventário
-    _create_inventory_window()
 
 func _open_map_menu() -> void:
-    popup_menu.position = map_button.get_global_position() + Vector2(0, map_button.size.y)
+    popup_menu.position = maps_button.get_global_position() + Vector2(0, maps_button.size.y)
     popup_menu.popup()
 
 func _open_status_dialog() -> void:
@@ -241,11 +427,11 @@ func set_player(p: CharacterBody2D) -> void:
     player_ref = p
 
 func update_health(current: int, maxv: int) -> void:
-    if hp_bar == null:
-        print("⚠️ hp_bar é null em update_health(), não atualizando")
+    if vida_bar == null:
+        print("⚠️ vida_bar é null em update_health(), não atualizando")
         return
-    hp_bar.max_value = maxv
-    hp_bar.value = current
+    vida_bar.max_value = maxv
+    vida_bar.value = current
     _update_hp_text(current, maxv)
 
 func update_xp(current: int, maxv: int) -> void:
@@ -424,15 +610,16 @@ func _add_vitality_point() -> void:
 
 # ================== helpers ==================
 func _update_hp_text(cur: int, maxv: int) -> void:
-    hp_value_label.text = str(cur, "/", maxv)
+    # Atualizar texto diretamente na barra de vida
+    var vida_text_label = vida_bar.get_parent().get_child(2)  # Label com texto
+    if vida_text_label:
+        vida_text_label.text = str(cur, "/", maxv)
 
 func _update_xp_text(cur: int, maxv: int) -> void:
-    xp_value_label.text = str(cur, "/", maxv)
-
-func _on_auto_attack_toggled(button_pressed: bool) -> void:
-    var main_node = get_parent()
-    if main_node and main_node.has_method("set_auto_attack"):
-        main_node.set_auto_attack(button_pressed)
+    # Atualizar texto diretamente na barra de XP
+    var xp_text_label = xp_bar.get_parent().get_child(2)  # Label com texto
+    if xp_text_label:
+        xp_text_label.text = str(cur, "/", maxv)
 
 # ================== Interface de Inventário ==================
 func _create_inventory_window() -> void:
