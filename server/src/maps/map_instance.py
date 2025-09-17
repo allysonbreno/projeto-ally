@@ -98,10 +98,17 @@ class MapInstance:
         """
         print(f"[DEBUG_ADD_PLAYER] {player_name}: store={store is not None}, character_id={character_id}")
         server_player = ServerPlayer(player_id, player_name, self.spawn_positions, store, character_id)
+        
+        # Verificar se precisa fazer respawn (player morto chegando na Cidade)
+        if self.map_name == "Cidade" and server_player.hp <= 0:
+            print(f"[RESPAWN_DETECTED] Player {player_name} chegou na Cidade com HP={server_player.hp}, fazendo respawn...")
+            server_player.respawn(self.spawn_positions)
+            print(f"[RESPAWN_COMPLETED] Player {player_name} respawnou com HP={server_player.hp}/{server_player.max_hp}")
+        
         self.players[player_id] = server_player
         self.last_activity = time.time()
         
-        print(f" [MAP:{self.map_name}] Player {player_name} ({player_id}) entrou")
+        print(f" [MAP:{self.map_name}] Player {player_name} ({player_id}) entrou com HP={server_player.hp}/{server_player.max_hp}")
         print(f" [MAP:{self.map_name}] Players ativos: {len(self.players)} | Inimigos: {len(self.enemies)}")
         
         return self.spawn_positions

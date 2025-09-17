@@ -108,6 +108,9 @@ class ServerPlayer:
             except Exception:
                 self.xp_max = self.xp_max + 20
             self.attribute_points += 5
+            # Restaurar HP ao máximo quando sobe de level
+            self.hp = self.max_hp
+            print(f"[LEVEL_UP] {self.name} subiu para Level {self.level}! HP restaurado: {self.hp}/{self.max_hp}")
             leveled = True
         
         # Auto-save no banco de dados

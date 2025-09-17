@@ -811,8 +811,13 @@ func _on_level_up_received(player_id: String, new_level: int, available_pts: int
     player_level = new_level
     available_points = available_pts
     player_xp_max = xp_max_s
+    # Restaurar HP ao máximo quando sobe de level
+    player_hp = player_hp_max
     if hud:
         hud.update_xp(player_xp, player_xp_max)
+        hud.update_health(player_hp, player_hp_max)
+    if local_player:
+        show_damage_popup_at_world(local_player.global_position + Vector2(0, -40), "LEVEL UP!", Color(1.0, 1.0, 0.0, 1))
     _show_level_up_message()
 
 func _on_player_stats_update_received(player_id: String, stats: Dictionary) -> void:
